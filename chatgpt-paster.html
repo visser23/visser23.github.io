@@ -477,6 +477,7 @@
                 <ul>
                     <li>Automatically processes content as you type or paste</li>
                     <li>Removes ChatGPT tracking parameters (?utm_source=chatgpt.com)</li>
+                    <li>Replaces em dashes (—) with normal dashes (-)</li>
                     <li>Finds single anchor tags and converts text to "(via text)"</li>
                     <li>Groups consecutive anchor tags as "(via link1, link2)"</li>
                     <li>Works entirely locally in your browser - no data is sent anywhere</li>
@@ -516,7 +517,10 @@
                     // Step 1: Remove UTM parameters from all URLs
                     this.removeUTMParameters(processedElement);
                     
-                    // Step 2: Process anchor tags
+                    // Step 2: Replace em dashes with normal dashes
+                    this.replaceEmDashes(processedElement);
+                    
+                    // Step 3: Process anchor tags
                     this.processAnchorTags(processedElement);
                     
                     return processedElement;
@@ -554,6 +558,35 @@
                 textNodes.forEach(textNode => {
                     const originalText = textNode.textContent;
                     const cleanedText = originalText.replace(this.utmPattern, '');
+                    if (cleanedText !== originalText) {
+                        textNode.textContent = cleanedText;
+                    }
+                });
+            }
+
+            /**
+             * Replace em dashes with normal dashes throughout the content
+             * @param {HTMLElement} element - Element to process
+             */
+            replaceEmDashes(element) {
+                // Create a tree walker to find all text nodes
+                const walker = document.createTreeWalker(
+                    element,
+                    NodeFilter.SHOW_TEXT,
+                    null,
+                    false
+                );
+                
+                const textNodes = [];
+                let node;
+                while (node = walker.nextNode()) {
+                    textNodes.push(node);
+                }
+                
+                // Replace em dashes (—) with normal dashes (-) in all text content
+                textNodes.forEach(textNode => {
+                    const originalText = textNode.textContent;
+                    const cleanedText = originalText.replace(/—/g, '-');
                     if (cleanedText !== originalText) {
                         textNode.textContent = cleanedText;
                     }
