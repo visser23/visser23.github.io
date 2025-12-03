@@ -1398,6 +1398,10 @@ const App = (function() {
             // Update leave count in intro text
             if (shareLeaveCount) shareLeaveCount.textContent = leaveDays.size;
             
+            // Update school holiday count
+            const shareSchoolCount = document.getElementById('share-school-count');
+            if (shareSchoolCount) shareSchoolCount.textContent = schoolHolidays.size;
+            
             // Auto-generate the share URL
             generateShareUrl();
             
@@ -1524,16 +1528,18 @@ const App = (function() {
         if (importPartnerModal) {
             if (importPartnerNameEl) importPartnerNameEl.textContent = partnerData.name || 'Your partner';
             
-            // Show leave days count
+            // Show counts
             const leaveCount = partnerData.leaveDays?.length || 0;
             const schoolCount = partnerData.schoolHolidays?.length || 0;
             
             if (importLeaveCountEl) {
-                if (schoolCount > 0) {
-                    importLeaveCountEl.textContent = `${leaveCount} leave days and ${schoolCount} school holiday days`;
-                } else {
-                    importLeaveCountEl.textContent = `${leaveCount} leave days`;
-                }
+                importLeaveCountEl.textContent = leaveCount;
+            }
+            
+            // Update school holidays count
+            const importSchoolCountEl = document.getElementById('import-school-count');
+            if (importSchoolCountEl) {
+                importSchoolCountEl.textContent = schoolCount;
             }
             
             console.log('Opening import modal with data:', {

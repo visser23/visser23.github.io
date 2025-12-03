@@ -407,8 +407,12 @@
             </div>
             <div class="modal-body">
                 <p class="share-intro">
-                    Share your <strong id="share-leave-count">0</strong> leave days with your partner. When they open this link, they can import your days as their "Partner's Leave".
+                    Share your plan with your partner. This includes:
                 </p>
+                <ul class="share-stats-list">
+                    <li><strong id="share-leave-count">0</strong> leave days (imported as "Partner's Leave")</li>
+                    <li><strong id="share-school-count">0</strong> school holiday days (merged with their calendar)</li>
+                </ul>
                 
                 <div class="setting-group">
                     <label for="partner-name-input" class="setting-label">Your Name</label>
@@ -474,16 +478,19 @@
             </div>
             <div class="modal-body">
                 <p class="import-intro" id="import-intro">
-                    <strong id="import-partner-name">Your partner</strong> has shared their leave plan with you.
+                    <strong id="import-partner-name">Your partner</strong> has shared their plan with you.
                 </p>
                 
                 <div class="import-summary" id="import-summary">
-                    <p><strong id="import-leave-count">0</strong> leave days to import</p>
+                    <ul class="import-stats-list">
+                        <li><strong id="import-leave-count">0</strong> leave days → added as "Partner's Leave"</li>
+                        <li><strong id="import-school-count">0</strong> school holidays → merged with your calendar</li>
+                    </ul>
                 </div>
 
                 <div class="import-actions">
                     <button type="button" class="btn btn-primary btn-lg" id="import-accept-btn">
-                        Import as Partner's Leave
+                        Import Plan
                     </button>
                     <button type="button" class="btn btn-secondary" id="import-skip-btn">
                         Skip
@@ -491,7 +498,7 @@
                 </div>
                 
                 <p class="import-hint">
-                    These days will appear in purple on your calendar. You can edit them anytime using "Partner's Leave" mode.
+                    Partner's leave days will appear in purple on your calendar. School holidays will be merged with any you've already marked.
                 </p>
             </div>
         </div>

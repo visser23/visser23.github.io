@@ -1154,6 +1154,27 @@ kbd.kbd {
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
     line-height: 1.6;
+    margin-bottom: 0.5rem;
+}
+
+.share-stats-list,
+.import-stats-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.75rem 0 1rem 0;
+    font-size: var(--font-size-sm);
+}
+
+.share-stats-list li,
+.import-stats-list li {
+    padding: 0.4rem 0;
+    color: var(--color-text-secondary);
+}
+
+.share-stats-list strong,
+.import-stats-list strong {
+    color: var(--color-primary);
+    font-weight: 600;
 }
 
 .share-info {
