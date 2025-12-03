@@ -393,6 +393,30 @@
         </div>
     </div>
 
+    <!-- General Toast Notification -->
+    <div class="toast" id="toast" hidden role="alert" aria-live="polite">
+        <div class="toast-content">
+            <span class="toast-icon" id="toast-icon"></span>
+            <span class="toast-message" id="toast-message"></span>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirm-modal" hidden>
+        <div class="modal modal--confirm" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="confirm-message" aria-modal="true">
+            <div class="modal-header">
+                <h2 class="modal-title" id="confirm-title">Confirm</h2>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="confirm-cancel-btn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirm-ok-btn">OK</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Share with Partner Modal -->
     <div class="modal-overlay" id="share-modal" hidden>
         <div class="modal modal--share" role="dialog" aria-labelledby="share-title" aria-modal="true">

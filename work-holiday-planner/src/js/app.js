@@ -72,6 +72,18 @@ const App = (function() {
     let supportToast = null;
     let supportToastCloseBtn = null;
     
+    // General toast and confirm modal elements
+    let toastEl = null;
+    let toastIcon = null;
+    let toastMessage = null;
+    let toastTimeout = null;
+    let confirmModal = null;
+    let confirmTitle = null;
+    let confirmMessage = null;
+    let confirmOkBtn = null;
+    let confirmCancelBtn = null;
+    let confirmResolve = null;
+    
     // Suggest holidays modal DOM elements
     let suggestHolidaysBtn = null;
     let suggestHolidaysModal = null;
@@ -178,6 +190,16 @@ const App = (function() {
         // Support toast DOM elements
         supportToast = document.getElementById('support-toast');
         supportToastCloseBtn = document.getElementById('support-toast-close');
+        
+        // General toast and confirm modal
+        toastEl = document.getElementById('toast');
+        toastIcon = document.getElementById('toast-icon');
+        toastMessage = document.getElementById('toast-message');
+        confirmModal = document.getElementById('confirm-modal');
+        confirmTitle = document.getElementById('confirm-title');
+        confirmMessage = document.getElementById('confirm-message');
+        confirmOkBtn = document.getElementById('confirm-ok-btn');
+        confirmCancelBtn = document.getElementById('confirm-cancel-btn');
         
         // Suggest holidays modal DOM elements
         suggestHolidaysBtn = document.getElementById('suggest-holidays-btn');
@@ -536,6 +558,21 @@ const App = (function() {
             supportToastCloseBtn.addEventListener('click', hideSupportToast);
         }
         
+        // Confirm modal buttons
+        if (confirmOkBtn) {
+            confirmOkBtn.addEventListener('click', handleConfirmOk);
+        }
+        if (confirmCancelBtn) {
+            confirmCancelBtn.addEventListener('click', handleConfirmCancel);
+        }
+        if (confirmModal) {
+            confirmModal.addEventListener('click', (e) => {
+                if (e.target === confirmModal) {
+                    handleConfirmCancel();
+                }
+            });
+        }
+        
         // Suggest holidays modal
         if (suggestHolidaysBtn) {
             suggestHolidaysBtn.addEventListener('click', openSuggestHolidaysModal);
@@ -797,12 +834,10 @@ const App = (function() {
         let isNowLeave;
         
         if (forceAdd === true) {
-            // Check if it's a bank holiday and warn
+            // Show warning for bank holiday (but allow booking)
             if (cell.classList.contains('day-cell--bank-holiday') && !leaveDays.has(dateString)) {
                 const holidayName = cell.dataset.tooltip || 'Bank Holiday';
-                if (!confirm(`${holidayName} is a bank holiday. You may not need to use annual leave for this day. Book it anyway?`)) {
-                    return false;
-                }
+                showToast(`${holidayName} - you may not need to use leave for this day`, 'warning', 4000);
             }
             
             leaveDays.add(dateString);
@@ -819,12 +854,10 @@ const App = (function() {
                 cell.classList.remove('day-cell--leave');
                 isNowLeave = false;
             } else {
-                // Check if it's a bank holiday and warn
+                // Show warning for bank holiday (but allow booking)
                 if (cell.classList.contains('day-cell--bank-holiday')) {
                     const holidayName = cell.dataset.tooltip || 'Bank Holiday';
-                    if (!confirm(`${holidayName} is a bank holiday. You may not need to use annual leave for this day. Book it anyway?`)) {
-                        return false;
-                    }
+                    showToast(`${holidayName} - you may not need to use leave for this day`, 'warning', 4000);
                 }
                 
                 leaveDays.add(dateString);
@@ -952,22 +985,13 @@ const App = (function() {
             const wasLeave = leaveDays.has(dragStartDate);
             dragAction = wasLeave ? 'remove' : 'add';
             
-            // Apply action to start cell (for adding, check warnings)
+            // Show warnings for special days (but don't block)
             if (dragAction === 'add') {
-                // Check for blocked day warning
                 if (blockedDays.has(dateString)) {
-                    if (!confirm('This day is marked as non-bookable (work event/team leave). Book leave anyway?')) {
-                        isDragging = false;
-                        return;
-                    }
-                }
-                // Check for bank holiday warning
-                if (cell.classList.contains('day-cell--bank-holiday')) {
+                    showToast('This day is marked as non-bookable - booking anyway', 'warning', 4000);
+                } else if (cell.classList.contains('day-cell--bank-holiday')) {
                     const holidayName = cell.dataset.tooltip || 'Bank Holiday';
-                    if (!confirm(`${holidayName} is a bank holiday. You may not need to use annual leave for this day. Book it anyway?`)) {
-                        isDragging = false;
-                        return;
-                    }
+                    showToast(`${holidayName} - you may not need to use leave for this day`, 'warning', 4000);
                 }
             }
             
@@ -1101,7 +1125,7 @@ const App = (function() {
             
             // Check for over-allocation after drag ends
             if (leaveDays.size > leaveAllowance) {
-                alert(`Warning: You have booked ${leaveDays.size} days but only have ${leaveAllowance} days allowance.`);
+                showToast(`You've booked ${leaveDays.size} days but only have ${leaveAllowance} days allowance`, 'warning', 5000);
             }
         } else if (currentMode === 'block-days') {
             saveBlockedDays();
@@ -1150,13 +1174,10 @@ const App = (function() {
             const wasLeave = leaveDays.has(dragStartDate);
             dragAction = wasLeave ? 'remove' : 'add';
             
-            // Check bank holiday warning
+            // Show warning for bank holiday (but allow booking)
             if (dragAction === 'add' && dayCell.classList.contains('day-cell--bank-holiday')) {
                 const holidayName = dayCell.dataset.tooltip || 'Bank Holiday';
-                if (!confirm(`${holidayName} is a bank holiday. You may not need to use annual leave for this day. Book it anyway?`)) {
-                    isDragging = false;
-                    return;
-                }
+                showToast(`${holidayName} - you may not need to use leave for this day`, 'warning', 4000);
             }
             
             toggleLeaveDay(dragStartDate, !wasLeave);
@@ -1226,64 +1247,84 @@ const App = (function() {
     /**
      * Handle clear selection button
      */
-    function handleClearSelection() {
+    async function handleClearSelection() {
         if (currentMode === 'school-holidays') {
             if (schoolHolidays.size === 0) {
-                console.log('No school holidays to clear');
+                showToast('No school holidays to clear', 'info');
                 return;
             }
             
-            // Confirm before clearing
             const count = schoolHolidays.size;
-            if (confirm(`Clear all ${count} school holiday days?`)) {
+            const confirmed = await showConfirm(
+                `Clear all ${count} school holiday days?`,
+                'Clear School Holidays',
+                'Clear',
+                'Cancel'
+            );
+            if (confirmed) {
                 schoolHolidays.clear();
                 renderSchoolHolidays();
                 saveSchoolHolidays();
-                console.log('School holidays cleared');
+                showToast('School holidays cleared', 'success');
             }
         } else if (currentMode === 'book-leave') {
             if (leaveDays.size === 0) {
-                console.log('No leave days to clear');
+                showToast('No leave days to clear', 'info');
                 return;
             }
             
-            // Confirm before clearing
             const count = leaveDays.size;
-            if (confirm(`Clear all ${count} booked leave days?`)) {
+            const confirmed = await showConfirm(
+                `Clear all ${count} booked leave days?`,
+                'Clear Leave Days',
+                'Clear',
+                'Cancel'
+            );
+            if (confirmed) {
                 leaveDays.clear();
                 renderLeaveDays();
                 saveLeaveDays();
                 updateLeaveCounter();
-                console.log('Leave days cleared');
+                showToast('Leave days cleared', 'success');
             }
         } else if (currentMode === 'block-days') {
             if (blockedDays.size === 0) {
-                console.log('No blocked days to clear');
+                showToast('No blocked days to clear', 'info');
                 return;
             }
             
-            // Confirm before clearing
             const count = blockedDays.size;
-            if (confirm(`Clear all ${count} blocked days?`)) {
+            const confirmed = await showConfirm(
+                `Clear all ${count} blocked days?`,
+                'Clear Blocked Days',
+                'Clear',
+                'Cancel'
+            );
+            if (confirmed) {
                 blockedDays.clear();
                 renderBlockedDays();
                 saveBlockedDays();
-                console.log('Blocked days cleared');
+                showToast('Blocked days cleared', 'success');
             }
         } else if (currentMode === 'partner-leave') {
             if (partnerLeaveDays.size === 0) {
-                console.log('No partner leave days to clear');
+                showToast('No partner leave days to clear', 'info');
                 return;
             }
             
-            // Confirm before clearing
             const count = partnerLeaveDays.size;
-            if (confirm(`Clear all ${count} partner leave days?`)) {
+            const confirmed = await showConfirm(
+                `Clear all ${count} partner leave days?`,
+                "Clear Partner's Leave",
+                'Clear',
+                'Cancel'
+            );
+            if (confirmed) {
                 partnerLeaveDays.clear();
                 partnerName = '';
                 renderPartnerLeaveDays();
                 savePartnerLeaveDays();
-                console.log('Partner leave days cleared');
+                showToast("Partner's leave cleared", 'success');
             }
         }
     }
@@ -1318,6 +1359,7 @@ const App = (function() {
         renderSchoolHolidays();
         renderLeaveDays();
         renderBlockedDays();
+        renderPartnerLeaveDays();
     }
 
     /**
@@ -1613,6 +1655,105 @@ const App = (function() {
         }
     }
 
+    /**
+     * Show a toast notification
+     * @param {string} message - Message to display
+     * @param {string} type - 'success', 'warning', 'error', or 'info'
+     * @param {number} duration - Duration in ms (default 3000)
+     */
+    function showToast(message, type = 'info', duration = 3000) {
+        if (!toastEl) return;
+        
+        // Clear any existing timeout
+        if (toastTimeout) {
+            clearTimeout(toastTimeout);
+        }
+        
+        // Set icon based on type
+        const icons = {
+            success: '✓',
+            warning: '⚠',
+            error: '✕',
+            info: 'ℹ'
+        };
+        
+        // Update content
+        if (toastIcon) toastIcon.textContent = icons[type] || icons.info;
+        if (toastMessage) toastMessage.textContent = message;
+        
+        // Update type class
+        toastEl.className = 'toast';
+        toastEl.classList.add(`toast--${type}`);
+        
+        // Show toast
+        toastEl.hidden = false;
+        
+        // Auto-hide
+        toastTimeout = setTimeout(() => {
+            toastEl.hidden = true;
+        }, duration);
+    }
+
+    /**
+     * Show a confirmation dialog (returns a Promise)
+     * @param {string} message - Confirmation message
+     * @param {string} title - Dialog title (optional)
+     * @param {string} okText - OK button text (optional)
+     * @param {string} cancelText - Cancel button text (optional)
+     * @returns {Promise<boolean>} Resolves to true if confirmed, false if cancelled
+     */
+    function showConfirm(message, title = 'Confirm', okText = 'OK', cancelText = 'Cancel') {
+        return new Promise((resolve) => {
+            if (!confirmModal) {
+                // Fallback to native confirm if modal not available
+                resolve(confirm(message));
+                return;
+            }
+            
+            // Store resolve function for later
+            confirmResolve = resolve;
+            
+            // Set content
+            if (confirmTitle) confirmTitle.textContent = title;
+            if (confirmMessage) confirmMessage.textContent = message;
+            if (confirmOkBtn) confirmOkBtn.textContent = okText;
+            if (confirmCancelBtn) confirmCancelBtn.textContent = cancelText;
+            
+            // Show modal
+            confirmModal.hidden = false;
+            document.body.style.overflow = 'hidden';
+            confirmOkBtn?.focus();
+        });
+    }
+
+    /**
+     * Handle confirm OK button
+     */
+    function handleConfirmOk() {
+        if (confirmModal) {
+            confirmModal.hidden = true;
+            document.body.style.overflow = '';
+        }
+        if (confirmResolve) {
+            confirmResolve(true);
+            confirmResolve = null;
+        }
+    }
+
+    /**
+     * Handle confirm Cancel button
+     */
+    function handleConfirmCancel() {
+        if (confirmModal) {
+            confirmModal.hidden = true;
+            document.body.style.overflow = '';
+        }
+        if (confirmResolve) {
+            confirmResolve(false);
+            confirmResolve = null;
+        }
+    }
+
     // =========================================================================
     // Suggest School Holidays Modal
     // =========================================================================
@@ -1771,8 +1912,8 @@ const App = (function() {
                 schoolHolidays: schoolHolidays.size
             });
             
-            // Show confirmation after render
-            alert(message);
+            // Show success toast
+            showToast(`Imported ${importedLeaveDays.length} leave days from ${partnerName}`, 'success', 4000);
         });
     }
 
@@ -1903,7 +2044,13 @@ const App = (function() {
             const imported = await Export.importJSON(file);
             
             // Confirm before overwriting
-            if (!confirm('This will replace all your current data. Continue?')) {
+            const confirmed = await showConfirm(
+                'This will replace all your current data. Continue?',
+                'Import Data',
+                'Import',
+                'Cancel'
+            );
+            if (!confirmed) {
                 event.target.value = '';
                 return;
             }
@@ -1955,11 +2102,11 @@ const App = (function() {
                 });
             }
             
-            alert('Data imported successfully!');
+            showToast('Data imported successfully!', 'success');
             closeSettingsModal();
             
         } catch (err) {
-            alert('Failed to import data: ' + err.message);
+            showToast('Failed to import data: ' + err.message, 'error', 5000);
         }
         
         // Reset file input
@@ -1969,14 +2116,22 @@ const App = (function() {
     /**
      * Handle clear all data
      */
-    function handleClearAllData() {
-        if (!confirm('Are you sure you want to clear ALL data? This cannot be undone.')) {
-            return;
-        }
+    async function handleClearAllData() {
+        const firstConfirm = await showConfirm(
+            'Are you sure you want to clear ALL data? This cannot be undone.',
+            'Clear All Data',
+            'Continue',
+            'Cancel'
+        );
+        if (!firstConfirm) return;
         
-        if (!confirm('This will delete all your school holidays, leave bookings, and settings. Really continue?')) {
-            return;
-        }
+        const secondConfirm = await showConfirm(
+            'This will delete all your school holidays, leave bookings, and settings. Really continue?',
+            'Final Warning',
+            'Clear Everything',
+            'Cancel'
+        );
+        if (!secondConfirm) return;
         
         // Clear all data
         schoolHolidays.clear();
@@ -2004,7 +2159,7 @@ const App = (function() {
             Storage.clear();
         }
         
-        alert('All data has been cleared.');
+        showToast('All data has been cleared', 'success');
         closeSettingsModal();
     }
 
@@ -2137,18 +2292,13 @@ const App = (function() {
             
             const wasLeave = leaveDays.has(dateString);
             
-            // Check warnings for adding
+            // Show warnings for special days (but allow booking)
             if (!wasLeave) {
                 if (blockedDays.has(dateString)) {
-                    if (!confirm('This day is marked as non-bookable. Book leave anyway?')) {
-                        return;
-                    }
-                }
-                if (cell.classList.contains('day-cell--bank-holiday')) {
+                    showToast('This day is marked as non-bookable - booking anyway', 'warning', 4000);
+                } else if (cell.classList.contains('day-cell--bank-holiday')) {
                     const holidayName = cell.dataset.tooltip || 'Bank Holiday';
-                    if (!confirm(`${holidayName} is a bank holiday. Book it anyway?`)) {
-                        return;
-                    }
+                    showToast(`${holidayName} - you may not need to use leave for this day`, 'warning', 4000);
                 }
             }
             
