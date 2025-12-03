@@ -1370,6 +1370,85 @@ kbd.kbd {
 /* --------------------------------------------------------------------------
    Export Help Modal
    -------------------------------------------------------------------------- */
+/* Export Options Modal */
+.modal--export-options {
+    max-width: 400px;
+}
+
+.export-options-intro {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-4);
+}
+
+.export-options-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.export-option {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.export-option:hover {
+    background: var(--color-bg-tertiary);
+}
+
+.export-option input[type="checkbox"] {
+    margin-top: 2px;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-primary);
+}
+
+.export-option-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex: 1;
+}
+
+.export-option-label strong {
+    color: var(--color-text-primary);
+}
+
+.export-option-count {
+    font-size: var(--font-size-xs);
+    color: var(--color-primary);
+    background: var(--color-primary-light);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+}
+
+.export-option-desc {
+    flex-basis: 100%;
+    padding-left: 30px;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
+
+.modal--export-options .modal-footer {
+    display: flex;
+    gap: var(--space-3);
+    justify-content: flex-end;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+}
+
+.modal--export-options .modal-footer .btn svg {
+    margin-right: var(--space-2);
+}
+
+/* Export Help Modal */
 .modal--export-help .modal-body {
     display: flex;
     flex-direction: column;

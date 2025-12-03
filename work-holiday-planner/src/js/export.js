@@ -261,11 +261,15 @@ const Export = (function() {
     /**
      * Generate iCal (.ics) file content
      * @param {Object} data - Leave data object
+     * @param {Object} options - Export options
      * @returns {string} iCal file content
      */
-    function generateICalContent(data) {
-        const { year, leaveDays, leaveAllowance } = data;
-        const sortedLeave = [...leaveDays].sort();
+    function generateICalContent(data, options = {}) {
+        const { year, leaveDays, schoolHolidays = new Set() } = data;
+        const { includeLeave = true, includeSchool = false } = options;
+        
+        const sortedLeave = includeLeave ? [...leaveDays].sort() : [];
+        const sortedSchool = includeSchool ? [...schoolHolidays].sort() : [];
         
         // iCal header
         let ical = [
@@ -315,6 +319,41 @@ const Export = (function() {
                 'END:VEVENT'
             );
         });
+        
+        // Add school holidays as all-day events
+        sortedSchool.forEach((dateStr, index) => {
+            const date = new Date(dateStr);
+            const nextDay = new Date(date);
+            nextDay.setDate(nextDay.getDate() + 1);
+            
+            // Format dates for iCal (YYYYMMDD for all-day events)
+            const startDate = dateStr.replace(/-/g, '');
+            const endDate = nextDay.toISOString().split('T')[0].replace(/-/g, '');
+            
+            // Create unique ID
+            const uid = `school-${startDate}-${index}@workleaveplanner`;
+            
+            // Format date for description
+            const formattedDate = date.toLocaleDateString('en-GB', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+
+            ical.push(
+                'BEGIN:VEVENT',
+                `UID:${uid}`,
+                `DTSTAMP:${timestamp}`,
+                `DTSTART;VALUE=DATE:${startDate}`,
+                `DTEND;VALUE=DATE:${endDate}`,
+                'SUMMARY:School Holiday',
+                `DESCRIPTION:School holiday - ${formattedDate}`,
+                'TRANSP:TRANSPARENT',
+                'STATUS:CONFIRMED',
+                'END:VEVENT'
+            );
+        });
 
         // iCal footer
         ical.push('END:VCALENDAR');
@@ -325,16 +364,21 @@ const Export = (function() {
     /**
      * Download iCal file
      * @param {Object} data - Leave data object
+     * @param {Object} options - Export options { includeLeave, includeSchool }
      */
-    function downloadICal(data) {
-        const { year, leaveDays } = data;
+    function downloadICal(data, options = {}) {
+        const { year, leaveDays, schoolHolidays = new Set() } = data;
+        const { includeLeave = true, includeSchool = false } = options;
         
-        if (leaveDays.size === 0) {
-            alert('No leave days booked to export. Book some leave first!');
-            return;
+        const leaveCount = includeLeave ? leaveDays.size : 0;
+        const schoolCount = includeSchool ? schoolHolidays.size : 0;
+        
+        if (leaveCount === 0 && schoolCount === 0) {
+            console.warn('No events to export');
+            return false;
         }
 
-        const icalContent = generateICalContent(data);
+        const icalContent = generateICalContent(data, options);
         const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         
@@ -349,7 +393,8 @@ const Export = (function() {
         // Clean up
         URL.revokeObjectURL(url);
         
-        console.log(`iCal exported: ${leaveDays.size} leave days`);
+        console.log(`iCal exported: ${leaveCount} leave days, ${schoolCount} school holidays`);
+        return true;
     }
 
     /**

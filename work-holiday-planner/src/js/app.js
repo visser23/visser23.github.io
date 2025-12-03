@@ -68,6 +68,16 @@ const App = (function() {
     let exportHelpModal = null;
     let exportHelpCloseBtn = null;
     
+    // Export options modal DOM elements
+    let exportOptionsModal = null;
+    let exportOptionsCloseBtn = null;
+    let exportIncludeLeaveCheckbox = null;
+    let exportIncludeSchoolCheckbox = null;
+    let exportLeaveCountEl = null;
+    let exportSchoolCountEl = null;
+    let exportOptionsDownloadBtn = null;
+    let exportOptionsCancelBtn = null;
+    
     // Support toast DOM elements
     let supportToast = null;
     let supportToastCloseBtn = null;
@@ -186,6 +196,16 @@ const App = (function() {
         // Export help modal DOM elements
         exportHelpModal = document.getElementById('export-help-modal');
         exportHelpCloseBtn = document.getElementById('export-help-close');
+        
+        // Export options modal DOM elements
+        exportOptionsModal = document.getElementById('export-options-modal');
+        exportOptionsCloseBtn = document.getElementById('export-options-close');
+        exportIncludeLeaveCheckbox = document.getElementById('export-include-leave');
+        exportIncludeSchoolCheckbox = document.getElementById('export-include-school');
+        exportLeaveCountEl = document.getElementById('export-leave-count');
+        exportSchoolCountEl = document.getElementById('export-school-count');
+        exportOptionsDownloadBtn = document.getElementById('export-options-download');
+        exportOptionsCancelBtn = document.getElementById('export-options-cancel');
         
         // Support toast DOM elements
         supportToast = document.getElementById('support-toast');
@@ -549,6 +569,24 @@ const App = (function() {
             exportHelpModal.addEventListener('click', (e) => {
                 if (e.target === exportHelpModal) {
                     closeExportHelpModal();
+                }
+            });
+        }
+        
+        // Export options modal
+        if (exportOptionsCloseBtn) {
+            exportOptionsCloseBtn.addEventListener('click', closeExportOptionsModal);
+        }
+        if (exportOptionsCancelBtn) {
+            exportOptionsCancelBtn.addEventListener('click', closeExportOptionsModal);
+        }
+        if (exportOptionsDownloadBtn) {
+            exportOptionsDownloadBtn.addEventListener('click', handleExportOptionsDownload);
+        }
+        if (exportOptionsModal) {
+            exportOptionsModal.addEventListener('click', (e) => {
+                if (e.target === exportOptionsModal) {
+                    closeExportOptionsModal();
                 }
             });
         }
@@ -1631,6 +1669,74 @@ const App = (function() {
     }
 
     /**
+     * Open export options modal
+     */
+    function openExportOptionsModal() {
+        if (exportOptionsModal) {
+            // Update counts
+            if (exportLeaveCountEl) {
+                exportLeaveCountEl.textContent = `${leaveDays.size} days`;
+            }
+            if (exportSchoolCountEl) {
+                exportSchoolCountEl.textContent = `${schoolHolidays.size} days`;
+            }
+            
+            // Reset checkboxes
+            if (exportIncludeLeaveCheckbox) {
+                exportIncludeLeaveCheckbox.checked = leaveDays.size > 0;
+                exportIncludeLeaveCheckbox.disabled = leaveDays.size === 0;
+            }
+            if (exportIncludeSchoolCheckbox) {
+                exportIncludeSchoolCheckbox.checked = false; // Default unchecked
+                exportIncludeSchoolCheckbox.disabled = schoolHolidays.size === 0;
+            }
+            
+            exportOptionsModal.hidden = false;
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    /**
+     * Close export options modal
+     */
+    function closeExportOptionsModal() {
+        if (exportOptionsModal) {
+            exportOptionsModal.hidden = true;
+            document.body.style.overflow = '';
+        }
+    }
+
+    /**
+     * Handle export options download button
+     */
+    function handleExportOptionsDownload() {
+        const includeLeave = exportIncludeLeaveCheckbox?.checked ?? true;
+        const includeSchool = exportIncludeSchoolCheckbox?.checked ?? false;
+        
+        // Check if anything selected
+        if (!includeLeave && !includeSchool) {
+            showToast('Select at least one option to export', 'warning');
+            return;
+        }
+        
+        const data = {
+            year: Calendar.getYear(),
+            leaveDays: leaveDays,
+            schoolHolidays: schoolHolidays
+        };
+        
+        const success = Export.downloadICal(data, { includeLeave, includeSchool });
+        
+        if (success) {
+            closeExportOptionsModal();
+            openExportHelpModal();
+            
+            // Show support toast after a short delay
+            setTimeout(showSupportToast, 2000);
+        }
+    }
+
+    /**
      * Show support toast
      */
     function showSupportToast() {
@@ -2184,18 +2290,17 @@ const App = (function() {
     }
 
     /**
-     * Handle export to iCal
+     * Handle export to iCal - opens options modal
      */
     function handleExportICal() {
-        const data = {
-            year: Calendar.getYear(),
-            leaveDays: leaveDays
-        };
+        // Check if there's anything to export
+        if (leaveDays.size === 0 && schoolHolidays.size === 0) {
+            showToast('Nothing to export yet. Book some leave or mark school holidays first!', 'info');
+            return;
+        }
         
-        Export.downloadICal(data);
-        
-        // Show help modal with import instructions
-        openExportHelpModal();
+        // Open options modal
+        openExportOptionsModal();
     }
 
     /**

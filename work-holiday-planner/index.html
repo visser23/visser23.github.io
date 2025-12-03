@@ -283,6 +283,57 @@
     </div>
 
     <!-- Export Help Modal -->
+    <!-- Export Options Modal (shown before download) -->
+    <div class="modal-overlay" id="export-options-modal" hidden>
+        <div class="modal modal--export-options" role="dialog" aria-labelledby="export-options-title" aria-modal="true">
+            <div class="modal-header">
+                <h2 class="modal-title" id="export-options-title">Export to Calendar</h2>
+                <button type="button" class="btn btn-icon modal-close" id="export-options-close" aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="export-options-intro">
+                    Choose what to include in your calendar export:
+                </p>
+                
+                <div class="export-options-list">
+                    <label class="export-option">
+                        <input type="checkbox" id="export-include-leave" checked>
+                        <span class="export-option-label">
+                            <strong>Booked Leave</strong>
+                            <span class="export-option-count" id="export-leave-count">0 days</span>
+                        </span>
+                        <span class="export-option-desc">Your annual leave days</span>
+                    </label>
+                    
+                    <label class="export-option">
+                        <input type="checkbox" id="export-include-school">
+                        <span class="export-option-label">
+                            <strong>School Holidays</strong>
+                            <span class="export-option-count" id="export-school-count">0 days</span>
+                        </span>
+                        <span class="export-option-desc">Skip if already in your calendar</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="export-options-cancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="export-options-download">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download .ics
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="export-help-modal" hidden>
         <div class="modal modal--export-help" role="dialog" aria-labelledby="export-help-title" aria-modal="true">
             <div class="modal-header">
