@@ -1,0 +1,21 @@
+{
+  "_comment": "Ad-hoc bank holidays not covered by standard rules (e.g., royal events, special occasions)",
+  "_howToAdd": "Add entries under the year key. Each entry needs: date (YYYY-MM-DD), name, and optionally regions array",
+  "_regions": ["england", "scotland", "northern-ireland"],
+  
+  "2022": [
+    {
+      "date": "2022-06-03",
+      "name": "Platinum Jubilee Bank Holiday",
+      "regions": ["england", "scotland", "northern-ireland"]
+    }
+  ],
+  "2023": [
+    {
+      "date": "2023-05-08",
+      "name": "Coronation Bank Holiday",
+      "regions": ["england", "scotland", "northern-ireland"]
+    }
+  ]
+}
+

@@ -1,0 +1,482 @@
+/* ==========================================================================
+   Work Leave Planner - Calendar Styles
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Calendar Container
+   -------------------------------------------------------------------------- */
+.calendar-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-6);
+}
+
+/* --------------------------------------------------------------------------
+   Month Card
+   -------------------------------------------------------------------------- */
+.month-card {
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-xl);
+    padding: var(--space-4);
+    box-shadow: var(--shadow-sm);
+}
+
+.month-header {
+    text-align: center;
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.month-name {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    text-transform: capitalize;
+}
+
+/* --------------------------------------------------------------------------
+   Weekday Labels
+   -------------------------------------------------------------------------- */
+.weekday-labels {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: var(--space-2);
+}
+
+.weekday-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-tertiary);
+    text-align: center;
+    padding: var(--space-1) 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.weekday-label--weekend {
+    color: var(--color-weekend-text);
+}
+
+/* --------------------------------------------------------------------------
+   Days Grid
+   -------------------------------------------------------------------------- */
+.days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Day Cell
+   -------------------------------------------------------------------------- */
+.day-cell {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    color: var(--color-text-primary);
+    background-color: transparent;
+    border-radius: var(--radius-md);
+    cursor: default;
+    transition: background-color var(--transition-fast);
+    user-select: none;
+}
+
+/* Empty cells (padding for month alignment) */
+.day-cell--empty {
+    visibility: hidden;
+}
+
+/* Weekend styling */
+.day-cell--weekend {
+    background-color: var(--color-weekend);
+    color: var(--color-weekend-text);
+}
+
+/* Today indicator */
+.day-cell--today {
+    background-color: var(--color-today-bg);
+    font-weight: var(--font-weight-semibold);
+    box-shadow: inset 0 0 0 2px var(--color-today-ring);
+}
+
+/* Combined: Today + Weekend */
+.day-cell--today.day-cell--weekend {
+    background: linear-gradient(135deg, var(--color-today-bg) 50%, var(--color-weekend) 50%);
+    box-shadow: inset 0 0 0 2px var(--color-today-ring);
+}
+
+/* Bank holiday styling */
+.day-cell--bank-holiday {
+    background-color: #fee2e2;
+    color: #991b1b;
+    font-weight: var(--font-weight-medium);
+    position: relative;
+}
+
+.day-cell--bank-holiday::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    background-color: #ef4444;
+    border-radius: 50%;
+}
+
+/* Combined: Bank holiday + Weekend (bank holidays take precedence visually) */
+.day-cell--bank-holiday.day-cell--weekend {
+    background-color: #fee2e2;
+}
+
+/* Combined: Bank holiday + Today */
+.day-cell--bank-holiday.day-cell--today {
+    background: linear-gradient(135deg, var(--color-today-bg) 50%, #fee2e2 50%);
+    box-shadow: inset 0 0 0 2px var(--color-today-ring);
+}
+
+/* Tooltip for bank holiday names */
+.day-cell--bank-holiday[data-tooltip] {
+    cursor: help;
+}
+
+.day-cell--bank-holiday[data-tooltip]:hover::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: var(--space-2) var(--space-3);
+    background-color: var(--color-text-primary);
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+    border-radius: var(--radius-md);
+    z-index: 100;
+    box-shadow: var(--shadow-md);
+}
+
+.day-cell--bank-holiday[data-tooltip]:hover::after {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: var(--color-text-primary);
+    z-index: 100;
+}
+
+/* --------------------------------------------------------------------------
+   School Holiday Styling
+   -------------------------------------------------------------------------- */
+.day-cell--school-holiday {
+    background-color: #dbeafe;
+    color: #1e40af;
+    font-weight: var(--font-weight-medium);
+}
+
+/* School holiday + weekend */
+.day-cell--school-holiday.day-cell--weekend {
+    background-color: #bfdbfe;
+}
+
+/* School holiday + bank holiday */
+.day-cell--school-holiday.day-cell--bank-holiday {
+    background: linear-gradient(135deg, #dbeafe 50%, #fee2e2 50%);
+}
+
+/* School holiday + today */
+.day-cell--school-holiday.day-cell--today {
+    box-shadow: inset 0 0 0 2px var(--color-today-ring);
+}
+
+/* --------------------------------------------------------------------------
+   Leave Day Styling
+   -------------------------------------------------------------------------- */
+.day-cell--leave {
+    background-color: #d1fae5;
+    color: #065f46;
+    font-weight: var(--font-weight-medium);
+}
+
+.day-cell--leave::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    background-color: #059669;
+    border-radius: 50%;
+}
+
+/* Leave + weekend (shouldn't happen normally but style just in case) */
+.day-cell--leave.day-cell--weekend {
+    background-color: #a7f3d0;
+}
+
+/* Leave + school holiday */
+.day-cell--leave.day-cell--school-holiday {
+    background: linear-gradient(135deg, #d1fae5 50%, #dbeafe 50%);
+}
+
+/* Leave + bank holiday (with warning indication) */
+.day-cell--leave.day-cell--bank-holiday {
+    background: linear-gradient(135deg, #d1fae5 50%, #fee2e2 50%);
+}
+
+/* Leave + today */
+.day-cell--leave.day-cell--today {
+    box-shadow: inset 0 0 0 2px var(--color-today-ring);
+}
+
+/* --------------------------------------------------------------------------
+   Blocked Day Styling (Non-bookable)
+   -------------------------------------------------------------------------- */
+.day-cell--blocked {
+    background-color: #fed7aa;
+    color: #9a3412;
+    font-weight: var(--font-weight-medium);
+}
+
+.day-cell--blocked::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    background-color: #ea580c;
+    border-radius: 50%;
+}
+
+/* Blocked + weekend */
+.day-cell--blocked.day-cell--weekend {
+    background-color: #fdba74;
+}
+
+/* Blocked + school holiday */
+.day-cell--blocked.day-cell--school-holiday {
+    background: linear-gradient(135deg, #fed7aa 50%, #dbeafe 50%);
+}
+
+/* Blocked + bank holiday */
+.day-cell--blocked.day-cell--bank-holiday {
+    background: linear-gradient(135deg, #fed7aa 50%, #fee2e2 50%);
+}
+
+/* Blocked + today */
+.day-cell--blocked.day-cell--today {
+    box-shadow: inset 0 0 0 2px var(--color-today-ring);
+}
+
+/* --------------------------------------------------------------------------
+   Selection States (for drag selection)
+   -------------------------------------------------------------------------- */
+.day-cell--selecting {
+    background-color: #93c5fd !important;
+    color: #1e3a8a;
+}
+
+.day-cell--drag-start {
+    box-shadow: inset 0 0 0 2px #3b82f6;
+}
+
+/* Cursor states for different modes */
+.calendar-container--mode-school-holidays .day-cell:not(.day-cell--empty) {
+    cursor: pointer;
+}
+
+.calendar-container--mode-school-holidays .day-cell:not(.day-cell--empty):hover {
+    background-color: #e0f2fe;
+}
+
+.calendar-container--mode-school-holidays .day-cell--school-holiday:hover {
+    background-color: #bfdbfe;
+}
+
+.calendar-container--mode-school-holidays .day-cell--weekend:not(.day-cell--school-holiday):hover {
+    background-color: #fef3c7;
+}
+
+/* Book leave mode - hover states */
+.calendar-container--mode-book-leave .day-cell:not(.day-cell--empty):not(.day-cell--weekend) {
+    cursor: pointer;
+}
+
+.calendar-container--mode-book-leave .day-cell:not(.day-cell--empty):not(.day-cell--weekend):hover {
+    background-color: #ecfdf5;
+}
+
+.calendar-container--mode-book-leave .day-cell--leave:hover {
+    background-color: #a7f3d0;
+}
+
+.calendar-container--mode-book-leave .day-cell--bank-holiday:not(.day-cell--leave):hover {
+    background-color: #fecaca;
+}
+
+/* Weekend is not clickable in leave mode */
+.calendar-container--mode-book-leave .day-cell--weekend {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Block Days Mode Hover States */
+.calendar-container--mode-block-days .day-cell:not(.day-cell--empty):hover {
+    background-color: #fdba74;
+}
+
+.calendar-container--mode-block-days .day-cell--blocked:hover {
+    background-color: #fb923c;
+}
+
+/* Prevent text selection during drag */
+.calendar-container--dragging {
+    user-select: none;
+}
+
+.calendar-container--dragging .day-cell {
+    cursor: crosshair;
+}
+
+/* Hover state for interactive cells (will be used in later phases) */
+.day-cell--interactive:hover {
+    background-color: var(--color-bg-tertiary);
+    cursor: pointer;
+}
+
+.day-cell--interactive.day-cell--weekend:hover {
+    background-color: #fde68a;
+}
+
+/* Focus state for accessibility */
+.day-cell:focus-visible {
+    outline: 2px solid var(--color-accent-primary);
+    outline-offset: 1px;
+    z-index: 1;
+}
+
+/* Partner leave styling */
+.day-cell--partner-leave {
+    background-color: #c4b5fd;
+    color: #5b21b6;
+}
+
+/* Partner leave on top of your leave - show split */
+.day-cell--leave.day-cell--partner-leave {
+    background: linear-gradient(135deg, var(--color-leave) 50%, #c4b5fd 50%);
+}
+
+/* Partner leave mode hover states */
+.calendar-container--mode-partner-leave .day-cell:not(.day-cell--empty):hover {
+    background-color: #ddd6fe;
+}
+
+.calendar-container--mode-partner-leave .day-cell--partner-leave:hover {
+    background-color: #a78bfa;
+}
+
+/* --------------------------------------------------------------------------
+   Day Number
+   -------------------------------------------------------------------------- */
+.day-number {
+    position: relative;
+    z-index: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Month Stats (for future phases)
+   -------------------------------------------------------------------------- */
+.month-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-border-light);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive: 3 columns on medium screens
+   -------------------------------------------------------------------------- */
+@media (max-width: 1200px) {
+    .calendar-container {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-4);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Responsive: 2 columns on tablet
+   -------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+    .calendar-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-4);
+    }
+    
+    .month-card {
+        padding: var(--space-3);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Responsive: 1 column on mobile
+   -------------------------------------------------------------------------- */
+@media (max-width: 600px) {
+    .calendar-container {
+        grid-template-columns: 1fr;
+        gap: var(--space-4);
+    }
+    
+    .month-card {
+        padding: var(--space-4);
+    }
+    
+    .day-cell {
+        font-size: var(--font-size-base);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Loading State
+   -------------------------------------------------------------------------- */
+.calendar-container--loading {
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.calendar-loading {
+    font-size: var(--font-size-base);
+    color: var(--color-text-tertiary);
+}
+
+/* --------------------------------------------------------------------------
+   Print Styles (basic - to be expanded in Phase 6)
+   -------------------------------------------------------------------------- */
+@media print {
+    .calendar-container {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-3);
+    }
+    
+    .month-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+}
+
