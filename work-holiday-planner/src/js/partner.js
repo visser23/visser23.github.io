@@ -33,13 +33,28 @@ const Partner = (function() {
      */
     function decodeData(encoded) {
         try {
+            console.log('Partner.decodeData - attempting to decode, length:', encoded?.length);
+            
             const json = LZString.decompressFromEncodedURIComponent(encoded);
             if (!json) {
-                console.warn('Failed to decompress partner data');
+                console.warn('Failed to decompress partner data - decompression returned null/empty');
                 return null;
             }
+            
+            console.log('Partner.decodeData - decompressed JSON length:', json.length);
+            
             const data = JSON.parse(json);
-            return validatePartnerData(data) ? data : null;
+            console.log('Partner.decodeData - parsed data:', {
+                name: data.name,
+                leaveDays: data.leaveDays?.length,
+                schoolHolidays: data.schoolHolidays?.length,
+                created: data.created
+            });
+            
+            const isValid = validatePartnerData(data);
+            console.log('Partner.decodeData - validation result:', isValid);
+            
+            return isValid ? data : null;
         } catch (e) {
             console.error('Failed to decode partner data:', e);
             return null;
@@ -55,24 +70,35 @@ const Partner = (function() {
         if (!data || typeof data !== 'object') return false;
         if (!data.name || typeof data.name !== 'string') return false;
         if (!Array.isArray(data.leaveDays)) return false;
+        // schoolHolidays is optional but must be array if present
+        if (data.schoolHolidays && !Array.isArray(data.schoolHolidays)) return false;
         // Validate date format for each entry
         const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-        const validDates = data.leaveDays.every(d => dateRegex.test(d));
-        return validDates;
+        const validLeaveDates = data.leaveDays.every(d => dateRegex.test(d));
+        const validSchoolDates = !data.schoolHolidays || data.schoolHolidays.every(d => dateRegex.test(d));
+        return validLeaveDates && validSchoolDates;
     }
 
     /**
      * Generate shareable URL with current plan data
      * @param {string} partnerName - Name to identify this partner's data
      * @param {Array} leaveDays - Array of ISO date strings for leave
+     * @param {Array} schoolHolidays - Array of ISO date strings for school holidays (optional)
      * @returns {string} Full shareable URL
      */
-    function generateShareURL(partnerName, leaveDays) {
+    function generateShareURL(partnerName, leaveDays, schoolHolidays) {
         const data = {
             name: partnerName,
             leaveDays: leaveDays,
+            schoolHolidays: schoolHolidays || [],
             created: new Date().toISOString()
         };
+
+        console.log('Generating share URL with data:', {
+            name: data.name,
+            leaveDays: data.leaveDays.length,
+            schoolHolidays: data.schoolHolidays.length
+        });
 
         const encoded = encodeData(data);
         if (!encoded) return null;
@@ -90,12 +116,24 @@ const Partner = (function() {
      */
     function parseFromURL() {
         const hash = window.location.hash;
+        console.log('Partner.parseFromURL - hash:', hash);
+        
         if (!hash || !hash.startsWith('#partner=')) {
+            console.log('Partner.parseFromURL - no partner hash found');
             return null;
         }
 
         const encoded = hash.substring('#partner='.length);
-        return decodeData(encoded);
+        console.log('Partner.parseFromURL - encoded data length:', encoded.length);
+        
+        const decoded = decodeData(encoded);
+        console.log('Partner.parseFromURL - decoded:', decoded ? {
+            name: decoded.name,
+            leaveDays: decoded.leaveDays?.length,
+            schoolHolidays: decoded.schoolHolidays?.length
+        } : null);
+        
+        return decoded;
     }
 
     /**
@@ -105,6 +143,7 @@ const Partner = (function() {
     function loadFromURL() {
         partnerData = parseFromURL();
         isViewingPartner = partnerData !== null;
+        console.log('Partner.loadFromURL - result:', partnerData ? 'Data loaded' : 'No data');
         return partnerData;
     }
 

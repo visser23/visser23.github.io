@@ -1419,7 +1419,19 @@ const App = (function() {
     function generateShareUrl() {
         const name = partnerNameInput?.value.trim() || 'Partner';
         
-        const url = Partner.generateShareURL(name, Array.from(leaveDays));
+        // Include both leave days AND school holidays in the share
+        const url = Partner.generateShareURL(
+            name, 
+            Array.from(leaveDays),
+            Array.from(schoolHolidays)
+        );
+        
+        console.log('Share URL generated:', {
+            name,
+            leaveDays: leaveDays.size,
+            schoolHolidays: schoolHolidays.size,
+            urlLength: url?.length
+        });
         
         if (url && shareUrlOutput) {
             shareUrlOutput.value = url;
@@ -1482,13 +1494,22 @@ const App = (function() {
      * Check for partner data in URL and load if present
      */
     function checkForPartnerData() {
+        console.log('Checking for partner data in URL...');
+        console.log('Current URL hash:', window.location.hash);
+        
         const partnerData = Partner.loadFromURL();
         
         if (partnerData) {
-            console.log('Partner data found in URL:', partnerData.name, partnerData.leaveDays.length, 'days');
+            console.log('Partner data found in URL:', {
+                name: partnerData.name,
+                leaveDays: partnerData.leaveDays?.length || 0,
+                schoolHolidays: partnerData.schoolHolidays?.length || 0
+            });
             // Store for import and show modal
             pendingPartnerImport = partnerData;
             openImportModal(partnerData);
+        } else {
+            console.log('No partner data in URL');
         }
     }
 
@@ -1502,7 +1523,24 @@ const App = (function() {
     function openImportModal(partnerData) {
         if (importPartnerModal) {
             if (importPartnerNameEl) importPartnerNameEl.textContent = partnerData.name || 'Your partner';
-            if (importLeaveCountEl) importLeaveCountEl.textContent = partnerData.leaveDays.length;
+            
+            // Show leave days count
+            const leaveCount = partnerData.leaveDays?.length || 0;
+            const schoolCount = partnerData.schoolHolidays?.length || 0;
+            
+            if (importLeaveCountEl) {
+                if (schoolCount > 0) {
+                    importLeaveCountEl.textContent = `${leaveCount} leave days and ${schoolCount} school holiday days`;
+                } else {
+                    importLeaveCountEl.textContent = `${leaveCount} leave days`;
+                }
+            }
+            
+            console.log('Opening import modal with data:', {
+                name: partnerData.name,
+                leaveDays: leaveCount,
+                schoolHolidays: schoolCount
+            });
             
             importPartnerModal.hidden = false;
             document.body.style.overflow = 'hidden';
@@ -1669,27 +1707,64 @@ const App = (function() {
      * Handle importing partner data
      */
     function handleImportPartnerData() {
+        console.log('handleImportPartnerData called, pendingPartnerImport:', pendingPartnerImport);
+        
         if (!pendingPartnerImport) {
+            console.warn('No pending partner import data!');
             closeImportModal();
             return;
         }
 
         // Import partner's leave days
-        partnerLeaveDays.clear();
-        pendingPartnerImport.leaveDays.forEach(d => partnerLeaveDays.add(d));
+        const importedLeaveDays = pendingPartnerImport.leaveDays || [];
+        const importedSchoolHolidays = pendingPartnerImport.schoolHolidays || [];
+        
+        console.log('Importing:', {
+            leaveDays: importedLeaveDays.length,
+            schoolHolidays: importedSchoolHolidays.length
+        });
+        
+        // Add partner's leave days
+        importedLeaveDays.forEach(d => partnerLeaveDays.add(d));
         partnerName = pendingPartnerImport.name || 'Partner';
+        
+        // Add partner's school holidays to our school holidays
+        let newSchoolHolidays = 0;
+        importedSchoolHolidays.forEach(d => {
+            if (!schoolHolidays.has(d)) {
+                schoolHolidays.add(d);
+                newSchoolHolidays++;
+            }
+        });
         
         // Save to storage
         savePartnerLeaveDays();
+        saveSchoolHolidays();
         
         // Render on calendar
         renderPartnerLeaveDays();
+        renderSchoolHolidays();
+        
+        // Build confirmation message
+        let message = `Imported from ${partnerName}:\n`;
+        message += `- ${importedLeaveDays.length} leave days (as Partner's Leave)\n`;
+        if (importedSchoolHolidays.length > 0) {
+            message += `- ${newSchoolHolidays} new school holiday days added`;
+            if (newSchoolHolidays < importedSchoolHolidays.length) {
+                message += ` (${importedSchoolHolidays.length - newSchoolHolidays} already existed)`;
+            }
+        }
         
         // Close modal and clear URL
         closeImportModal();
         
         // Show confirmation
-        alert(`Imported ${partnerLeaveDays.size} leave days from ${partnerName}!`);
+        alert(message);
+        
+        console.log('Import complete:', {
+            partnerLeaveDays: partnerLeaveDays.size,
+            schoolHolidays: schoolHolidays.size
+        });
     }
 
     /**
