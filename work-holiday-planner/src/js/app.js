@@ -1747,10 +1747,6 @@ const App = (function() {
         savePartnerLeaveDays();
         saveSchoolHolidays();
         
-        // Render on calendar
-        renderPartnerLeaveDays();
-        renderSchoolHolidays();
-        
         // Build confirmation message
         let message = `Imported from ${partnerName}:\n`;
         message += `- ${importedLeaveDays.length} leave days (as Partner's Leave)\n`;
@@ -1761,15 +1757,22 @@ const App = (function() {
             }
         }
         
-        // Close modal and clear URL
+        // Close modal first (so DOM is ready for rendering)
         closeImportModal();
         
-        // Show confirmation
-        alert(message);
-        
-        console.log('Import complete:', {
-            partnerLeaveDays: partnerLeaveDays.size,
-            schoolHolidays: schoolHolidays.size
+        // Use requestAnimationFrame to ensure DOM is fully updated before rendering
+        // This fixes the timing issue where partner leave days don't appear immediately
+        requestAnimationFrame(() => {
+            renderPartnerLeaveDays();
+            renderSchoolHolidays();
+            
+            console.log('Import complete:', {
+                partnerLeaveDays: partnerLeaveDays.size,
+                schoolHolidays: schoolHolidays.size
+            });
+            
+            // Show confirmation after render
+            alert(message);
         });
     }
 
