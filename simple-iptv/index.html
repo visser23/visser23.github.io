@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0f">
+  <!-- Reduce browser fingerprinting on media requests -->
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Simple IPTV - A lightweight, privacy-respecting IPTV web player">
+  <title>Simple IPTV</title>
+  <link rel="stylesheet" href="src/css/main.css">
+  
+  <!-- Preconnect to CDN for faster lib loading -->
+  <link rel="preconnect" href="https://esm.sh">
+</head>
+<body>
+  <!-- App Container -->
+  <div id="app" class="app">
+    
+    <!-- Header -->
+    <header class="header">
+      <div class="header__brand">
+        <span class="header__logo">◈</span>
+        <span class="header__title">Simple<span class="accent">IPTV</span></span>
+      </div>
+      
+      <div class="header__search">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input type="text" id="search-input" class="search-input" placeholder="Search channels... (press /)" autocomplete="off">
+        <kbd class="search-hint">/</kbd>
+      </div>
+      
+      <div class="header__actions">
+        <button id="btn-settings" class="btn-icon" title="Settings">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main">
+      
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <button class="sidebar__toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18M3 6h18M3 18h18"/>
+          </svg>
+        </button>
+        
+        <!-- Categories -->
+        <nav class="categories" id="categories">
+          <div class="categories__section">
+            <button class="category-item category-item--active" data-category="__all__">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+              </svg>
+              <span>All Channels</span>
+              <span class="category-count" id="count-all">0</span>
+            </button>
+            <button class="category-item" data-category="__favorites__">
+              <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              <span>Favourites</span>
+              <span class="category-count" id="count-favorites">0</span>
+            </button>
+            <button class="category-item" data-category="__recents__">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span>Recents</span>
+              <span class="category-count" id="count-recents">0</span>
+            </button>
+          </div>
+          
+          <div class="categories__divider"></div>
+          
+          <div class="categories__section categories__groups" id="category-groups">
+            <!-- Dynamically populated -->
+          </div>
+        </nav>
+        
+        <!-- Channel List -->
+        <div class="channel-list" id="channel-list">
+          <div class="channel-list__viewport" id="channel-viewport">
+            <!-- Virtual scrolling container -->
+            <div class="channel-list__content" id="channel-content">
+              <!-- Channels rendered here -->
+            </div>
+          </div>
+        </div>
+      </aside>
+      
+      <!-- Player Area -->
+      <section class="player-area" id="player-area">
+        
+        <!-- Onboarding (shown when no playlist) -->
+        <div class="onboarding" id="onboarding">
+          <div class="onboarding__content">
+            <div class="onboarding__icon">◈</div>
+            <h1 class="onboarding__title">Welcome to Simple<span class="accent">IPTV</span></h1>
+            <p class="onboarding__subtitle">A lightweight, privacy-respecting IPTV player.<br>All data stays on your device.</p>
+            
+            <button class="btn btn--primary btn--large" id="btn-add-playlist">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Add Playlist
+            </button>
+            
+            <div class="onboarding__warnings">
+              <div class="warning-item">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>Cannot bypass DRM-protected streams</span>
+              </div>
+              <div class="warning-item">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>CORS restrictions may block some providers</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Player (hidden until channel selected) -->
+        <div class="player" id="player" hidden>
+          <div class="player__container">
+            <video id="video" class="player__video" playsinline></video>
+            
+            <!-- Player Overlay -->
+            <div class="player__overlay" id="player-overlay">
+              <div class="player__loading" id="player-loading" hidden>
+                <div class="spinner"></div>
+                <span>Loading stream...</span>
+              </div>
+              
+              <div class="player__error" id="player-error" hidden>
+                <svg class="icon icon--large" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+                <div id="error-message">
+                  <span class="error-title">Stream unavailable</span>
+                </div>
+                <button class="btn btn--outline btn--small" id="btn-copy-url">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                  Copy Stream URL
+                </button>
+              </div>
+            </div>
+            
+            <!-- Player Controls -->
+            <div class="player__controls" id="player-controls">
+              <div class="controls__progress">
+                <div class="progress-bar">
+                  <div class="progress-bar__fill" id="progress-fill"></div>
+                </div>
+              </div>
+              <div class="controls__buttons">
+                <button class="btn-icon" id="btn-play-pause" title="Play/Pause">
+                  <svg class="icon icon-play" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                  </svg>
+                  <svg class="icon icon-pause" viewBox="0 0 24 24" fill="currentColor" hidden>
+                    <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                  </svg>
+                </button>
+                
+                <div class="volume-control">
+                  <button class="btn-icon" id="btn-mute" title="Mute">
+                    <svg class="icon icon-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                    </svg>
+                    <svg class="icon icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" hidden>
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                      <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+                    </svg>
+                  </button>
+                  <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.05" value="1">
+                </div>
+                
+                <div class="controls__spacer"></div>
+                
+                <span class="now-playing" id="now-playing">No channel selected</span>
+                
+                <div class="controls__spacer"></div>
+                
+                <button class="btn-icon" id="btn-pip" title="Picture-in-Picture">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/>
+                    <rect x="11" y="9" width="9" height="6" rx="1"/>
+                  </svg>
+                </button>
+                
+                <button class="btn-icon" id="btn-fullscreen" title="Fullscreen">
+                  <svg class="icon icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+                    <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+                  </svg>
+                  <svg class="icon icon-compress" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" hidden>
+                    <polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/>
+                    <line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- EPG Info -->
+          <div class="epg-info" id="epg-info">
+            <div class="epg-now" id="epg-now">
+              <span class="epg-label">Now</span>
+              <span class="epg-title" id="epg-now-title">—</span>
+              <div class="epg-progress">
+                <div class="epg-progress__fill" id="epg-progress-fill"></div>
+              </div>
+            </div>
+            <div class="epg-next" id="epg-next">
+              <span class="epg-label">Next</span>
+              <span class="epg-title" id="epg-next-title">—</span>
+              <span class="epg-time" id="epg-next-time"></span>
+            </div>
+          </div>
+          
+          <!-- Debug Actions -->
+          <div class="player__actions">
+            <button class="btn btn--outline btn--small" id="btn-copy-stream">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              Copy Stream URL
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  
+  <!-- Modals -->
+  <div class="modal-backdrop" id="modal-backdrop" hidden></div>
+  
+  <!-- Add Playlist Modal -->
+  <dialog class="modal" id="modal-playlist">
+    <div class="modal__header">
+      <h2 class="modal__title">Add Playlist</h2>
+      <button class="btn-icon modal__close" id="modal-playlist-close">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="modal__body">
+      <!-- Tabs -->
+      <div class="tabs" id="playlist-tabs">
+        <button class="tab tab--active" data-tab="xtream">Xtream Codes</button>
+        <button class="tab" data-tab="m3u-url">M3U URL</button>
+        <button class="tab" data-tab="m3u-file">Upload File</button>
+      </div>
+      
+      <!-- Xtream Form -->
+      <form class="form tab-content tab-content--active" id="form-xtream" data-tab="xtream">
+        <div class="form-group">
+          <label for="xtream-server">Server URL</label>
+          <input type="url" id="xtream-server" class="input" placeholder="http://provider.example.com:8080" required>
+          <span class="form-hint">Include port if required (e.g., :8080)</span>
+        </div>
+        <div class="form-group">
+          <label for="xtream-username">Username</label>
+          <input type="text" id="xtream-username" class="input" placeholder="Your username" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="xtream-password">Password</label>
+          <input type="password" id="xtream-password" class="input" placeholder="Your password" required autocomplete="current-password">
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="xtream-remember" checked>
+            <span>Remember on this device</span>
+          </label>
+          <span class="form-hint">Stored locally with obfuscation (not encryption)</span>
+        </div>
+      </form>
+      
+      <!-- M3U URL Form -->
+      <form class="form tab-content" id="form-m3u-url" data-tab="m3u-url" hidden>
+        <div class="form-group">
+          <label for="m3u-url">Playlist URL</label>
+          <input type="url" id="m3u-url" class="input" placeholder="https://example.com/playlist.m3u" required>
+        </div>
+        <div class="form-group">
+          <label for="epg-url">EPG URL (optional)</label>
+          <input type="url" id="epg-url" class="input" placeholder="https://example.com/epg.xml">
+          <span class="form-hint">XMLTV format for program guide</span>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="m3u-url-remember" checked>
+            <span>Remember on this device</span>
+          </label>
+        </div>
+      </form>
+      
+      <!-- M3U File Form -->
+      <form class="form tab-content" id="form-m3u-file" data-tab="m3u-file" hidden>
+        <div class="form-group">
+          <label for="m3u-file">Select M3U File</label>
+          <div class="file-drop" id="file-drop">
+            <svg class="icon icon--large" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <span>Drop file here or click to browse</span>
+            <input type="file" id="m3u-file" accept=".m3u,.m3u8,text/plain" hidden>
+          </div>
+          <span class="form-hint" id="file-name"></span>
+        </div>
+        <div class="form-group">
+          <label for="file-epg-url">EPG URL (optional)</label>
+          <input type="url" id="file-epg-url" class="input" placeholder="https://example.com/epg.xml">
+        </div>
+      </form>
+      
+      <!-- Loading State -->
+      <div class="form-loading" id="form-loading" hidden>
+        <div class="spinner"></div>
+        <span id="loading-message">Loading playlist...</span>
+        <div class="progress-bar" id="loading-progress-container" hidden>
+          <div class="progress-bar__fill" id="loading-progress"></div>
+        </div>
+      </div>
+      
+      <!-- Error State -->
+      <div class="form-error" id="form-error" hidden>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span id="error-text">An error occurred</span>
+      </div>
+    </div>
+    
+    <div class="modal__footer">
+      <button type="button" class="btn btn--outline" id="btn-cancel-playlist">Cancel</button>
+      <button type="submit" class="btn btn--primary" id="btn-load-playlist">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Load Playlist
+      </button>
+    </div>
+  </dialog>
+  
+  <!-- Settings Modal -->
+  <dialog class="modal" id="modal-settings">
+    <div class="modal__header">
+      <h2 class="modal__title">Settings</h2>
+      <button class="btn-icon modal__close" id="modal-settings-close">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="modal__body">
+      <div class="settings-section">
+        <h3 class="settings-title">Playlist</h3>
+        <div class="settings-item">
+          <div class="settings-info">
+            <span class="settings-label">Current playlist</span>
+            <span class="settings-value" id="settings-playlist-info">None loaded</span>
+          </div>
+          <button class="btn btn--outline btn--small" id="btn-change-playlist">Change</button>
+        </div>
+        <div class="settings-item">
+          <div class="settings-info">
+            <span class="settings-label">Refresh playlist</span>
+            <span class="settings-value">Re-fetch channels from source</span>
+          </div>
+          <button class="btn btn--outline btn--small" id="btn-refresh-playlist">Refresh</button>
+        </div>
+        <div class="settings-item">
+          <div class="settings-info">
+            <span class="settings-label">Logout</span>
+            <span class="settings-value">Clear credentials and return to login</span>
+          </div>
+          <button class="btn btn--danger btn--small" id="btn-logout">Logout</button>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h3 class="settings-title">Security</h3>
+        <div class="settings-item">
+          <div class="settings-info">
+            <span class="settings-label">Vault Mode (PIN)</span>
+            <span class="settings-value">Encrypt credentials with a PIN</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-vault">
+            <span class="toggle__slider"></span>
+          </label>
+        </div>
+        <p class="settings-note">
+          ⚠️ Note: A short PIN provides limited protection. This is convenience, not security.
+        </p>
+      </div>
+      
+      <div class="settings-section">
+        <h3 class="settings-title">Playback</h3>
+        <div class="settings-item">
+          <div class="settings-info">
+            <span class="settings-label">Stream Proxy URL</span>
+            <span class="settings-value">Route streams through a CORS proxy</span>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 0.5rem;">
+          <input type="url" class="input" id="proxy-url" placeholder="https://your-proxy.workers.dev/">
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+            <button class="btn btn--outline btn--small" id="btn-save-proxy">Save</button>
+            <button class="btn btn--outline btn--small" id="btn-test-proxy">Test Proxy</button>
+          </div>
+        </div>
+        <p class="settings-note">
+          💡 If streams are blocked, deploy your own <a href="#" id="link-proxy-help" style="color: var(--color-accent);">Cloudflare Worker proxy</a> (free) and enter the URL above.
+        </p>
+        <div id="proxy-test-results" class="proxy-test-results" hidden>
+          <div class="proxy-test-header">
+            <span class="proxy-test-status" id="proxy-test-status">Testing...</span>
+          </div>
+          <pre class="proxy-test-log" id="proxy-test-log"></pre>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h3 class="settings-title">Data</h3>
+        <div class="settings-item">
+          <div class="settings-info">
+            <span class="settings-label">Export settings</span>
+            <span class="settings-value">Download as JSON file</span>
+          </div>
+          <button class="btn btn--outline btn--small" id="btn-export">Export</button>
+        </div>
+        <div class="settings-item">
+          <div class="settings-info">
+            <span class="settings-label">Import settings</span>
+            <span class="settings-value">Load from JSON file</span>
+          </div>
+          <button class="btn btn--outline btn--small" id="btn-import">Import</button>
+          <input type="file" id="import-file" accept=".json,application/json" hidden>
+        </div>
+        <div class="settings-item settings-item--danger">
+          <div class="settings-info">
+            <span class="settings-label">Clear all data</span>
+            <span class="settings-value">Remove all stored data from this device</span>
+          </div>
+          <button class="btn btn--danger btn--small" id="btn-clear-data">Clear Data</button>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h3 class="settings-title">About</h3>
+        <p class="settings-about">
+          <strong>Simple IPTV</strong> v1.0.0<br>
+          A lightweight, privacy-respecting IPTV player.<br>
+          No accounts. No tracking. All data stays local.
+        </p>
+        <p class="settings-note">
+          This app cannot bypass DRM or CORS restrictions. Some streams may not work in a browser.
+        </p>
+        <div style="margin-top: 1rem;">
+          <a href="https://www.paypal.com/paypalme/viss23/5GBP" 
+             target="_blank" 
+             rel="noopener noreferrer" 
+             class="btn btn--outline btn--small"
+             style="display: inline-flex; align-items: center; gap: 0.5rem;">
+            <span>☕</span>
+            <span>Buy me a coffee</span>
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal__footer">
+      <button type="button" class="btn btn--primary" id="btn-close-settings">Done</button>
+    </div>
+  </dialog>
+  
+  <!-- PIN Entry Modal -->
+  <dialog class="modal modal--small" id="modal-pin">
+    <div class="modal__header">
+      <h2 class="modal__title" id="pin-title">Enter PIN</h2>
+    </div>
+    <div class="modal__body">
+      <p class="pin-description" id="pin-description">Enter your PIN to unlock credentials.</p>
+      <div class="pin-input-group">
+        <input type="password" class="pin-input" id="pin-input" maxlength="8" pattern="[0-9]*" inputmode="numeric" autocomplete="one-time-code">
+      </div>
+      <p class="form-error" id="pin-error" hidden>Incorrect PIN</p>
+    </div>
+    <div class="modal__footer">
+      <button type="button" class="btn btn--outline" id="btn-cancel-pin">Cancel</button>
+      <button type="button" class="btn btn--primary" id="btn-submit-pin">Unlock</button>
+    </div>
+  </dialog>
+  
+  <!-- Confirm Dialog -->
+  <dialog class="modal modal--small" id="modal-confirm">
+    <div class="modal__header">
+      <h2 class="modal__title" id="confirm-title">Confirm</h2>
+    </div>
+    <div class="modal__body">
+      <p id="confirm-message">Are you sure?</p>
+    </div>
+    <div class="modal__footer">
+      <button type="button" class="btn btn--outline" id="btn-confirm-cancel">Cancel</button>
+      <button type="button" class="btn btn--danger" id="btn-confirm-ok">Confirm</button>
+    </div>
+  </dialog>
+  
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toast-container"></div>
+  
+  <!-- Scripts (ES modules) -->
+  <script type="module" src="src/js/app.js"></script>
+</body>
+</html>
