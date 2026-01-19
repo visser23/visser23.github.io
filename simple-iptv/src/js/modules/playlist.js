@@ -5,7 +5,7 @@
  * DEBUG MODE: Set window.PLAYLIST_DEBUG = true for verbose logging
  */
 
-import { db, KEYS, applyProxyToUrl } from './storage.js';
+import { db, KEYS, applyProxyToUrl, getProxyUrl } from './storage.js';
 
 // Debug logging - disabled in production, enable via console: window.PLAYLIST_DEBUG = true
 const DEBUG = () => window.PLAYLIST_DEBUG === true;
