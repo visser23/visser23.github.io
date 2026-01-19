@@ -5,25 +5,17 @@
  * DEBUG MODE: Set window.PLAYER_DEBUG = true in console for verbose logging
  */
 
-import { getProxyUrl } from './storage.js';
+import { applyProxyToUrl } from './storage.js';
 
-// Debug logging helper
+// Debug logging - disabled in production, enable via console: window.PLAYER_DEBUG = true
 const DEBUG = () => window.PLAYER_DEBUG === true;
-function log(...args) {
-  console.log('[Player]', ...args);
-}
-function debug(...args) {
-  if (DEBUG()) console.log('[Player:DEBUG]', ...args);
-}
-function warn(...args) {
-  console.warn('[Player]', ...args);
-}
-function error(...args) {
-  console.error('[Player]', ...args);
-}
+const log = (...args) => DEBUG() && console.log('[Player]', ...args);
+const debug = (...args) => DEBUG() && console.log('[Player:DEBUG]', ...args);
+const warn = (...args) => console.warn('[Player]', ...args);
+const error = (...args) => console.error('[Player]', ...args);
 
-// Enable debug mode by default for now (can be disabled later)
-window.PLAYER_DEBUG = true;
+// Use centralized proxy function
+const applyProxy = applyProxyToUrl;
 
 // hls.js will be loaded dynamically when needed
 let Hls = null;
@@ -59,35 +51,6 @@ const listeners = {
 // Known blocking status codes used by IPTV providers
 const BLOCKED_STATUS_CODES = [401, 403, 451, 458, 459, 460];
 
-/**
- * Apply proxy to URL if configured
- * @param {string} url 
- * @returns {string}
- */
-function applyProxy(url) {
-  const proxyUrl = getProxyUrl();
-  
-  debug('applyProxy() called');
-  debug('  Original URL:', url);
-  debug('  Proxy URL from storage:', proxyUrl);
-  
-  if (!proxyUrl) {
-    debug('  No proxy configured, returning original');
-    return url;
-  }
-  
-  // Ensure proxy URL ends with /
-  const baseProxy = proxyUrl.endsWith('/') ? proxyUrl : proxyUrl + '/';
-  
-  // Encode the original URL and append to proxy
-  const proxiedUrl = baseProxy + encodeURIComponent(url);
-  
-  debug('  Base proxy:', baseProxy);
-  debug('  Encoded target:', encodeURIComponent(url));
-  debug('  Final proxied URL:', proxiedUrl);
-  
-  return proxiedUrl;
-}
 
 /**
  * Check if browser supports native HLS (Safari/iOS)
@@ -162,14 +125,20 @@ async function loadHlsJs() {
  * @returns {Promise<{ok: boolean, status: number, error?: string}>}
  */
 async function preflightCheck(url, isProxied = false) {
-  log('═══════════════════════════════════════════════════════════');
-  log('PREFLIGHT CHECK START');
-  log('  URL:', url);
-  log('  Is Proxied:', isProxied);
+  log('Preflight check:', url.substring(0, 80) + (url.length > 80 ? '...' : ''));
+  
+  // Detect content type from URL
+  const urlLower = url.toLowerCase();
+  const isHLS = urlLower.includes('.m3u8') || urlLower.includes('m3u8');
+  const isVOD = urlLower.match(/\.(mp4|mkv|avi|mov|wmv|flv|webm)(\?|$)/i);
+  log('  Content type detection:');
+  log('    Is HLS:', isHLS);
+  log('    Is VOD:', !!isVOD);
+  if (isVOD) log('    VOD extension:', isVOD[1]);
   
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     
     debug('  Creating fetch request...');
     debug('  Mode: cors');
@@ -193,16 +162,64 @@ async function preflightCheck(url, isProxied = false) {
     log('  Status:', response.status, response.statusText);
     log('  Time:', elapsed + 'ms');
     log('  OK:', response.ok);
-    debug('  Response headers:');
+    
+    // Log important headers
+    const contentType = response.headers.get('content-type') || 'unknown';
+    const contentLength = response.headers.get('content-length') || 'unknown';
+    const contentRange = response.headers.get('content-range') || 'unknown';
+    log('  Content-Type:', contentType);
+    log('  Content-Length:', contentLength);
+    log('  Content-Range:', contentRange);
+    
+    debug('  All response headers:');
     response.headers.forEach((value, key) => {
       debug('    ' + key + ':', value);
     });
     
-    // Try to read a bit of the response body
+    // For VOD files, just check the status - don't try to read body
+    if (isVOD) {
+      log('  VOD file detected - checking status only (not reading body)');
+      
+      // Accept 200 OK or 206 Partial Content (from Range request)
+      if (response.status === 200 || response.status === 206) {
+      log('✓ VOD accessible');
+      return { ok: true, status: response.status };
+      }
+      
+      // Check for blocking
+      if (BLOCKED_STATUS_CODES.includes(response.status)) {
+      log('✗ VOD blocked (status ' + response.status + ')');
+      return {
+          ok: false,
+          status: response.status,
+          error: 'blocked',
+          message: `VOD blocked by provider (HTTP ${response.status}). Try copying the URL to VLC.`
+        };
+      }
+      
+      // Other error
+      log('✗ VOD request failed (status ' + response.status + ')');
+      return {
+        ok: false,
+        status: response.status,
+        error: 'network',
+        message: `VOD request failed (HTTP ${response.status})`
+      };
+    }
+    
+    // For HLS streams, read and analyze the manifest
     let bodyText = '';
     try {
       const clone = response.clone();
-      bodyText = await clone.text();
+      // Only read a small chunk to avoid hanging on large responses
+      const reader = clone.body?.getReader();
+      if (reader) {
+        const { value } = await reader.read();
+        bodyText = value ? new TextDecoder().decode(value) : '';
+        reader.releaseLock();
+      } else {
+        bodyText = await clone.text();
+      }
       debug('  Response body preview:', bodyText.substring(0, 300));
       
       // Check for proxy error messages
@@ -233,9 +250,8 @@ async function preflightCheck(url, isProxied = false) {
         
         // Empty manifest: has structure but no actual segments
         if (hasEndList && segmentUrls.length === 0) {
-          log('  ⚠️ EMPTY MANIFEST DETECTED - Stream appears to be offline/ended');
-          log('═══════════════════════════════════════════════════════════');
-          return {
+        log('⚠️ Empty manifest - stream offline/ended');
+        return {
             ok: false,
             status: response.status,
             error: 'empty_stream',
@@ -253,9 +269,8 @@ async function preflightCheck(url, isProxied = false) {
     }
     
     if (BLOCKED_STATUS_CODES.includes(response.status)) {
-      log('PREFLIGHT RESULT: BLOCKED (HTTP ' + response.status + ')');
-      log('═══════════════════════════════════════════════════════════');
-      return { 
+    log('✗ Blocked (HTTP ' + response.status + ')');
+    return {
         ok: false, 
         status: response.status, 
         error: `blocked`,
@@ -264,9 +279,8 @@ async function preflightCheck(url, isProxied = false) {
     }
     
     if (!response.ok && response.status !== 206) { // 206 is partial content (range request)
-      log('PREFLIGHT RESULT: HTTP ERROR ' + response.status);
-      log('═══════════════════════════════════════════════════════════');
-      return { 
+    log('✗ HTTP error ' + response.status);
+    return {
         ok: false, 
         status: response.status, 
         error: 'http_error',
@@ -274,16 +288,11 @@ async function preflightCheck(url, isProxied = false) {
       };
     }
     
-    log('PREFLIGHT RESULT: OK ✓');
-    log('═══════════════════════════════════════════════════════════');
+    log('✓ Preflight OK');
     return { ok: true, status: response.status };
     
   } catch (e) {
-    error('PREFLIGHT EXCEPTION:');
-    error('  Name:', e.name);
-    error('  Message:', e.message);
-    error('  Stack:', e.stack);
-    log('═══════════════════════════════════════════════════════════');
+    error('Preflight error:', e.message);
     
     // Analyze the error type
     if (e.name === 'AbortError') {
@@ -359,12 +368,23 @@ export async function play(channel) {
   currentChannel = channel;
   const originalUrl = channel.url;
   
+  // Detect content type
+  const contentType = channel.type || 'live';
+  const urlLower = originalUrl.toLowerCase();
+  const isHLS = urlLower.includes('.m3u8');
+  const isVOD = urlLower.match(/\.(mp4|mkv|avi|mov|wmv|flv|webm)(\?|$)/i);
+  const extension = isVOD ? isVOD[1] : (isHLS ? 'm3u8' : 'unknown');
+  
   log('');
-  log('▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶');
-  log('PLAY CHANNEL:', channel.name);
-  log('▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶');
+  log('▶ PLAY:', channel.name, isVOD ? '[VOD]' : isHLS ? '[HLS]' : '');
   debug('Channel object:', JSON.stringify(channel, null, 2));
   log('Original stream URL:', originalUrl);
+  log('File extension:', extension);
+  
+  // Warn about potentially problematic containers
+  if (extension === 'mkv') {
+    warn('⚠️ MKV container detected - browser support varies. May need external player.');
+  }
   
   // Apply proxy if configured
   const url = applyProxy(originalUrl);
@@ -378,9 +398,7 @@ export async function play(channel) {
   
   emit('onStateChange', { loading: true, channel });
   
-  // Determine if HLS (check original URL, not proxied)
-  const isHLS = originalUrl.includes('.m3u8') || originalUrl.includes('m3u8');
-  log('Is HLS stream:', isHLS);
+  // Log playback capabilities
   log('Supports native HLS:', supportsNativeHLS());
   log('Supports MSE (hls.js):', supportsMSE());
   log('Supports HEVC/H.265:', supportsHEVC());
@@ -449,9 +467,7 @@ export async function play(channel) {
       throw new Error('HLS playback not supported on this browser');
     }
     
-    log('');
-    log('✓✓✓ PLAYBACK STARTED SUCCESSFULLY ✓✓✓');
-    log('');
+    log('✓ Playback started');
     
   } catch (err) {
     error('PLAYBACK FAILED:', err);
@@ -560,7 +576,7 @@ async function playNative(url) {
       warn('  Event: abort');
     };
     
-    const cleanup = () => {
+    let cleanup = () => {
       videoElement.removeEventListener('loadstart', onLoadStart);
       videoElement.removeEventListener('progress', onProgress);
       videoElement.removeEventListener('loadeddata', onLoadedData);
@@ -582,20 +598,65 @@ async function playNative(url) {
     videoElement.addEventListener('waiting', onWaiting);
     videoElement.addEventListener('abort', onAbort);
     
+    // Detect if this is a VOD file (needs stricter timeout)
+    const urlLower = url.toLowerCase();
+    const isVOD = urlLower.match(/\.(mp4|mkv|avi|mov|wmv|flv|webm)(\?|$|%)/i);
+    
     log('  Setting video.src...');
+    log('  Is VOD file:', !!isVOD);
     videoElement.src = url;
     log('  Calling video.load()...');
     videoElement.load();
     log('  Waiting for video events...');
     
-    // Timeout fallback
-    setTimeout(() => {
+    // Timeout fallback - stricter for VOD files since they should load faster
+    const timeoutMs = isVOD ? 30000 : 15000;
+    const timeoutTimer = setTimeout(() => {
       if (!resolved) {
-        warn('  Timeout: 15 seconds elapsed without canplay event');
-        warn('  Current state - networkState:', videoElement.networkState, 'readyState:', videoElement.readyState);
-        // Don't reject on timeout if video might still be loading
+        resolved = true;
+        cleanup();
+        
+        error('  ⏱️ TIMEOUT: ' + (timeoutMs/1000) + ' seconds elapsed without playback');
+        error('  Network state:', videoElement.networkState);
+        error('  Ready state:', videoElement.readyState);
+        error('  Current src:', videoElement.currentSrc);
+        error('  Buffered ranges:', videoElement.buffered.length);
+        
+        // Provide helpful error message
+        const networkStates = ['EMPTY', 'IDLE', 'LOADING', 'NO_SOURCE'];
+        const readyStates = ['HAVE_NOTHING', 'HAVE_METADATA', 'HAVE_CURRENT_DATA', 'HAVE_FUTURE_DATA', 'HAVE_ENOUGH_DATA'];
+        
+        let errorMessage = 'Playback timeout';
+        let errorHint = 'The video failed to start playing in time.';
+        
+        if (videoElement.networkState === 3) {
+          errorMessage = 'Unable to load video';
+          errorHint = 'The video source could not be loaded. It may be blocked, offline, or use an unsupported format.';
+        } else if (videoElement.readyState === 0) {
+          errorMessage = 'Video not loading';
+          errorHint = 'No video data received. Check your network connection or try copying the URL to VLC.';
+        } else if (isVOD) {
+          errorMessage = 'VOD playback timeout';
+          errorHint = 'The movie/episode is taking too long to load. It may use an unsupported codec (like HEVC) or be blocked.';
+        }
+        
+        emit('onStateChange', { loading: false });
+        emit('onError', {
+          type: ErrorTypes.NETWORK,
+          message: errorMessage,
+          hint: errorHint
+        });
+        
+        reject(new Error(errorMessage));
       }
-    }, 15000);
+    }, timeoutMs);
+    
+    // Clear timeout when we resolve
+    const originalCleanup = cleanup;
+    cleanup = () => {
+      clearTimeout(timeoutTimer);
+      originalCleanup();
+    };
   });
 }
 

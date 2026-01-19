@@ -15,8 +15,14 @@ let currentCredentials = null;
 let channels = [];
 let isInitialized = false;
 
-// Modal state
-const openModals = new Set();
+// Content type state (live/movies/series)
+let currentContentType = 'live';
+let vodCategories = [];
+let seriesCategories = [];
+let currentVodItems = [];
+let currentSeriesItems = [];
+let vodCategoryCache = {}; // { categoryId: items[] }
+let seriesCategoryCache = {}; // { categoryId: items[] }
 
 /**
  * Initialize the application
@@ -28,7 +34,7 @@ async function init() {
   // Initialize UI
   ui.init({
     onChannelSelect: handleChannelSelect,
-    onFavoriteToggle: handleFavoriteToggle,
+    onFavoriteToggle: () => {}, // Handled by UI module
   });
   
   // Initialize player
@@ -47,6 +53,12 @@ async function init() {
   // Set up settings
   setupSettings();
   
+  // Set up content type tabs (Live/Movies/Series)
+  setupContentTypeTabs();
+  
+  // Initial UI state (hide logout button if not logged in)
+  updateSettingsInfo();
+  
   // Check for stored credentials and decide initial view
   await checkInitialState();
   
@@ -58,12 +70,8 @@ async function init() {
  */
 function ensureModalsClosedOnStart() {
   document.querySelectorAll('dialog').forEach(dialog => {
-    if (dialog.open) {
-      dialog.close();
-    }
+    if (dialog.open) dialog.close();
   });
-  const backdrop = document.getElementById('modal-backdrop');
-  if (backdrop) backdrop.hidden = true;
 }
 
 /**
@@ -186,6 +194,212 @@ async function refreshPlaylist() {
   }
 }
 
+// =============================================================================
+// Content Type Switching (Live TV / Movies / Series)
+// =============================================================================
+
+/**
+ * Set up content type tab handlers
+ */
+function setupContentTypeTabs() {
+  const tabs = document.querySelectorAll('.content-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchContentType(tab.dataset.type));
+  });
+}
+
+/**
+ * Switch between content types (live/movies/series)
+ */
+async function switchContentType(type) {
+  if (type === currentContentType) return;
+  if (!currentCredentials || currentCredentials.mode !== 'xtream') {
+    // Only Xtream supports Movies/Series
+    if (type !== 'live') {
+      ui.showToast('Movies & Series require Xtream login', 'error');
+      return;
+    }
+  }
+  
+  // Update tab UI
+  document.querySelectorAll('.content-tab').forEach(tab => {
+    tab.classList.toggle('content-tab--active', tab.dataset.type === type);
+  });
+  
+  currentContentType = type;
+  
+  // Load content for the selected type
+  try {
+    if (type === 'live') {
+      await loadLiveContent();
+    } else if (type === 'movies') {
+      await loadMoviesContent();
+    } else if (type === 'series') {
+      await loadSeriesContent();
+    }
+  } catch (error) {
+    console.error(`[App] Failed to load ${type} content:`, error);
+    ui.showToast(`Failed to load ${type}`, 'error');
+  }
+}
+
+/**
+ * Load Live TV content
+ */
+async function loadLiveContent() {
+  // Live TV content is already in channels array
+  if (channels.length === 0) {
+    // Try loading from cache
+    channels = await playlist.loadChannels();
+  }
+  
+  ui.setChannels(channels);
+  ui.setContentType('live');
+}
+
+/**
+ * Load Movies (VOD) content - lazy load
+ */
+async function loadMoviesContent() {
+  const tab = document.querySelector('[data-type="movies"]');
+  tab?.classList.add('content-tab--loading');
+  
+  try {
+    // Load categories first (fast)
+    if (vodCategories.length === 0) {
+      ui.showLoading(true);
+      ui.setNowPlaying('Loading movie categories...');
+      
+      // Try cache first
+      vodCategories = await playlist.loadVodCategories();
+      
+      if (vodCategories.length === 0) {
+        vodCategories = await playlist.fetchVodCategories(currentCredentials);
+        await playlist.storeVodCategories(vodCategories);
+      }
+    }
+    
+    ui.setContentType('movies', vodCategories);
+    ui.showLoading(false);
+    ui.setNowPlaying('Select a category');
+    
+  } finally {
+    tab?.classList.remove('content-tab--loading');
+  }
+}
+
+/**
+ * Load Series content - lazy load
+ */
+async function loadSeriesContent() {
+  const tab = document.querySelector('[data-type="series"]');
+  tab?.classList.add('content-tab--loading');
+  
+  try {
+    // Load categories first (fast)
+    if (seriesCategories.length === 0) {
+      ui.showLoading(true);
+      ui.setNowPlaying('Loading series categories...');
+      
+      // Try cache first
+      seriesCategories = await playlist.loadSeriesCategories();
+      
+      if (seriesCategories.length === 0) {
+        seriesCategories = await playlist.fetchSeriesCategories(currentCredentials);
+        await playlist.storeSeriesCategories(seriesCategories);
+      }
+    }
+    
+    ui.setContentType('series', seriesCategories);
+    ui.showLoading(false);
+    ui.setNowPlaying('Select a category');
+    
+  } finally {
+    tab?.classList.remove('content-tab--loading');
+  }
+}
+
+/**
+ * Load items for a specific VOD category (called from UI when category selected)
+ */
+async function loadVodCategory(categoryId) {
+  ui.showLoading(true);
+  ui.setNowPlaying('Loading movies...');
+  
+  try {
+    // Check cache first
+    if (vodCategoryCache[categoryId]) {
+      currentVodItems = vodCategoryCache[categoryId];
+    } else {
+      // Fetch from API
+      currentVodItems = await playlist.fetchVodStreams(currentCredentials, categoryId);
+      vodCategoryCache[categoryId] = currentVodItems;
+    }
+    
+    ui.setItems(currentVodItems);
+    ui.showLoading(false);
+    ui.setNowPlaying(`${currentVodItems.length} movies`);
+    
+  } catch (error) {
+    console.error('[App] Failed to load VOD category:', error);
+    ui.showLoading(false);
+    ui.showToast('Failed to load movies', 'error');
+  }
+}
+
+/**
+ * Load items for a specific Series category (called from UI when category selected)
+ */
+async function loadSeriesCategory(categoryId) {
+  ui.showLoading(true);
+  ui.setNowPlaying('Loading series...');
+  
+  try {
+    // Check cache first
+    if (seriesCategoryCache[categoryId]) {
+      currentSeriesItems = seriesCategoryCache[categoryId];
+    } else {
+      // Fetch from API
+      currentSeriesItems = await playlist.fetchSeriesList(currentCredentials, categoryId);
+      seriesCategoryCache[categoryId] = currentSeriesItems;
+    }
+    
+    ui.setItems(currentSeriesItems);
+    ui.showLoading(false);
+    ui.setNowPlaying(`${currentSeriesItems.length} series`);
+    
+  } catch (error) {
+    console.error('[App] Failed to load series category:', error);
+    ui.showLoading(false);
+    ui.showToast('Failed to load series', 'error');
+  }
+}
+
+/**
+ * Load series details (seasons/episodes) - called when series is selected
+ */
+async function loadSeriesDetails(seriesId) {
+  ui.showLoading(true);
+  ui.setNowPlaying('Loading episodes...');
+  
+  try {
+    const seriesInfo = await playlist.fetchSeriesInfo(currentCredentials, seriesId);
+    ui.showSeriesDetails(seriesInfo);
+    ui.showLoading(false);
+    
+  } catch (error) {
+    console.error('[App] Failed to load series details:', error);
+    ui.showLoading(false);
+    ui.showToast('Failed to load episodes', 'error');
+  }
+}
+
+// Export content loading functions for UI callbacks
+window.app = window.app || {};
+window.app.loadVodCategory = loadVodCategory;
+window.app.loadSeriesCategory = loadSeriesCategory;
+window.app.loadSeriesDetails = loadSeriesDetails;
+
 /**
  * Load EPG data
  * @param {string} url 
@@ -261,12 +475,7 @@ function stopEpgUpdater() {
   }
 }
 
-/**
- * Handle favorite toggle
- */
-function handleFavoriteToggle(channelId) {
-  // Favorites toggle handled by UI module
-}
+// Favorites toggle is handled directly by UI module
 
 /**
  * Set up player event listeners
@@ -399,20 +608,12 @@ function setupModals() {
   modals.pin = document.getElementById('modal-pin');
   modals.confirm = document.getElementById('modal-confirm');
   
-  // Set up dialog close event handlers to track state
+  // Set up dialog event handlers
   Object.entries(modals).forEach(([name, modal]) => {
     if (modal) {
-      // Track when dialog is closed (by any means)
-      modal.addEventListener('close', () => {
-        openModals.delete(name);
-      });
-      
       // Handle click on backdrop (clicking outside the dialog)
       modal.addEventListener('click', (e) => {
-        // If click is on the dialog element itself (not its children), it's the backdrop
-        if (e.target === modal) {
-          hideModal(name);
-        }
+        if (e.target === modal) hideModal(name);
       });
     }
   });
@@ -464,13 +665,10 @@ function setupModals() {
 function showModal(name) {
   const modal = modals[name];
   if (modal && !modal.open) {
-    openModals.add(name);
-    
     // Pre-populate playlist form with current credentials if available
     if (name === 'playlist' && currentCredentials) {
       prefillPlaylistForm(currentCredentials);
     }
-    
     modal.showModal();
   }
 }
@@ -505,18 +703,9 @@ function prefillPlaylistForm(creds) {
  */
 function hideModal(name) {
   const modal = modals[name];
-  if (modal && modal.open) {
-    modal.close();
-    openModals.delete(name);
-  }
+  if (modal?.open) modal.close();
 }
 
-/**
- * Hide all modals
- */
-function hideAllModals() {
-  Object.keys(modals).forEach(name => hideModal(name));
-}
 
 /**
  * Switch playlist tab
@@ -868,17 +1057,7 @@ function setupSettings() {
     e.target.value = '';
   });
   
-  document.getElementById('btn-clear-data')?.addEventListener('click', () => {
-    showConfirmDialog(
-      'Clear All Data',
-      'This will remove all stored data including credentials, favorites, and cached channels. This cannot be undone.',
-      async () => {
-        await logout();
-      }
-    );
-  });
-  
-  // Logout button
+  // Logout button (in header)
   document.getElementById('btn-logout')?.addEventListener('click', () => {
     showConfirmDialog(
       'Logout',
@@ -946,15 +1125,10 @@ async function runProxyTest(proxyUrl, statusEl, logEl) {
     logEl.scrollTop = logEl.scrollHeight;
   };
   
-  log('═══════════════════════════════════════════════════════════');
   log('PROXY DIAGNOSTIC TEST');
-  log('═══════════════════════════════════════════════════════════');
-  log('');
+  log('─'.repeat(40));
   
-  // Normalize proxy URL
   const baseProxy = proxyUrl.endsWith('/') ? proxyUrl : proxyUrl + '/';
-  log(`Proxy URL: ${baseProxy}`, 'url');
-  log('');
   
   // Test 1: Basic connectivity
   log('TEST 1: Basic proxy connectivity');
@@ -1107,9 +1281,8 @@ async function runProxyTest(proxyUrl, statusEl, logEl) {
   }
   
   log('');
-  log('═══════════════════════════════════════════════════════════');
+  log('─'.repeat(40));
   log('TEST COMPLETE');
-  log('═══════════════════════════════════════════════════════════');
 }
 
 /**
@@ -1138,46 +1311,41 @@ async function logout() {
 }
 
 /**
- * Show proxy setup help
+ * Show proxy setup help - opens help in a new window with formatted content
  */
 function showProxyHelp() {
-  const helpText = `
-🔐 PROXY SETUP GUIDE
-
-Some IPTV providers block browser playback. A proxy can help.
-
-WHAT YOU NEED:
-• A serverless edge function (Cloudflare Workers, Fly.io, etc.)
-• The function should forward requests with media player headers
-• It must add CORS headers to responses
-• HLS manifests need URL rewriting for relative paths
-
-KEY CONCEPTS:
-• Decode the encoded URL from the request path
-• Mimic VLC/FFmpeg User-Agent headers
-• Follow redirects from the upstream server  
-• Stream content without buffering large segments
-• Rewrite .m3u8 playlist URLs to route back through proxy
-
-HEADERS TO CONSIDER:
-• User-Agent: Lavf/60.3.100 (FFmpeg)
-• Access-Control-Allow-Origin: *
-• Icy-MetaData: 1
-
-PLATFORMS (all have free tiers):
-• Cloudflare Workers - dash.cloudflare.com
-• Fly.io - fly.io
-• Railway - railway.app
-• Render - render.com
-
-The proxy URL format should be:
-https://your-proxy.example.com/{encoded-target-url}
-
-Check the project README for more details.
-  `.trim();
+  const helpHtml = `
+<!DOCTYPE html><html><head><title>Proxy Setup Guide</title>
+<style>body{font-family:system-ui;background:#1a1a25;color:#f0f0f5;padding:2rem;max-width:600px;margin:0 auto}
+h1{color:#00d4ff}h2{color:#a855f7;margin-top:1.5rem}code{background:#2a2a35;padding:2px 6px;border-radius:4px}
+ul{line-height:1.8}</style></head><body>
+<h1>🔐 Proxy Setup Guide</h1>
+<p>Some IPTV providers block browser playback. A proxy can help bypass this.</p>
+<h2>Requirements</h2>
+<ul>
+<li>A serverless edge function (Cloudflare Workers, Fly.io, etc.)</li>
+<li>Forward requests with media player headers</li>
+<li>Add CORS headers to responses</li>
+<li>Rewrite relative URLs in HLS manifests</li>
+</ul>
+<h2>Key Concepts</h2>
+<ul>
+<li>Decode the URL from the request path</li>
+<li>Use <code>User-Agent: Lavf/60.3.100</code> (FFmpeg)</li>
+<li>Follow HTTP redirects</li>
+<li>Stream large content without buffering</li>
+</ul>
+<h2>Free Hosting Options</h2>
+<ul>
+<li><strong>Fly.io</strong> - fly.io</li>
+<li><strong>Cloudflare Workers</strong> - dash.cloudflare.com</li>
+<li><strong>Railway</strong> - railway.app</li>
+</ul>
+<p>URL format: <code>https://your-proxy.example.com/{encoded-url}</code></p>
+</body></html>`;
   
-  // Create a temporary modal or alert
-  alert(helpText);
+  const win = window.open('', '_blank', 'width=650,height=600');
+  if (win) win.document.write(helpHtml);
 }
 
 /**
@@ -1212,6 +1380,12 @@ function updateSettingsInfo() {
   if (proxyUrlInput) {
     const settings = storage.getSettings();
     proxyUrlInput.value = settings.proxyUrl || '';
+  }
+  
+  // Show/hide logout button based on login state
+  const logoutBtn = document.getElementById('btn-logout');
+  if (logoutBtn) {
+    logoutBtn.hidden = !currentCredentials;
   }
 }
 

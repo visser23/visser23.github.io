@@ -17,6 +17,11 @@ let currentCategory = '__all__';
 let searchQuery = '';
 let selectedChannelId = null;
 
+// Content type state
+let currentContentType = 'live';
+let vodSeriesCategories = []; // Categories for current VOD/Series view
+let currentItems = []; // Items for current VOD/Series category
+
 // Virtual scrolling state
 const ITEM_HEIGHT = 48;
 const BUFFER_SIZE = 10;
@@ -140,6 +145,292 @@ export function setChannels(channelList) {
 }
 
 /**
+ * Set content type and categories
+ * @param {string} type - 'live', 'movies', or 'series'
+ * @param {Array} categories - Categories for VOD/Series (optional)
+ */
+export function setContentType(type, categories = []) {
+  currentContentType = type;
+  vodSeriesCategories = categories;
+  currentItems = [];
+  currentCategory = '__all__';
+  searchQuery = '';
+  
+  // Clear search
+  if (elements.searchInput) {
+    elements.searchInput.value = '';
+    elements.searchInput.placeholder = type === 'live' 
+      ? 'Search channels... (press /)'
+      : type === 'movies' 
+        ? 'Search movies... (press /)'
+        : 'Search series... (press /)';
+  }
+  
+  // Update counts display
+  const countLabels = {
+    live: 'All Channels',
+    movies: 'All Movies',
+    series: 'All Series'
+  };
+  
+  const allBtn = document.querySelector('[data-category="__all__"] span:first-of-type');
+  if (allBtn) allBtn.textContent = countLabels[type] || 'All';
+  
+  // Hide favorites/recents for VOD/Series (not applicable)
+  const favBtn = document.querySelector('[data-category="__favorites__"]');
+  const recBtn = document.querySelector('[data-category="__recents__"]');
+  if (favBtn) favBtn.hidden = type !== 'live';
+  if (recBtn) recBtn.hidden = type !== 'live';
+  
+  if (type === 'live') {
+    // Live TV - show channel groups
+    applyFilters();
+    updateCounts();
+    renderGroups();
+    renderChannels();
+  } else {
+    // VOD/Series - show categories
+    renderVodSeriesCategories();
+    renderItems([]);
+  }
+}
+
+/**
+ * Set items for current VOD/Series category
+ * @param {Array} items 
+ */
+export function setItems(items) {
+  currentItems = items;
+  renderItems(items);
+}
+
+/**
+ * Render VOD/Series categories
+ */
+function renderVodSeriesCategories() {
+  if (!elements.categoryGroups) return;
+  
+  // Reset "All" count 
+  if (elements.countAll) {
+    elements.countAll.textContent = '...';
+  }
+  
+  elements.categoryGroups.innerHTML = vodSeriesCategories.map(cat => `
+    <button class="category-item" data-vod-category="${cat.category_id}">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+      </svg>
+      <span>${escapeHtml(cat.category_name)}</span>
+    </button>
+  `).join('');
+  
+  // Add click handlers
+  elements.categoryGroups.querySelectorAll('[data-vod-category]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const categoryId = btn.dataset.vodCategory;
+      
+      // Update active state
+      document.querySelectorAll('[data-vod-category]').forEach(b => {
+        b.classList.remove('category-item--active');
+      });
+      btn.classList.add('category-item--active');
+      document.querySelector('[data-category="__all__"]')?.classList.remove('category-item--active');
+      
+      // Load items for this category
+      if (currentContentType === 'movies') {
+        window.app?.loadVodCategory?.(categoryId);
+      } else if (currentContentType === 'series') {
+        window.app?.loadSeriesCategory?.(categoryId);
+      }
+    });
+  });
+}
+
+/**
+ * Render VOD/Series items with virtual scrolling
+ */
+function renderItems(items) {
+  if (!elements.channelContent) return;
+  
+  const filtered = searchQuery 
+    ? items.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : items;
+  
+  // Update "All" count
+  if (elements.countAll) {
+    elements.countAll.textContent = filtered.length;
+  }
+  
+  const totalHeight = filtered.length * ITEM_HEIGHT;
+  elements.channelContent.style.height = `${totalHeight}px`;
+  
+  // Calculate visible range
+  const startIndex = Math.max(0, Math.floor(scrollTop / ITEM_HEIGHT) - BUFFER_SIZE);
+  const endIndex = Math.min(
+    filtered.length,
+    Math.ceil((scrollTop + viewportHeight) / ITEM_HEIGHT) + BUFFER_SIZE
+  );
+  
+  const visibleItems = filtered.slice(startIndex, endIndex);
+  
+  elements.channelContent.innerHTML = visibleItems.map((item, i) => {
+    const actualIndex = startIndex + i;
+    const top = actualIndex * ITEM_HEIGHT;
+    const isActive = item.id === selectedChannelId;
+    
+    // Show year for movies, episode count for series
+    const subtitle = item.type === 'vod' 
+      ? [item.year, item.duration].filter(Boolean).join(' • ')
+      : item.type === 'series'
+        ? item.genre || ''
+        : '';
+    
+    return `
+      <div class="channel-item ${isActive ? 'channel-item--active' : ''}" 
+           data-id="${item.id}" 
+           data-type="${item.type || 'vod'}"
+           style="top: ${top}px">
+        ${item.logo 
+          ? `<img class="channel-logo" src="${escapeHtml(applyProxyToUrl(item.logo))}" alt="" loading="lazy" onerror="this.style.display='none'">`
+          : `<div class="channel-logo channel-logo--placeholder">${getInitials(item.name)}</div>`
+        }
+        <div class="channel-info">
+          <div class="channel-name">${escapeHtml(item.name)}</div>
+          ${subtitle ? `<div class="channel-epg">${escapeHtml(subtitle)}</div>` : ''}
+        </div>
+        ${item.type === 'series' 
+          ? `<svg class="icon channel-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+               <polyline points="9 18 15 12 9 6"/>
+             </svg>`
+          : ''
+        }
+      </div>
+    `;
+  }).join('');
+  
+  // Add click handlers
+  elements.channelContent.querySelectorAll('.channel-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.id;
+      const type = el.dataset.type;
+      const item = items.find(i => String(i.id) === String(id));
+      
+      if (!item) return;
+      
+      if (type === 'series') {
+        // For series, load episodes
+        window.app?.loadSeriesDetails?.(id);
+      } else {
+        // For VOD, play directly
+        selectedChannelId = id;
+        renderItems(items);
+        onChannelSelect(item);
+        
+        if (window.innerWidth <= 768) {
+          closeSidebar();
+        }
+      }
+    });
+  });
+}
+
+/**
+ * Show series details modal with seasons/episodes
+ * @param {Object} seriesInfo - { info, seasons, episodes }
+ */
+export function showSeriesDetails(seriesInfo) {
+  const { info, episodes } = seriesInfo;
+  
+  // Group episodes by season
+  const seasons = {};
+  episodes.forEach(ep => {
+    const s = ep.season || 1;
+    if (!seasons[s]) seasons[s] = [];
+    seasons[s].push(ep);
+  });
+  
+  // Create modal content
+  const modalHtml = `
+    <div class="series-modal" id="series-modal">
+      <div class="series-modal__header">
+        <div class="series-modal__info">
+          ${info.cover ? `<img class="series-modal__cover" src="${escapeHtml(applyProxyToUrl(info.cover))}" alt="">` : ''}
+          <div>
+            <h2 class="series-modal__title">${escapeHtml(info.name || 'Series')}</h2>
+            <p class="series-modal__meta">${escapeHtml([info.genre, info.releaseDate].filter(Boolean).join(' • '))}</p>
+            ${info.plot ? `<p class="series-modal__plot">${escapeHtml(info.plot.substring(0, 200))}${info.plot.length > 200 ? '...' : ''}</p>` : ''}
+          </div>
+        </div>
+        <button class="series-modal__close" id="close-series-modal" aria-label="Close">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="series-modal__seasons">
+        ${Object.entries(seasons).map(([num, eps]) => `
+          <div class="series-season">
+            <h3 class="series-season__title">Season ${num}</h3>
+            <div class="series-episodes">
+              ${eps.map(ep => `
+                <button class="series-episode" data-episode-url="${escapeHtml(ep.url)}" data-episode-name="${escapeHtml(ep.name)}">
+                  <span class="series-episode__num">E${ep.episode}</span>
+                  <span class="series-episode__title">${escapeHtml(ep.name)}</span>
+                  ${ep.duration ? `<span class="series-episode__duration">${escapeHtml(ep.duration)}</span>` : ''}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  
+  // Create overlay
+  let overlay = document.getElementById('series-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'series-overlay';
+    overlay.className = 'series-overlay';
+    document.body.appendChild(overlay);
+  }
+  
+  overlay.innerHTML = modalHtml;
+  overlay.hidden = false;
+  
+  // Add event handlers
+  document.getElementById('close-series-modal')?.addEventListener('click', () => {
+    overlay.hidden = true;
+  });
+  
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.hidden = true;
+    }
+  });
+  
+  // Episode click handlers
+  overlay.querySelectorAll('.series-episode').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const url = btn.dataset.episodeUrl;
+      const name = btn.dataset.episodeName;
+      
+      // Create a channel-like object for the player
+      const episode = {
+        id: url,
+        name: name,
+        url: url,
+        type: 'episode'
+      };
+      
+      selectedChannelId = url;
+      overlay.hidden = true;
+      onChannelSelect(episode);
+    });
+  });
+}
+
+/**
  * Get groups from channels
  * @returns {Array<string>}
  */
@@ -226,18 +517,30 @@ function applyFilters() {
  */
 export function selectCategory(category) {
   currentCategory = category;
+  scrollTop = 0;
   
-  // Update active state
+  if (elements.channelViewport) {
+    elements.channelViewport.scrollTop = 0;
+  }
+  
+  // Update active state for fixed categories
   document.querySelectorAll('[data-category]').forEach(btn => {
     btn.classList.toggle('category-item--active', btn.dataset.category === category);
   });
   
-  applyFilters();
-  scrollTop = 0;
-  if (elements.channelViewport) {
-    elements.channelViewport.scrollTop = 0;
+  // For Live TV, use standard filtering
+  if (currentContentType === 'live') {
+    applyFilters();
+    renderChannels();
+  } else {
+    // For VOD/Series, "All" means clear selection (show empty until category chosen)
+    // Also clear any VOD category selection
+    document.querySelectorAll('[data-vod-category]').forEach(b => {
+      b.classList.remove('category-item--active');
+    });
+    currentItems = [];
+    renderItems([]);
   }
-  renderChannels();
   
   // Close sidebar on mobile
   if (window.innerWidth <= 768) {
@@ -250,12 +553,19 @@ export function selectCategory(category) {
  */
 function handleSearch(e) {
   searchQuery = e.target.value.trim();
-  applyFilters();
   scrollTop = 0;
   if (elements.channelViewport) {
     elements.channelViewport.scrollTop = 0;
   }
-  renderChannels();
+  
+  // For Live TV, use filters and render channels
+  // For VOD/Series, re-render items with search filter
+  if (currentContentType === 'live') {
+    applyFilters();
+    renderChannels();
+  } else {
+    renderItems(currentItems);
+  }
 }
 
 /**
@@ -438,21 +748,37 @@ export function setNowPlaying(text) {
 export function updateEpg(nowNext) {
   const { now, next } = nowNext || {};
   
+  // Get EPG container to show/hide
+  const epgContainer = document.getElementById('epg-info');
+  
+  // If no EPG data at all, hide the entire section
+  if (!now && !next) {
+    if (epgContainer) epgContainer.hidden = true;
+    return;
+  }
+  
+  // Show the section if we have data
+  if (epgContainer) epgContainer.hidden = false;
+  
   if (elements.epgNowTitle) {
-    elements.epgNowTitle.textContent = now?.title || '—';
+    elements.epgNowTitle.textContent = now?.title || 'No info';
   }
   
   if (elements.epgNextTitle) {
-    elements.epgNextTitle.textContent = next?.title || '—';
+    elements.epgNextTitle.textContent = next?.title || 'No info';
   }
   
   if (elements.epgNextTime) {
     elements.epgNextTime.textContent = next ? epg.formatTime(next.start) : '';
   }
   
-  if (elements.epgProgressFill && now) {
-    const progress = epg.getProgress(now);
-    elements.epgProgressFill.style.width = `${progress}%`;
+  if (elements.epgProgressFill) {
+    if (now) {
+      const progress = epg.getProgress(now);
+      elements.epgProgressFill.style.width = `${progress}%`;
+    } else {
+      elements.epgProgressFill.style.width = '0%';
+    }
   }
 }
 

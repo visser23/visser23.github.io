@@ -5,46 +5,16 @@
  * DEBUG MODE: Set window.PLAYLIST_DEBUG = true for verbose logging
  */
 
-import { db, KEYS, getProxyUrl } from './storage.js';
+import { db, KEYS, applyProxyToUrl } from './storage.js';
 
-// Debug logging helper
+// Debug logging - disabled in production, enable via console: window.PLAYLIST_DEBUG = true
 const DEBUG = () => window.PLAYLIST_DEBUG === true;
-function log(...args) {
-  console.log('[Playlist]', ...args);
-}
-function debug(...args) {
-  if (DEBUG()) console.log('[Playlist:DEBUG]', ...args);
-}
-function error(...args) {
-  console.error('[Playlist]', ...args);
-}
+const log = (...args) => DEBUG() && console.log('[Playlist]', ...args);
+const debug = (...args) => DEBUG() && console.log('[Playlist:DEBUG]', ...args);
+const error = (...args) => console.error('[Playlist]', ...args);
 
-// Enable debug mode by default for now
-window.PLAYLIST_DEBUG = true;
-
-/**
- * Apply proxy to URL if configured
- * @param {string} url 
- * @returns {string}
- */
-function applyProxy(url) {
-  const proxyUrl = getProxyUrl();
-  
-  debug('applyProxy() called');
-  debug('  Original URL:', url);
-  debug('  Proxy URL from storage:', proxyUrl);
-  
-  if (!proxyUrl) {
-    debug('  No proxy configured, returning original');
-    return url;
-  }
-  
-  const baseProxy = proxyUrl.endsWith('/') ? proxyUrl : proxyUrl + '/';
-  const proxiedUrl = baseProxy + encodeURIComponent(url);
-  
-  debug('  Final proxied URL:', proxiedUrl);
-  return proxiedUrl;
-}
+// Use centralized proxy function
+const applyProxy = applyProxyToUrl;
 
 // Simple M3U parser (no external dependency to reduce bundle)
 // Format: #EXTM3U, #EXTINF:-1 tvg-id="..." tvg-name="..." tvg-logo="..." group-title="...",Channel Name\nURL
@@ -415,6 +385,270 @@ export async function getXtreamInfo(creds) {
   }
   
   return response.json();
+}
+
+// =============================================================================
+// VOD (Movies) API
+// =============================================================================
+
+/**
+ * Fetch VOD categories from Xtream API
+ * @param {Object} creds - { server, username, password }
+ * @returns {Promise<Array>} - Array of category objects
+ */
+export async function fetchVodCategories(creds) {
+  const { server, username, password } = creds;
+  const baseUrl = normalizeUrl(server);
+  const url = `${baseUrl}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&action=get_vod_categories`;
+  
+  const response = await fetch(applyProxy(url));
+  if (!response.ok) throw new Error('Failed to fetch VOD categories');
+  
+  const categories = await response.json();
+  return Array.isArray(categories) ? categories : [];
+}
+
+/**
+ * Fetch VOD streams for a specific category (or all if no category)
+ * @param {Object} creds - { server, username, password }
+ * @param {string|null} categoryId - Category ID to filter by (null for all)
+ * @returns {Promise<Array>} - Array of VOD items
+ */
+export async function fetchVodStreams(creds, categoryId = null) {
+  const { server, username, password } = creds;
+  const baseUrl = normalizeUrl(server);
+  
+  let url = `${baseUrl}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&action=get_vod_streams`;
+  
+  // Filter by category for performance - don't load all 50k movies!
+  if (categoryId) {
+    url += `&category_id=${encodeURIComponent(categoryId)}`;
+  }
+  
+  const response = await fetch(applyProxy(url));
+  if (!response.ok) throw new Error('Failed to fetch VOD streams');
+  
+  const streams = await response.json();
+  if (!Array.isArray(streams)) return [];
+  
+  // Normalize VOD data to common format
+  return streams.map(vod => ({
+    id: vod.stream_id || vod.num,
+    name: vod.name,
+    logo: vod.stream_icon || vod.cover || '',
+    group: vod.category_id,
+    url: buildVodUrl(baseUrl, username, password, vod.stream_id, vod.container_extension),
+    type: 'vod',
+    // VOD-specific fields
+    year: vod.year || vod.releaseDate?.split('-')[0] || '',
+    rating: vod.rating || '',
+    duration: vod.duration || '',
+    plot: vod.plot || '',
+    cast: vod.cast || '',
+    director: vod.director || '',
+    genre: vod.genre || '',
+    containerExtension: vod.container_extension || 'mp4'
+  }));
+}
+
+/**
+ * Build VOD stream URL
+ */
+function buildVodUrl(baseUrl, username, password, streamId, extension = 'mp4') {
+  return `${baseUrl}/movie/${encodeURIComponent(username)}/${encodeURIComponent(password)}/${streamId}.${extension}`;
+}
+
+// =============================================================================
+// Series API
+// =============================================================================
+
+/**
+ * Fetch Series categories from Xtream API
+ * @param {Object} creds - { server, username, password }
+ * @returns {Promise<Array>} - Array of category objects
+ */
+export async function fetchSeriesCategories(creds) {
+  const { server, username, password } = creds;
+  const baseUrl = normalizeUrl(server);
+  const url = `${baseUrl}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&action=get_series_categories`;
+  
+  const response = await fetch(applyProxy(url));
+  if (!response.ok) throw new Error('Failed to fetch series categories');
+  
+  const categories = await response.json();
+  return Array.isArray(categories) ? categories : [];
+}
+
+/**
+ * Fetch Series list for a specific category (or all if no category)
+ * @param {Object} creds - { server, username, password }
+ * @param {string|null} categoryId - Category ID to filter by (null for all)
+ * @returns {Promise<Array>} - Array of series
+ */
+export async function fetchSeriesList(creds, categoryId = null) {
+  const { server, username, password } = creds;
+  const baseUrl = normalizeUrl(server);
+  
+  let url = `${baseUrl}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&action=get_series`;
+  
+  // Filter by category for performance
+  if (categoryId) {
+    url += `&category_id=${encodeURIComponent(categoryId)}`;
+  }
+  
+  const response = await fetch(applyProxy(url));
+  if (!response.ok) throw new Error('Failed to fetch series');
+  
+  const series = await response.json();
+  if (!Array.isArray(series)) return [];
+  
+  // Normalize series data
+  return series.map(s => ({
+    id: s.series_id,
+    name: s.name,
+    logo: s.cover || '',
+    group: s.category_id,
+    type: 'series',
+    // Series-specific fields
+    year: s.year || s.releaseDate?.split('-')[0] || '',
+    rating: s.rating || '',
+    plot: s.plot || '',
+    cast: s.cast || '',
+    director: s.director || '',
+    genre: s.genre || '',
+    episodeCount: s.episode_run_time || s.num || ''
+  }));
+}
+
+/**
+ * Fetch Series info (seasons and episodes)
+ * @param {Object} creds - { server, username, password }
+ * @param {string} seriesId - Series ID
+ * @returns {Promise<Object>} - Series info with seasons/episodes
+ */
+export async function fetchSeriesInfo(creds, seriesId) {
+  const { server, username, password } = creds;
+  const baseUrl = normalizeUrl(server);
+  const url = `${baseUrl}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&action=get_series_info&series_id=${encodeURIComponent(seriesId)}`;
+  
+  const response = await fetch(applyProxy(url));
+  if (!response.ok) throw new Error('Failed to fetch series info');
+  
+  const info = await response.json();
+  
+  // Build episodes with URLs
+  const episodes = [];
+  if (info.episodes) {
+    for (const [seasonNum, seasonEpisodes] of Object.entries(info.episodes)) {
+      for (const ep of seasonEpisodes) {
+        episodes.push({
+          id: ep.id,
+          name: ep.title || `Episode ${ep.episode_num}`,
+          season: parseInt(seasonNum),
+          episode: ep.episode_num,
+          url: buildSeriesUrl(baseUrl, username, password, ep.id, ep.container_extension),
+          logo: ep.info?.movie_image || info.info?.cover || '',
+          plot: ep.info?.plot || '',
+          duration: ep.info?.duration || '',
+          rating: ep.info?.rating || '',
+          containerExtension: ep.container_extension || 'mp4'
+        });
+      }
+    }
+  }
+  
+  return {
+    info: info.info || {},
+    seasons: info.seasons || [],
+    episodes: episodes.sort((a, b) => (a.season - b.season) || (a.episode - b.episode))
+  };
+}
+
+/**
+ * Build Series episode stream URL
+ */
+function buildSeriesUrl(baseUrl, username, password, episodeId, extension = 'mp4') {
+  return `${baseUrl}/series/${encodeURIComponent(username)}/${encodeURIComponent(password)}/${episodeId}.${extension}`;
+}
+
+// =============================================================================
+// VOD/Series Storage
+// =============================================================================
+
+const VOD_CATEGORIES_KEY = 'vod_categories';
+const VOD_STREAMS_KEY = 'vod_streams';
+const SERIES_CATEGORIES_KEY = 'series_categories';
+const SERIES_LIST_KEY = 'series_list';
+
+/**
+ * Store VOD categories
+ */
+export async function storeVodCategories(categories) {
+  await db.set(VOD_CATEGORIES_KEY, categories);
+}
+
+/**
+ * Load VOD categories
+ */
+export async function loadVodCategories() {
+  return await db.get(VOD_CATEGORIES_KEY) || [];
+}
+
+/**
+ * Store VOD streams for a category
+ */
+export async function storeVodStreams(categoryId, streams) {
+  const key = `${VOD_STREAMS_KEY}_${categoryId || 'all'}`;
+  await db.set(key, streams);
+}
+
+/**
+ * Load VOD streams for a category
+ */
+export async function loadVodStreams(categoryId) {
+  const key = `${VOD_STREAMS_KEY}_${categoryId || 'all'}`;
+  return await db.get(key) || null;
+}
+
+/**
+ * Store Series categories
+ */
+export async function storeSeriesCategories(categories) {
+  await db.set(SERIES_CATEGORIES_KEY, categories);
+}
+
+/**
+ * Load Series categories
+ */
+export async function loadSeriesCategories() {
+  return await db.get(SERIES_CATEGORIES_KEY) || [];
+}
+
+/**
+ * Store Series list for a category
+ */
+export async function storeSeriesList(categoryId, series) {
+  const key = `${SERIES_LIST_KEY}_${categoryId || 'all'}`;
+  await db.set(key, series);
+}
+
+/**
+ * Load Series list for a category
+ */
+export async function loadSeriesList(categoryId) {
+  const key = `${SERIES_LIST_KEY}_${categoryId || 'all'}`;
+  return await db.get(key) || null;
+}
+
+/**
+ * Clear all VOD/Series cached data
+ */
+export async function clearVodSeriesCache() {
+  // Clear categories
+  await db.remove(VOD_CATEGORIES_KEY);
+  await db.remove(SERIES_CATEGORIES_KEY);
+  // Note: Individual category streams would need to be cleared separately
+  // This is a basic implementation - could be enhanced with a key prefix scan
 }
 
 // =============================================================================
