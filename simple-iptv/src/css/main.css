@@ -3018,6 +3018,386 @@ body {
 }
 
 /* --------------------------------------------------------------------------
+   Compact Mode - Small Screens & Echo Show Devices
+   -------------------------------------------------------------------------- */
+
+/* Detect compact screens: limited height OR very small width */
+@media (max-height: 600px), (max-width: 480px) {
+  :root {
+    /* Compact typography */
+    --font-size-xs: 0.65rem;
+    --font-size-sm: 0.75rem;
+    --font-size-base: 0.8125rem;
+    --font-size-lg: 0.875rem;
+    --font-size-xl: 1rem;
+    --font-size-2xl: 1.125rem;
+    
+    /* Compact spacing */
+    --space-1: 0.125rem;
+    --space-2: 0.25rem;
+    --space-3: 0.5rem;
+    --space-4: 0.625rem;
+    --space-5: 0.75rem;
+    --space-6: 1rem;
+    
+    /* Compact layout */
+    --header-height: 44px;
+    --channel-item-height: 36px;
+  }
+  
+  /* Header - more compact */
+  .header {
+    gap: var(--space-2);
+    padding: 0 var(--space-3);
+  }
+  
+  .header__logo {
+    font-size: var(--font-size-lg);
+  }
+  
+  .header__title {
+    font-size: var(--font-size-sm);
+  }
+  
+  .search-input {
+    padding: var(--space-2) var(--space-3);
+    padding-left: calc(var(--space-2) + 20px);
+    font-size: var(--font-size-sm);
+  }
+  
+  .header__search .icon {
+    width: 14px;
+    height: 14px;
+    left: var(--space-2);
+  }
+  
+  .header-btn {
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-xs);
+    gap: var(--space-1);
+  }
+  
+  .header-btn .icon {
+    width: 14px;
+    height: 14px;
+  }
+  
+  /* Hide text labels in header buttons on compact */
+  .header-btn span:last-child {
+    display: none;
+  }
+  
+  /* Content Tabs - more compact */
+  .content-tabs {
+    padding: var(--space-1);
+    gap: var(--space-1);
+  }
+  
+  .content-tab {
+    padding: var(--space-1);
+    font-size: 0.6rem;
+    gap: 0;
+  }
+  
+  .content-tab .icon {
+    width: 14px;
+    height: 14px;
+  }
+  
+  /* Sidebar quick access */
+  .sidebar__quick {
+    padding: var(--space-2);
+    gap: var(--space-1);
+  }
+  
+  /* Category items - compact */
+  .category-item {
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-xs);
+    gap: var(--space-1);
+  }
+  
+  .category-item .icon {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .category-count {
+    font-size: 0.6rem;
+    padding: 1px 4px;
+  }
+  
+  .categories__header {
+    font-size: var(--font-size-xs);
+    padding: var(--space-1) var(--space-2);
+  }
+  
+  .categories {
+    padding: var(--space-2);
+    max-height: 50%;
+  }
+  
+  /* Channel rows - compact */
+  .channel-row {
+    min-height: 32px;
+    padding: var(--space-1) var(--space-2);
+    gap: var(--space-2);
+  }
+  
+  .channel-row__logo {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .channel-row__name {
+    font-size: var(--font-size-xs);
+  }
+  
+  .channel-row__epg-title {
+    font-size: var(--font-size-xs);
+  }
+  
+  .channel-row__epg-label {
+    font-size: 0.55rem;
+  }
+  
+  .channel-row__no-epg {
+    font-size: var(--font-size-xs);
+  }
+  
+  /* Favourite button - compact */
+  .channel-favorite {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .channel-favorite .icon {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Floating Mini Player - For Compact Screens
+   Appears as a small overlay in the top-right corner
+   -------------------------------------------------------------------------- */
+@media (max-height: 600px), (max-width: 480px) {
+  /* EPG view top section becomes minimal */
+  .epg-view__top {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    z-index: 50;
+    display: block;
+    padding: 0;
+    background: transparent;
+    border: none;
+    min-height: auto;
+    max-height: none;
+    width: 180px;
+    height: 110px;
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    transition: all var(--transition-base);
+  }
+  
+  /* Hide the now playing panel entirely in mini mode */
+  .epg-view__top .now-playing-panel {
+    display: none;
+  }
+  
+  /* Mini player fills the container */
+  .epg-view__top .player {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+  
+  .epg-view__top .player__container {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .epg-view__top .player__video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  /* Hide most player controls in mini mode, show only essential */
+  .epg-view__top .player__controls {
+    padding: var(--space-1);
+    opacity: 0;
+  }
+  
+  .epg-view__top .player__container:hover .player__controls {
+    opacity: 1;
+  }
+  
+  .epg-view__top .controls__progress {
+    display: none;
+  }
+  
+  .epg-view__top .controls__buttons {
+    justify-content: flex-end;
+    gap: var(--space-1);
+  }
+  
+  .epg-view__top .now-playing {
+    display: none;
+  }
+  
+  .epg-view__top .controls__spacer {
+    display: none;
+  }
+  
+  .epg-view__top .volume-control {
+    display: none;
+  }
+  
+  .epg-view__top .btn-icon {
+    width: 24px;
+    height: 24px;
+    padding: 2px;
+  }
+  
+  .epg-view__top .btn-icon .icon {
+    width: 14px;
+    height: 14px;
+  }
+  
+  /* Content area takes full height, with padding for mini player */
+  .epg-view__content {
+    padding-top: var(--space-2);
+    padding-right: calc(180px + var(--space-4));
+  }
+  
+  .epg-view {
+    position: relative;
+  }
+  
+  /* Loading/error states in mini player */
+  .epg-view__top .player__loading,
+  .epg-view__top .player__error {
+    padding: var(--space-2);
+    gap: var(--space-1);
+  }
+  
+  .epg-view__top .player__loading span,
+  .epg-view__top .player__error .error-title {
+    font-size: var(--font-size-xs);
+  }
+  
+  .epg-view__top .spinner {
+    width: 20px;
+    height: 20px;
+    border-width: 2px;
+  }
+  
+  .epg-view__top .player__error .icon--large {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .epg-view__top .player__error .btn {
+    display: none;
+  }
+  
+  /* Expand mini player on tap/hover for better visibility */
+  .epg-view__top:hover,
+  .epg-view__top:focus-within {
+    width: 240px;
+    height: 145px;
+  }
+}
+
+/* Extra compact for very short screens (Echo Show in landscape) */
+@media (max-height: 500px) {
+  :root {
+    --header-height: 40px;
+  }
+  
+  .epg-view__top {
+    width: 150px;
+    height: 90px;
+  }
+  
+  .epg-view__top:hover,
+  .epg-view__top:focus-within {
+    width: 200px;
+    height: 120px;
+  }
+  
+  .epg-view__content {
+    padding-right: calc(150px + var(--space-3));
+  }
+  
+  /* Even smaller content tabs */
+  .content-tab span {
+    display: none;
+  }
+  
+  .content-tab {
+    padding: var(--space-2);
+  }
+  
+  .content-tab .icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Portrait phones - stack differently */
+@media (max-width: 480px) and (orientation: portrait) {
+  /* In portrait, put mini player at top-right but allow more width for sidebar */
+  .epg-view__top {
+    width: 120px;
+    height: 75px;
+  }
+  
+  .epg-view__top:hover,
+  .epg-view__top:focus-within {
+    width: 180px;
+    height: 110px;
+  }
+  
+  .epg-view__content {
+    padding-right: calc(120px + var(--space-3));
+    padding-top: var(--space-1);
+  }
+}
+
+/* When sidebar is open on mobile, hide mini player to avoid overlap */
+@media (max-height: 600px), (max-width: 480px) {
+  .sidebar--open ~ .content-area .epg-view__top {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+/* Content grid adjustments for compact mode */
+@media (max-height: 600px), (max-width: 480px) {
+  .content-grid--static .content-grid__inner {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: var(--space-2);
+  }
+  
+  .search-card__title {
+    font-size: var(--font-size-xs);
+  }
+  
+  .search-card__meta {
+    font-size: 0.6rem;
+  }
+  
+  .search-card__badge {
+    font-size: 0.55rem;
+    padding: 1px 4px;
+  }
+}
+
+/* --------------------------------------------------------------------------
    Utility Classes
    -------------------------------------------------------------------------- */
 [hidden] {

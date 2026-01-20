@@ -145,14 +145,22 @@ async function preflightCheck(url, isProxied = false) {
     debug('  Headers: Range: bytes=0-1000');
     
     const startTime = performance.now();
+    
+    // Build headers with session ID for proxy tracking
+    const fetchHeaders = {
+      'Range': 'bytes=0-1000'
+    };
+    
+    // Add session ID if using proxy
+    if (isProxied) {
+      fetchHeaders['X-Session-Id'] = getSessionId();
+    }
+    
     const response = await fetch(url, {
       method: 'GET',
       mode: 'cors',
       signal: controller.signal,
-      // Only fetch the first few bytes to check accessibility
-      headers: {
-        'Range': 'bytes=0-1000'
-      }
+      headers: fetchHeaders
     });
     const elapsed = (performance.now() - startTime).toFixed(0);
     
@@ -362,7 +370,8 @@ export async function play(channel) {
     throw new Error('Player not initialized');
   }
   
-  // Stop current playback
+  // Stop current playback - this closes browser connections,
+  // which the proxy detects and aborts upstream requests
   stop();
   
   currentChannel = channel;
@@ -407,47 +416,49 @@ export async function play(channel) {
   const codecSupport = getCodecSupport();
   debug('Full codec support:', codecSupport);
   
-  // ALWAYS do a preflight check now (even with proxy) so we can debug
-  log('');
-  log('Running preflight check on proxied URL...');
-  lastPreflightResult = await preflightCheck(url, usingProxy);
-  
-  if (!lastPreflightResult.ok) {
-    error('PREFLIGHT FAILED:', lastPreflightResult);
+  // SKIP preflight when using proxy - the proxy handles errors and returns proper status codes.
+  // Preflight was causing DOUBLE requests to upstream (preflight + hls.js), triggering provider blocks.
+  if (!usingProxy) {
+    log('');
+    log('Running preflight check (no proxy)...');
+    lastPreflightResult = await preflightCheck(url, false);
     
-    // Throw a descriptive error based on preflight result
-    const err = new Error(lastPreflightResult.message);
-    
-    // Map error string to ErrorType
-    switch (lastPreflightResult.error) {
-      case 'blocked':
-        err.type = ErrorTypes.BLOCKED;
-        break;
-      case 'cors_or_network':
-        err.type = ErrorTypes.CORS;
-        break;
-      case 'empty_stream':
-        err.type = ErrorTypes.EMPTY_STREAM;
-        break;
-      default:
-        err.type = ErrorTypes.NETWORK;
+    if (!lastPreflightResult.ok) {
+      error('PREFLIGHT FAILED:', lastPreflightResult);
+      
+      const err = new Error(lastPreflightResult.message);
+      
+      switch (lastPreflightResult.error) {
+        case 'blocked':
+          err.type = ErrorTypes.BLOCKED;
+          break;
+        case 'cors_or_network':
+          err.type = ErrorTypes.CORS;
+          break;
+        case 'empty_stream':
+          err.type = ErrorTypes.EMPTY_STREAM;
+          break;
+        default:
+          err.type = ErrorTypes.NETWORK;
+      }
+      
+      err.hint = getErrorHint(err.type);
+      err.status = lastPreflightResult.status;
+      
+      emit('onStateChange', { loading: false });
+      emit('onError', { 
+        type: err.type, 
+        message: err.message, 
+        hint: err.hint,
+        status: lastPreflightResult.status 
+      });
+      throw err;
     }
     
-    err.hint = getErrorHint(err.type);
-    err.status = lastPreflightResult.status;
-    
-    emit('onStateChange', { loading: false });
-    emit('onError', { 
-      type: err.type, 
-      message: err.message, 
-      hint: err.hint,
-      status: lastPreflightResult.status 
-    });
-    throw err;
+    log('✓ Preflight passed');
+  } else {
+    log('Skipping preflight (using proxy)');
   }
-  
-  log('');
-  log('✓ Preflight passed, proceeding to playback...');
   
   try {
     if (isHLS && supportsNativeHLS()) {
@@ -687,7 +698,11 @@ async function playWithHls(url) {
       maxBufferSize: 60 * 1000 * 1000,
       maxBufferHole: 0.5,
       
-      // XHR setup - verbose logging
+      // Reduce parallel requests to look more like single-device playback
+      // Default is 6 which can trigger multi-device detection
+      maxLoadingFragments: 2,
+      
+      // XHR setup
       xhrSetup: function(xhr, reqUrl) {
         debug('  HLS XHR setup for:', reqUrl.substring(0, 100));
         xhr.withCredentials = false;
@@ -956,6 +971,8 @@ function handleVideoError(e) {
 
 /**
  * Stop playback
+ * Destroying hls.js and clearing the video src will cause the browser to
+ * close connections, which the proxy detects and uses to abort upstream requests.
  */
 export function stop() {
   if (hlsInstance) {
