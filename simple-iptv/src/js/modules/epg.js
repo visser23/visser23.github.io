@@ -3,7 +3,7 @@
  * Handles XMLTV parsing using a Web Worker for performance
  */
 
-import { db, local, KEYS } from './storage.js';
+import { db, local, KEYS, applyProxyToUrl, getProxyUrl } from './storage.js';
 
 let epgWorker = null;
 let epgData = new Map(); // channelId -> programs[]
@@ -30,6 +30,7 @@ function initWorker() {
     
     switch (type) {
       case 'progress':
+        console.log('[EPG] Progress:', data.phase, data.loaded || '', data.parsed || '');
         emit('onProgress', data);
         break;
       case 'batch':
@@ -39,10 +40,18 @@ function initWorker() {
       case 'complete':
         isLoading = false;
         saveEpgToStorage();
+        console.log('[EPG] ✓ Complete! Total channels with EPG:', epgData.size);
+        // Log first few channel IDs for debugging
+        const sampleIds = [...epgData.keys()].slice(0, 5);
+        console.log('[EPG] Sample channel IDs:', sampleIds);
+        if (epgData.size === 0) {
+          console.warn('[EPG] ⚠ No EPG data loaded - check if XMLTV format is correct');
+        }
         emit('onComplete', { total: epgData.size });
         break;
       case 'error':
         isLoading = false;
+        console.error('[EPG] ✗ Error from worker:', data.message);
         emit('onError', { message: data.message });
         break;
     }
@@ -50,6 +59,7 @@ function initWorker() {
   
   epgWorker.onerror = (e) => {
     isLoading = false;
+    console.error('[EPG] ✗ Worker error:', e.message || 'Unknown worker error');
     emit('onError', { message: e.message || 'Worker error' });
   };
 }
@@ -78,25 +88,41 @@ export async function loadFromUrl(url) {
     return;
   }
   
+  // Apply proxy to the URL if configured
+  const proxiedUrl = applyProxyToUrl(url);
+  const proxyUrl = getProxyUrl();
+  
+  console.log('[EPG] Starting load from URL:', url);
+  console.log('[EPG] Proxy configured:', proxyUrl ? 'YES' : 'NO');
+  console.log('[EPG] Final URL:', proxiedUrl);
+  
   isLoading = true;
   epgData.clear();
   
   initWorker();
   
-  epgWorker.postMessage({ type: 'load', url });
+  epgWorker.postMessage({ type: 'load', url: proxiedUrl });
 }
 
 /**
  * Load EPG from cached data
  */
 export async function loadFromCache() {
+  console.log('[EPG] Loading from cache...');
   const cached = await db.get(KEYS.EPG);
+  
   if (cached && cached.data) {
+    const channelCount = Object.keys(cached.data).length;
+    const cacheAge = cached.timestamp ? Math.round((Date.now() - cached.timestamp) / 1000 / 60) : 'unknown';
+    console.log(`[EPG] ✓ Cache loaded: ${channelCount} channels, age: ${cacheAge} minutes`);
+    
     epgData = new Map(Object.entries(cached.data));
     emit('onComplete', { total: epgData.size, fromCache: true });
-    return true;
+    return epgData.size;
   }
-  return false;
+  
+  console.log('[EPG] No cache found');
+  return 0;
 }
 
 /**
@@ -114,8 +140,19 @@ async function saveEpgToStorage() {
  * @returns {Object|null}
  */
 export function getNow(channelId) {
+  if (!channelId) return null;
+  
   const programs = epgData.get(channelId);
-  if (!programs || programs.length === 0) return null;
+  if (!programs || programs.length === 0) {
+    // Try without case sensitivity
+    for (const [key, progs] of epgData) {
+      if (key.toLowerCase() === channelId.toLowerCase()) {
+        const now = Date.now();
+        return progs.find(p => p.start <= now && p.end > now) || null;
+      }
+    }
+    return null;
+  }
   
   const now = Date.now();
   return programs.find(p => p.start <= now && p.end > now) || null;

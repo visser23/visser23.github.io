@@ -3,12 +3,18 @@
  * Orchestrates all modules and handles app lifecycle
  */
 
+// MUST BE FIRST: Debug module controls console.log behavior
+// In production, this silences all console.log for performance
+// Enable with ?debug=true URL param or localStorage.simpleiptv_debug = 'true'
+import './modules/debug.js';
+
 import * as storage from './modules/storage.js';
 import * as credentials from './modules/credentials.js';
 import * as playlist from './modules/playlist.js';
 import * as player from './modules/player.js';
 import * as epg from './modules/epg.js';
 import * as ui from './modules/ui.js';
+import * as locale from './modules/locale.js';
 
 // App state
 let currentCredentials = null;
@@ -25,6 +31,22 @@ let vodCategoryCache = {}; // { categoryId: items[] }
 let seriesCategoryCache = {}; // { categoryId: items[] }
 
 /**
+ * Clear all VOD/Series caches (called when switching playlists)
+ */
+function clearVodSeriesCaches() {
+  vodCategories = [];
+  seriesCategories = [];
+  currentVodItems = [];
+  currentSeriesItems = [];
+  vodCategoryCache = {};
+  seriesCategoryCache = {};
+  allVodItems = [];
+  allSeriesItems = [];
+  isLoadingVodForSearch = false;
+  isLoadingSeriesForSearch = false;
+}
+
+/**
  * Initialize the application
  */
 async function init() {
@@ -37,11 +59,17 @@ async function init() {
     onFavoriteToggle: () => {}, // Handled by UI module
   });
   
+  // Initialize locale (for language-prioritized search)
+  locale.init();
+  ui.setLocaleModule(locale);
+  
   // Initialize player
   const videoElement = document.getElementById('video');
   if (videoElement) {
     player.init(videoElement);
     setupPlayerListeners();
+    // Attach DIRECT video element listeners for UI sync (more reliable)
+    setupVideoElementListeners(videoElement);
   }
   
   // Set up modal handlers
@@ -103,8 +131,19 @@ async function checkInitialState() {
  * Load stored credentials and playlist
  */
 async function loadStoredCredentials(pin = null) {
+  console.log('[App] ═══════════════════════════════════════════════════════════');
+  console.log('[App] loadStoredCredentials called');
+  
   try {
     currentCredentials = await credentials.getCredentials(pin);
+    
+    console.log('[App] Retrieved credentials:', currentCredentials ? {
+      mode: currentCredentials.mode,
+      server: currentCredentials.server || 'N/A',
+      hasUsername: !!currentCredentials.username,
+      hasPassword: !!currentCredentials.password,
+      epgUrl: currentCredentials.epgUrl || 'NOT SET'
+    } : 'NULL');
     
     if (!currentCredentials) {
       if (pin !== null) {
@@ -116,24 +155,53 @@ async function loadStoredCredentials(pin = null) {
         }
         return false;
       }
+      console.log('[App] No credentials found, showing onboarding');
       return false;
     }
     
     // Try to load cached channels first
     channels = await playlist.loadChannels();
+    console.log('[App] Loaded', channels.length, 'channels from cache');
     
     if (channels.length > 0) {
       ui.setChannels(channels);
       ui.showPlayer();
       updateSettingsInfo();
       
-      // Load EPG from cache
-      await epg.loadFromCache();
+      // Update global search with loaded channels
+      updateGlobalSearchItems();
+      
+      // VOD/Series now loaded on-demand when user searches (not eagerly)
+      // See loadVodSeriesOnDemand() for the on-demand loading logic
+      
+      // Load EPG from cache first
+      console.log('[App] Loading EPG from cache...');
+      const cachedEpgCount = await epg.loadFromCache();
+      console.log('[App] EPG cache result:', cachedEpgCount, 'channels');
+      
+      // If we have Xtream credentials, try to load fresh EPG
+      if (currentCredentials.mode === 'xtream' && currentCredentials.server) {
+        const { server, username, password } = currentCredentials;
+        if (server && username && password) {
+          const cleanServer = server.replace(/\/+$/, '');
+          const epgUrl = `${cleanServer}/xmltv.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+          console.log('[App] Will load fresh EPG from:', epgUrl);
+          // Don't await - load in background
+          loadEpg(epgUrl);
+        }
+      } else if (currentCredentials.epgUrl) {
+        console.log('[App] Loading fresh EPG from stored URL:', currentCredentials.epgUrl);
+        loadEpg(currentCredentials.epgUrl);
+      } else {
+        console.log('[App] No EPG URL available for fresh load');
+      }
     } else {
       // No cached channels, need to fetch
+      console.log('[App] No cached channels, calling refreshPlaylist');
       await refreshPlaylist();
     }
     
+    console.log('[App] ═══════════════════════════════════════════════════════════');
     return true;
   } catch (error) {
     console.error('[App] Failed to load credentials:', error);
@@ -178,10 +246,42 @@ async function refreshPlaylist() {
     ui.showLoading(false);
     ui.setNowPlaying('Select a channel');
     
+    // Update global search with new channels
+    updateGlobalSearchItems();
+    
+    // VOD/Series now loaded on-demand when user searches (not eagerly)
+    // See loadVodSeriesOnDemand() for the on-demand loading logic
+    
     // Load EPG if URL provided
-    if (currentCredentials.epgUrl) {
+    console.log('[App] ═══════════════════════════════════════════════════════════');
+    console.log('[App] EPG CHECK - Credentials mode:', currentCredentials?.mode);
+    console.log('[App] EPG CHECK - Stored epgUrl:', currentCredentials?.epgUrl || 'NOT SET');
+    
+    if (currentCredentials?.epgUrl) {
+      console.log('[App] EPG: Loading from stored credentials URL');
       loadEpg(currentCredentials.epgUrl);
+    } else if (currentCredentials?.mode === 'xtream') {
+      // Generate EPG URL for Xtream if not stored
+      const { server, username, password } = currentCredentials;
+      console.log('[App] EPG: Xtream mode - server:', server, 'username:', username ? 'SET' : 'NOT SET');
+      
+      if (server && username && password) {
+        const cleanServer = server.replace(/\/+$/, '');
+        const epgUrl = `${cleanServer}/xmltv.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+        console.log('[App] EPG: Generated Xtream XMLTV URL:', epgUrl);
+        currentCredentials.epgUrl = epgUrl;
+        loadEpg(epgUrl);
+      } else {
+        console.warn('[App] EPG: Cannot generate URL - missing server/username/password');
+        ui.showToast('EPG: Missing credentials for Xtream', 'warning');
+      }
+    } else if (currentCredentials?.mode === 'm3u-url' || currentCredentials?.mode === 'm3u-file') {
+      console.log('[App] EPG: M3U mode - no EPG URL configured');
+      // Could show hint to user about adding EPG URL
+    } else {
+      console.warn('[App] EPG: Unknown mode or no credentials:', currentCredentials?.mode);
     }
+    console.log('[App] ═══════════════════════════════════════════════════════════');
     
     updateSettingsInfo();
     ui.showToast(`Loaded ${channels.length} channels`, 'success');
@@ -334,6 +434,9 @@ async function loadVodCategory(categoryId) {
       // Fetch from API
       currentVodItems = await playlist.fetchVodStreams(currentCredentials, categoryId);
       vodCategoryCache[categoryId] = currentVodItems;
+      
+      // Update global search with new items
+      updateGlobalSearchItems();
     }
     
     ui.setItems(currentVodItems);
@@ -362,6 +465,9 @@ async function loadSeriesCategory(categoryId) {
       // Fetch from API
       currentSeriesItems = await playlist.fetchSeriesList(currentCredentials, categoryId);
       seriesCategoryCache[categoryId] = currentSeriesItems;
+      
+      // Update global search with new items
+      updateGlobalSearchItems();
     }
     
     ui.setItems(currentSeriesItems);
@@ -400,22 +506,165 @@ window.app.loadVodCategory = loadVodCategory;
 window.app.loadSeriesCategory = loadSeriesCategory;
 window.app.loadSeriesDetails = loadSeriesDetails;
 
+// All items storage for global search (loaded in background)
+let allVodItems = [];
+let allSeriesItems = [];
+let isLoadingVodForSearch = false;
+let isLoadingSeriesForSearch = false;
+
+/**
+ * Update all searchable items for global search
+ * Collects live channels + all VOD + all series
+ */
+function updateGlobalSearchItems() {
+  const allItems = [];
+  
+  // Add live channels (mark them with type: 'live')
+  channels.forEach(ch => {
+    allItems.push({
+      ...ch,
+      type: 'live'
+    });
+  });
+  
+  // Add all VOD items (from full list, not just cache)
+  allVodItems.forEach(item => {
+    allItems.push(item); // Already has type: 'vod'
+  });
+  
+  // Add all series items (from full list, not just cache)
+  allSeriesItems.forEach(item => {
+    allItems.push(item); // Already has type: 'series'
+  });
+  
+  // Pass to UI for global search
+  ui.setAllSearchableItems(allItems);
+  
+  console.log(`[App] Updated global search: ${channels.length} live + ${allVodItems.length} movies + ${allSeriesItems.length} series = ${allItems.length} total`);
+}
+
+/**
+ * Load all VOD items in background for global search
+ */
+async function loadAllVodForSearch() {
+  if (!currentCredentials || currentCredentials.mode !== 'xtream') return;
+  if (isLoadingVodForSearch || allVodItems.length > 0) return;
+  
+  isLoadingVodForSearch = true;
+  console.log('[App] Loading all movies for global search...');
+  
+  try {
+    // Fetch ALL VOD streams (no category filter)
+    allVodItems = await playlist.fetchVodStreams(currentCredentials, null);
+    console.log(`[App] Loaded ${allVodItems.length} movies for search`);
+    updateGlobalSearchItems();
+  } catch (error) {
+    console.error('[App] Failed to load VOD for search:', error);
+  } finally {
+    isLoadingVodForSearch = false;
+  }
+}
+
+/**
+ * Load all series items in background for global search
+ */
+async function loadAllSeriesForSearch() {
+  if (!currentCredentials || currentCredentials.mode !== 'xtream') return;
+  if (isLoadingSeriesForSearch || allSeriesItems.length > 0) return;
+  
+  isLoadingSeriesForSearch = true;
+  console.log('[App] Loading all series for global search...');
+  
+  try {
+    // Fetch ALL series (no category filter)
+    allSeriesItems = await playlist.fetchSeriesList(currentCredentials, null);
+    console.log(`[App] Loaded ${allSeriesItems.length} series for search`);
+    updateGlobalSearchItems();
+  } catch (error) {
+    console.error('[App] Failed to load series for search:', error);
+  } finally {
+    isLoadingSeriesForSearch = false;
+  }
+}
+
+/**
+ * Load VOD/Series on-demand when user starts searching
+ * Called from UI when search is triggered (not eagerly at startup)
+ * @returns {Promise<boolean>} true if data was loaded/available
+ */
+async function loadVodSeriesOnDemand() {
+  if (!currentCredentials || currentCredentials.mode !== 'xtream') {
+    // Only Xtream supports Movies/Series
+    return false;
+  }
+  
+  // If already loaded, return immediately
+  if (allVodItems.length > 0 && allSeriesItems.length > 0) {
+    return true;
+  }
+  
+  // If already loading, wait for completion
+  if (isLoadingVodForSearch || isLoadingSeriesForSearch) {
+    // Return a promise that resolves when loading completes
+    return new Promise(resolve => {
+      const checkLoading = setInterval(() => {
+        if (!isLoadingVodForSearch && !isLoadingSeriesForSearch) {
+          clearInterval(checkLoading);
+          resolve(true);
+        }
+      }, 100);
+    });
+  }
+  
+  console.log('[App] Loading VOD/Series on-demand for search...');
+  
+  // Load both in parallel
+  const loadPromises = [];
+  
+  if (allVodItems.length === 0) {
+    loadPromises.push(loadAllVodForSearch());
+  }
+  if (allSeriesItems.length === 0) {
+    loadPromises.push(loadAllSeriesForSearch());
+  }
+  
+  await Promise.all(loadPromises);
+  return true;
+}
+
+// Expose the on-demand loader for UI to call
+window.loadVodSeriesOnDemand = loadVodSeriesOnDemand;
+
 /**
  * Load EPG data
  * @param {string} url 
  */
 async function loadEpg(url) {
-  epg.on('onComplete', () => {
-    ui.showToast('EPG loaded', 'success');
+  console.log('[App] ═══════════════════════════════════════════════════════════');
+  console.log('[App] loadEpg called with URL:', url);
+  
+  epg.on('onProgress', (data) => {
+    console.log('[App] EPG Progress:', data.phase || data.status, data);
+  });
+  
+  epg.on('onComplete', (data) => {
+    console.log('[App] ✓ EPG Complete:', data);
+    if (data.total > 0) {
+      ui.showToast(`EPG loaded: ${data.total} channels`, 'success');
+    } else {
+      ui.showToast('EPG loaded but no data found', 'warning');
+    }
     ui.refresh();
   });
   
   epg.on('onError', (data) => {
-    console.error('[EPG] Error:', data);
-    ui.showToast('EPG failed to load', 'error');
+    console.error('[App] ✗ EPG Error:', data);
+    ui.showToast(`EPG failed: ${data.message || 'Unknown error'}`, 'error');
   });
   
+  console.log('[App] Calling epg.loadFromUrl...');
   await epg.loadFromUrl(url);
+  console.log('[App] ═══════════════════════════════════════════════════════════');
 }
 
 /**
@@ -426,6 +675,7 @@ async function handleChannelSelect(channel) {
   ui.showLoading(true);
   ui.hideError();
   ui.setNowPlaying(channel.name);
+  ui.updateNowPlayingPanel(channel); // Update the Now Playing panel
   
   try {
     await player.play(channel);
@@ -481,19 +731,56 @@ function stopEpgUpdater() {
  * Set up player event listeners
  */
 function setupPlayerListeners() {
+  console.log('[App] Setting up player listeners');
   player.on('onStateChange', (state) => {
     if (state.loading !== undefined) {
       ui.showLoading(state.loading);
-    }
-    if (state.playing !== undefined) {
-      updatePlayPauseButton(state.playing);
     }
   });
   
   player.on('onError', (error) => {
     ui.showLoading(false);
-    // Pass full error object for better messaging
     ui.showError(error);
+  });
+}
+
+/**
+ * Direct video element event listeners for UI sync
+ * More reliable than going through abstraction layer
+ * @param {HTMLVideoElement} video 
+ */
+function setupVideoElementListeners(video) {
+  console.log('[App] Attaching direct video element listeners');
+  
+  // Play/Pause state sync
+  video.addEventListener('play', () => {
+    console.log('[Video] play event');
+    updatePlayPauseButton(true);
+  });
+  
+  video.addEventListener('pause', () => {
+    console.log('[Video] pause event');
+    updatePlayPauseButton(false);
+  });
+  
+  // Volume/Mute state sync
+  video.addEventListener('volumechange', () => {
+    console.log('[Video] volumechange event', { muted: video.muted, volume: video.volume });
+    updateVolumeIcon();
+  });
+  
+  // Progress bar update
+  video.addEventListener('timeupdate', () => {
+    updateProgressBar(video.currentTime, video.duration);
+  });
+  
+  // Seeking feedback (optional: show seeking state)
+  video.addEventListener('seeking', () => {
+    console.log('[Video] seeking to', video.currentTime);
+  });
+  
+  video.addEventListener('seeked', () => {
+    console.log('[Video] seeked to', video.currentTime);
   });
 }
 
@@ -501,30 +788,263 @@ function setupPlayerListeners() {
  * Update play/pause button state
  */
 function updatePlayPauseButton(playing) {
-  const playIcon = document.querySelector('.icon-play');
-  const pauseIcon = document.querySelector('.icon-pause');
-  if (playIcon) playIcon.hidden = playing;
-  if (pauseIcon) pauseIcon.hidden = !playing;
+  console.log('[App] updatePlayPauseButton:', playing);
+  const playIcon = document.querySelector('#btn-play-pause .icon-play');
+  const pauseIcon = document.querySelector('#btn-play-pause .icon-pause');
+  console.log('[App] Found icons:', { playIcon: !!playIcon, pauseIcon: !!pauseIcon });
+  
+  if (playIcon && pauseIcon) {
+    // Use CSS class toggle instead of hidden attribute (more reliable for SVGs)
+    playIcon.classList.toggle('is-hidden', playing);
+    pauseIcon.classList.toggle('is-hidden', !playing);
+    console.log('[App] Icon classes after toggle:', {
+      playHidden: playIcon.classList.contains('is-hidden'),
+      pauseHidden: pauseIcon.classList.contains('is-hidden')
+    });
+  }
+}
+
+// Global debug functions for testing from browser console
+window.debugPlayerControls = {
+  testPlayPause: () => {
+    const playIcon = document.querySelector('#btn-play-pause .icon-play');
+    const pauseIcon = document.querySelector('#btn-play-pause .icon-pause');
+    console.log('Play icon:', playIcon);
+    console.log('Pause icon:', pauseIcon);
+    console.log('Play classes:', playIcon?.className);
+    console.log('Pause classes:', pauseIcon?.className);
+  },
+  showPause: () => {
+    document.querySelector('#btn-play-pause .icon-play')?.classList.add('is-hidden');
+    document.querySelector('#btn-play-pause .icon-pause')?.classList.remove('is-hidden');
+    console.log('Switched to pause icon');
+  },
+  showPlay: () => {
+    document.querySelector('#btn-play-pause .icon-play')?.classList.remove('is-hidden');
+    document.querySelector('#btn-play-pause .icon-pause')?.classList.add('is-hidden');
+    console.log('Switched to play icon');
+  },
+  testMute: () => {
+    const volumeIcon = document.querySelector('#btn-mute .icon-volume');
+    const mutedIcon = document.querySelector('#btn-mute .icon-muted');
+    console.log('Volume icon:', volumeIcon);
+    console.log('Muted icon:', mutedIcon);
+    console.log('Volume classes:', volumeIcon?.className);
+    console.log('Muted classes:', mutedIcon?.className);
+  },
+  showMuted: () => {
+    document.querySelector('#btn-mute .icon-volume')?.classList.add('is-hidden');
+    document.querySelector('#btn-mute .icon-muted')?.classList.remove('is-hidden');
+    console.log('Switched to muted icon');
+  },
+  showVolume: () => {
+    document.querySelector('#btn-mute .icon-volume')?.classList.remove('is-hidden');
+    document.querySelector('#btn-mute .icon-muted')?.classList.add('is-hidden');
+    console.log('Switched to volume icon');
+  },
+  videoState: () => {
+    const video = document.getElementById('video');
+    console.log('Video element:', video);
+    console.log('Paused:', video?.paused);
+    console.log('Muted:', video?.muted);
+    console.log('Volume:', video?.volume);
+    console.log('Duration:', video?.duration);
+    console.log('CurrentTime:', video?.currentTime);
+    
+    // Check seekable ranges
+    if (video?.seekable) {
+      console.log('Seekable ranges:', video.seekable.length);
+      for (let i = 0; i < video.seekable.length; i++) {
+        console.log(`  Range ${i}: ${video.seekable.start(i)} - ${video.seekable.end(i)}`);
+      }
+    }
+    
+    // Check buffered ranges
+    if (video?.buffered) {
+      console.log('Buffered ranges:', video.buffered.length);
+      for (let i = 0; i < video.buffered.length; i++) {
+        console.log(`  Range ${i}: ${video.buffered.start(i)} - ${video.buffered.end(i)}`);
+      }
+    }
+  },
+  
+  seekTo: (seconds) => {
+    const video = document.getElementById('video');
+    if (!video) {
+      console.error('No video element');
+      return;
+    }
+    console.log('=== SEEK DEBUG ===');
+    console.log('Target:', seconds);
+    console.log('Duration:', video.duration);
+    console.log('ReadyState:', video.readyState);
+    console.log('NetworkState:', video.networkState);
+    console.log('Paused:', video.paused);
+    console.log('Current time BEFORE:', video.currentTime);
+    
+    // Direct assignment
+    video.currentTime = seconds;
+    
+    console.log('Current time IMMEDIATELY AFTER:', video.currentTime);
+    
+    // Check multiple times
+    setTimeout(() => console.log('After 50ms:', video.currentTime), 50);
+    setTimeout(() => console.log('After 100ms:', video.currentTime), 100);
+    setTimeout(() => console.log('After 200ms:', video.currentTime), 200);
+    setTimeout(() => console.log('After 500ms:', video.currentTime), 500);
+  },
+  
+  // Try seeking with fastSeek (if available)
+  fastSeekTo: (seconds) => {
+    const video = document.getElementById('video');
+    if (!video) return;
+    console.log('=== FAST SEEK ===');
+    if (video.fastSeek) {
+      console.log('fastSeek is available');
+      video.fastSeek(seconds);
+    } else {
+      console.log('fastSeek not available, using currentTime');
+      video.currentTime = seconds;
+    }
+    setTimeout(() => console.log('After 200ms:', video.currentTime), 200);
+  },
+  
+  // Check HLS.js internal state
+  hlsState: () => {
+    const video = document.getElementById('video');
+    const hls = player.getHlsInstance();
+    
+    console.log('=== HLS STATE DEBUG ===');
+    console.log('Video src:', video?.src);
+    console.log('HLS instance:', hls ? 'ACTIVE' : 'none');
+    
+    if (hls) {
+      console.log('HLS media:', hls.media ? 'attached' : 'not attached');
+      console.log('HLS levels:', hls.levels?.length);
+      console.log('HLS currentLevel:', hls.currentLevel);
+      console.log('HLS startPosition:', hls.startPosition);
+      
+      // Check level details for live/VOD
+      if (hls.levels && hls.levels[hls.currentLevel]) {
+        const details = hls.levels[hls.currentLevel].details;
+        if (details) {
+          console.log('Level details - live:', details.live);
+          console.log('Level details - totalduration:', details.totalduration);
+          console.log('Level details - endSN:', details.endSN);
+        }
+      }
+    }
+    
+    // Check buffered ranges
+    if (video?.buffered?.length > 0) {
+      console.log('Buffered ranges:');
+      for (let i = 0; i < video.buffered.length; i++) {
+        console.log(`  ${i}: ${video.buffered.start(i).toFixed(2)} - ${video.buffered.end(i).toFixed(2)}`);
+      }
+    }
+  },
+  
+  // Force HLS.js to seek by restarting load at position
+  hlsSeek: (seconds) => {
+    const hls = player.getHlsInstance();
+    const video = document.getElementById('video');
+    
+    if (!hls) {
+      console.log('No HLS instance, using direct seek');
+      if (video) video.currentTime = seconds;
+      return;
+    }
+    
+    console.log('=== HLS.js FORCE SEEK ===');
+    console.log('Target:', seconds);
+    
+    // Method 1: Stop and restart load at position
+    hls.stopLoad();
+    hls.startLoad(seconds);
+    
+    // Also set video time
+    setTimeout(() => {
+      video.currentTime = seconds;
+      console.log('After HLS startLoad + currentTime:', video.currentTime);
+    }, 100);
+  }
+};
+
+/**
+ * Update progress bar
+ */
+function updateProgressBar(currentTime, duration) {
+  const progressFill = document.getElementById('progress-fill');
+  const scrubber = document.getElementById('progress-scrubber');
+  const progressBar = document.getElementById('progress-bar');
+  
+  // Don't update if dragging (user is scrubbing)
+  if (progressBar?.classList.contains('is-dragging')) return;
+  
+  if (!progressFill || !duration || !isFinite(duration)) return;
+  
+  const percent = (currentTime / duration) * 100;
+  progressFill.style.width = `${percent}%`;
+  if (scrubber) scrubber.style.left = `${percent}%`;
 }
 
 /**
  * Set up player controls
  */
 function setupPlayerControls() {
+  // Play/Pause button - directly control video element
   document.getElementById('btn-play-pause')?.addEventListener('click', () => {
-    player.togglePlay();
+    const video = document.getElementById('video');
+    if (!video) return;
+    
+    console.log('[App] Play/Pause clicked, paused:', video.paused);
+    if (video.paused) {
+      video.play().catch(err => console.warn('[App] Play failed:', err));
+    } else {
+      video.pause();
+    }
+    // play/pause events will trigger updatePlayPauseButton via direct listener
   });
   
+  // Volume slider - directly control video element
   const volumeSlider = document.getElementById('volume-slider');
   volumeSlider?.addEventListener('input', (e) => {
-    player.setVolume(parseFloat(e.target.value));
-    updateVolumeIcon();
+    const video = document.getElementById('video');
+    if (!video) return;
+    
+    const vol = parseFloat(e.target.value);
+    video.volume = vol;
+    // Unmute if adjusting volume while muted
+    if (video.muted && vol > 0) {
+      video.muted = false;
+    }
+    // volumechange event will trigger updateVolumeIcon via direct listener
   });
   
+  // Mute button - toggles mute and restores previous volume
   document.getElementById('btn-mute')?.addEventListener('click', () => {
-    player.toggleMute();
-    updateVolumeIcon();
+    const video = document.getElementById('video');
+    if (!video) return;
+    
+    console.log('[App] Mute button clicked, current muted:', video.muted);
+    
+    if (video.muted) {
+      // Unmute and restore previous volume
+      video.muted = false;
+      const prevVolume = parseFloat(volumeSlider?.dataset.prevVolume || '1');
+      video.volume = prevVolume;
+      if (volumeSlider) volumeSlider.value = prevVolume;
+    } else {
+      // Mute and remember current volume
+      if (volumeSlider) volumeSlider.dataset.prevVolume = video.volume;
+      video.muted = true;
+      if (volumeSlider) volumeSlider.value = 0;
+    }
+    // volumechange event will trigger updateVolumeIcon via direct listener
   });
+  
+  // Progress bar scrubbing (click and drag)
+  setupProgressBarScrubbing();
   
   document.getElementById('btn-fullscreen')?.addEventListener('click', () => {
     player.toggleFullscreen();
@@ -545,22 +1065,213 @@ function setupPlayerControls() {
  * Update volume icon based on state
  */
 function updateVolumeIcon() {
-  const volumeIcon = document.querySelector('.icon-volume');
-  const mutedIcon = document.querySelector('.icon-muted');
-  const isMuted = player.isMuted();
-  if (volumeIcon) volumeIcon.hidden = isMuted;
-  if (mutedIcon) mutedIcon.hidden = !isMuted;
+  const video = document.getElementById('video');
+  const volumeIcon = document.querySelector('#btn-mute .icon-volume');
+  const mutedIcon = document.querySelector('#btn-mute .icon-muted');
+  
+  if (!video) return;
+  
+  // Show muted icon if muted OR volume is 0
+  const showMuted = video.muted || video.volume === 0;
+  console.log('[App] updateVolumeIcon:', { muted: video.muted, volume: video.volume, showMuted });
+  
+  if (volumeIcon && mutedIcon) {
+    // Use CSS class toggle instead of hidden attribute (more reliable for SVGs)
+    volumeIcon.classList.toggle('is-hidden', showMuted);
+    mutedIcon.classList.toggle('is-hidden', !showMuted);
+    console.log('[App] Volume icon classes after toggle:', {
+      volumeHidden: volumeIcon.classList.contains('is-hidden'),
+      mutedHidden: mutedIcon.classList.contains('is-hidden')
+    });
+  }
 }
 
 /**
  * Update fullscreen icon based on state
  */
 function updateFullscreenIcon() {
-  const expandIcon = document.querySelector('.icon-expand');
-  const compressIcon = document.querySelector('.icon-compress');
+  const expandIcon = document.querySelector('#btn-fullscreen .icon-expand');
+  const compressIcon = document.querySelector('#btn-fullscreen .icon-compress');
   const isFs = player.isFullscreen();
-  if (expandIcon) expandIcon.hidden = isFs;
-  if (compressIcon) compressIcon.hidden = !isFs;
+  if (expandIcon && compressIcon) {
+    expandIcon.classList.toggle('is-hidden', isFs);
+    compressIcon.classList.toggle('is-hidden', !isFs);
+  }
+}
+
+/**
+ * Format seconds as timecode (H:MM:SS or M:SS)
+ * @param {number} seconds 
+ * @returns {string}
+ */
+function formatTimecode(seconds) {
+  if (!isFinite(seconds) || seconds < 0) return '0:00';
+  
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  
+  if (h > 0) {
+    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Set up progress bar scrubbing with click, drag, and tooltip
+ */
+function setupProgressBarScrubbing() {
+  const progressBar = document.getElementById('progress-bar');
+  const progressFill = document.getElementById('progress-fill');
+  const scrubber = document.getElementById('progress-scrubber');
+  const tooltip = document.getElementById('progress-tooltip');
+  const video = document.getElementById('video');
+  
+  if (!progressBar) {
+    console.warn('[App] Progress bar not found');
+    return;
+  }
+  
+  let isDragging = false;
+  
+  /**
+   * Calculate percent from mouse position
+   */
+  function getPercentFromEvent(e) {
+    const rect = progressBar.getBoundingClientRect();
+    return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  }
+  
+  /**
+   * Update tooltip position and text
+   */
+  function updateTooltip(e, percent) {
+    if (!tooltip || !video?.duration || !isFinite(video.duration) || video.duration === 0) return;
+    
+    const time = percent * video.duration;
+    tooltip.textContent = formatTimecode(time) + ' / ' + formatTimecode(video.duration);
+    
+    // Position tooltip at cursor
+    const rect = progressBar.getBoundingClientRect();
+    const tooltipX = e.clientX - rect.left;
+    tooltip.style.left = `${tooltipX}px`;
+  }
+  
+  /**
+   * Seek to position
+   */
+  function seekToPercent(percent) {
+    if (!video) {
+      console.warn('[App] Cannot seek - no video element');
+      return;
+    }
+    
+    // Check if video has valid duration
+    if (!video.duration || !isFinite(video.duration) || video.duration === 0) {
+      console.warn('[App] Cannot seek - no valid duration (live stream?)');
+      return;
+    }
+    
+    // Calculate seek time
+    const seekTime = percent * video.duration;
+    
+    // Validate seek time
+    if (!isFinite(seekTime) || seekTime < 0) {
+      console.warn('[App] Invalid seek time:', seekTime);
+      return;
+    }
+    
+    console.log('[App] Seeking to:', formatTimecode(seekTime), 'of', formatTimecode(video.duration), '(' + (percent * 100).toFixed(1) + '%)');
+    
+    // Use the player module's seek function (handles HLS.js properly)
+    player.seek(seekTime);
+  }
+  
+  /**
+   * Update scrubber and fill visually during drag
+   */
+  function updateScrubberPosition(percent) {
+    if (scrubber) scrubber.style.left = `${percent * 100}%`;
+    if (progressFill) progressFill.style.width = `${percent * 100}%`;
+  }
+  
+  // Mouse down - start drag
+  progressBar.addEventListener('mousedown', (e) => {
+    if (!video?.duration || !isFinite(video.duration)) return;
+    
+    isDragging = true;
+    progressBar.classList.add('is-dragging');
+    
+    const percent = getPercentFromEvent(e);
+    updateScrubberPosition(percent);
+    updateTooltip(e, percent);
+    
+    e.preventDefault(); // Prevent text selection
+  });
+  
+  // Mouse move - update preview during drag, show tooltip on hover
+  progressBar.addEventListener('mousemove', (e) => {
+    const percent = getPercentFromEvent(e);
+    updateTooltip(e, percent);
+    
+    if (isDragging) {
+      updateScrubberPosition(percent);
+    }
+  });
+  
+  // Mouse up on progress bar - seek
+  progressBar.addEventListener('mouseup', (e) => {
+    if (!video?.duration || !isFinite(video.duration)) return;
+    
+    const percent = getPercentFromEvent(e);
+    seekToPercent(percent);
+    
+    isDragging = false;
+    progressBar.classList.remove('is-dragging');
+  });
+  
+  // Mouse leave - cancel drag preview if not committed
+  progressBar.addEventListener('mouseleave', () => {
+    if (isDragging) {
+      // Reset to actual position
+      if (video?.duration && isFinite(video.duration)) {
+        const actualPercent = video.currentTime / video.duration;
+        updateScrubberPosition(actualPercent);
+      }
+    }
+  });
+  
+  // Global mouse up - finish drag even if mouse leaves progress bar
+  document.addEventListener('mouseup', (e) => {
+    if (isDragging) {
+      isDragging = false;
+      progressBar.classList.remove('is-dragging');
+      
+      // If we're still over the progress bar area, seek
+      const rect = progressBar.getBoundingClientRect();
+      if (e.clientX >= rect.left && e.clientX <= rect.right) {
+        const percent = getPercentFromEvent(e);
+        seekToPercent(percent);
+      } else {
+        // Reset to actual position
+        if (video?.duration && isFinite(video.duration)) {
+          const actualPercent = video.currentTime / video.duration;
+          updateScrubberPosition(actualPercent);
+        }
+      }
+    }
+  });
+  
+  // Global mouse move - continue drag even if mouse leaves progress bar
+  document.addEventListener('mousemove', (e) => {
+    if (isDragging && video?.duration && isFinite(video.duration)) {
+      const rect = progressBar.getBoundingClientRect();
+      const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      updateScrubberPosition(percent);
+    }
+  });
+  
+  console.log('[App] Progress bar scrubbing initialized');
 }
 
 /**
@@ -771,6 +1482,9 @@ async function handleLoadPlaylist() {
   
   hideFormError();
   
+  // Clear any existing VOD/Series caches when loading new playlist
+  clearVodSeriesCaches();
+  
   try {
     let creds = null;
     let loadedChannels = [];
@@ -785,7 +1499,12 @@ async function handleLoadPlaylist() {
         throw new Error('Please fill in all fields');
       }
       
-      creds = { mode: 'xtream', server, username, password };
+      // Build EPG URL for Xtream - XMLTV endpoint
+      const cleanServer = server.replace(/\/+$/, ''); // Remove trailing slashes
+      const epgUrl = `${cleanServer}/xmltv.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+      
+      creds = { mode: 'xtream', server, username, password, epgUrl };
+      console.log('[App] Xtream EPG URL:', epgUrl);
       
       showLoadingState('Connecting to server...');
       loadedChannels = await playlist.fetchXtream(creds, updateLoadingMessage);
@@ -844,6 +1563,12 @@ async function handleLoadPlaylist() {
     ui.showPlayer();
     ui.showToast(`Loaded ${channels.length} channels`, 'success');
     updateSettingsInfo();
+    
+    // Update global search with new channels
+    updateGlobalSearchItems();
+    
+    // VOD/Series now loaded on-demand when user searches (not eagerly)
+    // See loadVodSeriesOnDemand() for the on-demand loading logic
     
     // Load EPG if URL provided
     if (creds.epgUrl) {
@@ -1056,6 +1781,37 @@ function setupSettings() {
     }
     e.target.value = '';
   });
+  
+  // Locale/Country selector
+  const localeSelect = document.getElementById('locale-select');
+  const localeInfo = document.getElementById('settings-locale-info');
+  
+  // Set initial value from locale module
+  if (localeSelect) {
+    const override = locale.getCountryOverride();
+    localeSelect.value = override || '';
+    updateLocaleInfo();
+  }
+  
+  localeSelect?.addEventListener('change', (e) => {
+    const country = e.target.value || null;
+    locale.setCountryOverride(country);
+    updateLocaleInfo();
+    
+    // Refresh UI with new locale sorting
+    ui.refreshForLocaleChange();
+    
+    ui.showToast(country ? `Language set to ${e.target.options[e.target.selectedIndex].text}` : 'Using auto-detected language', 'success');
+  });
+  
+  function updateLocaleInfo() {
+    if (!localeInfo) return;
+    const activeCountry = locale.getActiveCountry();
+    const override = locale.getCountryOverride();
+    localeInfo.textContent = override 
+      ? `Set to ${activeCountry}` 
+      : `Auto-detected: ${activeCountry}`;
+  }
   
   // Logout button (in header)
   document.getElementById('btn-logout')?.addEventListener('click', () => {

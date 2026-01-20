@@ -757,6 +757,14 @@ async function playWithHls(url) {
     
     hlsInstance.on(Hls.Events.LEVEL_LOADED, (event, data) => {
       debug('  HLS Event: LEVEL_LOADED', data.level, 'fragments:', data.details?.fragments?.length);
+      // CRITICAL: Check if HLS.js detects this as LIVE or VOD
+      if (data.details) {
+        log('  HLS Stream Type:', data.details.live ? 'LIVE' : 'VOD');
+        log('  HLS Total Duration:', data.details.totalduration);
+        if (data.details.live) {
+          log('  ⚠️ Stream detected as LIVE - seeking may be limited');
+        }
+      }
     });
     
     hlsInstance.on(Hls.Events.FRAG_LOADING, (event, data) => {
@@ -981,6 +989,59 @@ export function togglePlay() {
 }
 
 /**
+ * Seek to a specific time
+ * @param {number} time - Time in seconds to seek to
+ * @returns {boolean} - Whether seek was attempted
+ */
+export function seek(time) {
+  if (!videoElement) {
+    console.warn('[Player] Cannot seek - no video element');
+    return false;
+  }
+  
+  console.log('[Player] Seeking to:', time);
+  
+  // If HLS.js is active, we need to handle seeking carefully
+  if (hlsInstance && hlsInstance.media) {
+    console.log('[Player] Using HLS.js seek approach');
+    
+    // Check HLS.js state
+    const levels = hlsInstance.levels;
+    const currentLevel = hlsInstance.currentLevel;
+    console.log('[Player] HLS levels:', levels?.length, 'current:', currentLevel);
+    
+    // Try using HLS.js's startLoad to force it to seek
+    // First, set the start position for loading
+    hlsInstance.startPosition = time;
+    
+    // Then set video currentTime
+    videoElement.currentTime = time;
+    
+    // If that doesn't work, try stopping and restarting load at position
+    setTimeout(() => {
+      if (Math.abs(videoElement.currentTime - time) > 2) {
+        console.log('[Player] Seek failed, trying HLS.js reload approach');
+        hlsInstance.stopLoad();
+        hlsInstance.startLoad(time);
+      }
+    }, 200);
+  } else {
+    // Native playback
+    videoElement.currentTime = time;
+  }
+  
+  return true;
+}
+
+/**
+ * Get HLS.js instance for debugging
+ * @returns {object|null}
+ */
+export function getHlsInstance() {
+  return hlsInstance;
+}
+
+/**
  * Set volume
  * @param {number} volume - 0 to 1
  */
@@ -1150,6 +1211,7 @@ export function off(event, callback) {
 }
 
 function emit(event, data) {
+  console.log(`[Player] emit: ${event}`, data, `listeners: ${listeners[event]?.length || 0}`);
   if (listeners[event]) {
     listeners[event].forEach(cb => {
       try {

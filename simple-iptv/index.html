@@ -8,7 +8,27 @@
   <meta name="referrer" content="no-referrer">
   <meta name="description" content="Simple IPTV - A lightweight, privacy-respecting IPTV web player">
   <title>Simple IPTV</title>
-  <link rel="stylesheet" href="src/css/main.css">
+  
+  <!-- CRITICAL CSS - Inlined for faster First Contentful Paint -->
+  <style>
+    :root{--color-bg-primary:#0a0a0f;--color-bg-secondary:#12121a;--color-bg-tertiary:#1a1a25;--color-glass:rgba(20,20,30,.8);--color-glass-border:rgba(255,255,255,.08);--color-text-primary:#f0f0f5;--color-text-muted:#606070;--color-accent:#00d4ff;--color-accent-glow:rgba(0,212,255,.3);--font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;--header-height:60px;--sidebar-width:280px;--transition-fast:150ms ease}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{font-size:16px;-webkit-font-smoothing:antialiased}
+    body{font-family:var(--font-family);color:var(--color-text-primary);background:var(--color-bg-primary);overflow:hidden}
+    .app{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+    .header{display:flex;align-items:center;gap:1rem;height:var(--header-height);padding:0 1rem;background:var(--color-glass);backdrop-filter:blur(12px);border-bottom:1px solid var(--color-glass-border)}
+    .main{display:flex;flex:1;overflow:hidden}
+    .sidebar{display:flex;flex-direction:column;width:var(--sidebar-width);background:var(--color-bg-secondary);border-right:1px solid var(--color-glass-border)}
+    .player-area{flex:1;display:flex;flex-direction:column;background:var(--color-bg-primary);overflow:hidden}
+    .spinner{width:48px;height:48px;border:3px solid var(--color-bg-tertiary);border-top-color:var(--color-accent);border-radius:50%;animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .player-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;background:rgba(0,0,0,.7);z-index:10}
+    [hidden]{display:none!important}
+    @media(max-width:768px){:root{--sidebar-width:100%;--header-height:56px}.sidebar{position:fixed;top:var(--header-height);left:0;right:0;bottom:0;transform:translateX(-100%);z-index:100}}
+  </style>
+  
+  <!-- Full stylesheet - loaded after critical CSS is painted -->
+  <link rel="stylesheet" href="src/css/main.css?v=28">
   
   <!-- Preconnect to CDN for faster lib loading -->
   <link rel="preconnect" href="https://esm.sh">
@@ -29,7 +49,7 @@
           <circle cx="11" cy="11" r="8"/>
           <path d="M21 21l-4.35-4.35"/>
         </svg>
-        <input type="text" id="search-input" class="search-input" placeholder="Search channels... (press /)" autocomplete="off">
+        <input type="text" id="search-input" class="search-input" placeholder="Search all content... (press /)" autocomplete="off">
         <kbd class="search-hint">/</kbd>
       </div>
       
@@ -56,17 +76,11 @@
       </div>
     </header>
     
-    <!-- Main Content -->
-    <main class="main">
+    <!-- Main Content - EPG Style Layout -->
+    <main class="main main--epg">
       
-      <!-- Sidebar -->
+      <!-- Left Sidebar: Navigation -->
       <aside class="sidebar" id="sidebar">
-        <button class="sidebar__toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 12h18M3 6h18M3 18h18"/>
-          </svg>
-        </button>
-        
         <!-- Content Type Tabs -->
         <div class="content-tabs" id="content-tabs">
           <button class="content-tab content-tab--active" data-type="live" title="Live TV">
@@ -82,10 +96,6 @@
               <line x1="7" y1="2" x2="7" y2="22"/>
               <line x1="17" y1="2" x2="17" y2="22"/>
               <line x1="2" y1="12" x2="22" y2="12"/>
-              <line x1="2" y1="7" x2="7" y2="7"/>
-              <line x1="2" y1="17" x2="7" y2="17"/>
-              <line x1="17" y1="17" x2="22" y2="17"/>
-              <line x1="17" y1="7" x2="22" y2="7"/>
             </svg>
             <span>Movies</span>
           </button>
@@ -99,53 +109,38 @@
           </button>
         </div>
         
-        <!-- Categories -->
+        <!-- Quick Access: Favourites & Recents -->
+        <div class="sidebar__quick">
+          <button class="category-item" data-category="__favorites__">
+            <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            <span>Favourites</span>
+            <span class="category-count" id="count-favorites">0</span>
+          </button>
+          <button class="category-item" data-category="__recents__">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span>Recents</span>
+            <span class="category-count" id="count-recents">0</span>
+          </button>
+        </div>
+        
+        <!-- Folders/Categories List -->
         <nav class="categories" id="categories">
-          <div class="categories__section">
-            <button class="category-item category-item--active" data-category="__all__">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-                <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-              </svg>
-              <span>All Channels</span>
-              <span class="category-count" id="count-all">0</span>
-            </button>
-            <button class="category-item" data-category="__favorites__">
-              <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-              </svg>
-              <span>Favourites</span>
-              <span class="category-count" id="count-favorites">0</span>
-            </button>
-            <button class="category-item" data-category="__recents__">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-              </svg>
-              <span>Recents</span>
-              <span class="category-count" id="count-recents">0</span>
-            </button>
+          <div class="categories__header">
+            <span>Folders</span>
+            <span class="category-count" id="count-all">0</span>
           </div>
-          
-          <div class="categories__divider"></div>
-          
           <div class="categories__section categories__groups" id="category-groups">
-            <!-- Dynamically populated -->
+            <!-- Dynamically populated folder buttons -->
           </div>
         </nav>
-        
-        <!-- Channel List -->
-        <div class="channel-list" id="channel-list">
-          <div class="channel-list__viewport" id="channel-viewport">
-            <!-- Virtual scrolling container -->
-            <div class="channel-list__content" id="channel-content">
-              <!-- Channels rendered here -->
-            </div>
-          </div>
-        </div>
       </aside>
       
-      <!-- Player Area -->
-      <section class="player-area" id="player-area">
+      <!-- Main Content Area -->
+      <section class="content-area" id="content-area">
         
         <!-- Onboarding (shown when no playlist) -->
         <div class="onboarding" id="onboarding">
@@ -178,119 +173,169 @@
           </div>
         </div>
         
-        <!-- Player (hidden until channel selected) -->
-        <div class="player" id="player" hidden>
-          <div class="player__container">
-            <video id="video" class="player__video" playsinline></video>
+        <!-- EPG View (hidden until playlist loaded) -->
+        <div class="epg-view" id="epg-view" hidden>
+          
+          <!-- Top Row: Now Playing Info + Video Player -->
+          <div class="epg-view__top">
             
-            <!-- Player Overlay -->
-            <div class="player__overlay" id="player-overlay">
-              <div class="player__loading" id="player-loading" hidden>
-                <div class="spinner"></div>
-                <span>Loading stream...</span>
-              </div>
-              
-              <div class="player__error" id="player-error" hidden>
-                <svg class="icon icon--large" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
-                </svg>
-                <div id="error-message">
-                  <span class="error-title">Stream unavailable</span>
-                </div>
-                <button class="btn btn--outline btn--small" id="btn-copy-url">
+            <!-- Now Playing Info Panel -->
+            <div class="now-playing-panel" id="now-playing-panel">
+              <div class="now-playing-panel__logo" id="channel-logo-container">
+                <img id="channel-logo" src="" alt="" hidden>
+                <div class="now-playing-panel__logo-placeholder" id="channel-logo-placeholder">
                   <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    <rect x="2" y="7" width="20" height="15" rx="2" ry="2"/>
+                    <polyline points="17 2 12 7 7 2"/>
                   </svg>
-                  Copy Stream URL
-                </button>
+                </div>
+              </div>
+              <div class="now-playing-panel__info">
+                <h2 class="now-playing-panel__title" id="panel-channel-name">Select a channel</h2>
+                <div class="now-playing-panel__meta" id="panel-meta">
+                  <span class="now-playing-panel__category" id="panel-category"></span>
+                </div>
+                <!-- EPG Info for Live -->
+                <div class="now-playing-panel__epg" id="panel-epg" hidden>
+                  <div class="panel-epg__now">
+                    <span class="panel-epg__label">Now</span>
+                    <span class="panel-epg__title" id="panel-epg-now">—</span>
+                  </div>
+                  <div class="panel-epg__progress">
+                    <div class="panel-epg__progress-fill" id="panel-epg-progress"></div>
+                  </div>
+                  <div class="panel-epg__next">
+                    <span class="panel-epg__label">Next</span>
+                    <span class="panel-epg__title" id="panel-epg-next">—</span>
+                    <span class="panel-epg__time" id="panel-epg-next-time"></span>
+                  </div>
+                </div>
+                <!-- VOD Metadata -->
+                <div class="now-playing-panel__vod" id="panel-vod" hidden>
+                  <span class="panel-vod__duration" id="panel-vod-duration"></span>
+                  <span class="panel-vod__year" id="panel-vod-year"></span>
+                  <span class="panel-vod__rating" id="panel-vod-rating"></span>
+                </div>
               </div>
             </div>
             
-            <!-- Player Controls -->
-            <div class="player__controls" id="player-controls">
-              <div class="controls__progress">
-                <div class="progress-bar">
-                  <div class="progress-bar__fill" id="progress-fill"></div>
-                </div>
-              </div>
-              <div class="controls__buttons">
-                <button class="btn-icon" id="btn-play-pause" title="Play/Pause">
-                  <svg class="icon icon-play" viewBox="0 0 24 24" fill="currentColor">
-                    <polygon points="5 3 19 12 5 21 5 3"/>
-                  </svg>
-                  <svg class="icon icon-pause" viewBox="0 0 24 24" fill="currentColor" hidden>
-                    <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
-                  </svg>
-                </button>
+            <!-- Video Player -->
+            <div class="player" id="player">
+              <div class="player__container">
+                <video id="video" class="player__video" playsinline></video>
                 
-                <div class="volume-control">
-                  <button class="btn-icon" id="btn-mute" title="Mute">
-                    <svg class="icon icon-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                <!-- Player Overlay -->
+                <div class="player__overlay" id="player-overlay">
+                  <div class="player__loading" id="player-loading" hidden>
+                    <div class="spinner"></div>
+                    <span>Loading stream...</span>
+                  </div>
+                  
+                  <div class="player__error" id="player-error" hidden>
+                    <svg class="icon icon--large" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
                     </svg>
-                    <svg class="icon icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" hidden>
-                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                      <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
-                    </svg>
-                  </button>
-                  <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.05" value="1">
+                    <div id="error-message">
+                      <span class="error-title">Stream unavailable</span>
+                    </div>
+                    <button class="btn btn--outline btn--small" id="btn-copy-url">
+                      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                      </svg>
+                      Copy Stream URL
+                    </button>
+                  </div>
                 </div>
                 
-                <div class="controls__spacer"></div>
-                
-                <span class="now-playing" id="now-playing">No channel selected</span>
-                
-                <div class="controls__spacer"></div>
-                
-                <button class="btn-icon" id="btn-pip" title="Picture-in-Picture">
-                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="2" y="3" width="20" height="14" rx="2"/>
-                    <rect x="11" y="9" width="9" height="6" rx="1"/>
-                  </svg>
-                </button>
-                
-                <button class="btn-icon" id="btn-fullscreen" title="Fullscreen">
-                  <svg class="icon icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
-                    <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
-                  </svg>
-                  <svg class="icon icon-compress" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" hidden>
-                    <polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/>
-                    <line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/>
-                  </svg>
-                </button>
+                <!-- Player Controls -->
+                <div class="player__controls" id="player-controls">
+                  <div class="controls__progress">
+                    <div class="progress-bar" id="progress-bar">
+                      <div class="progress-bar__fill" id="progress-fill"></div>
+                      <div class="progress-bar__scrubber" id="progress-scrubber"></div>
+                    </div>
+                    <div class="progress-bar__tooltip" id="progress-tooltip">0:00</div>
+                  </div>
+                  <div class="controls__buttons">
+                    <button class="btn-icon" id="btn-play-pause" title="Play/Pause">
+                      <svg class="icon icon-play" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                      </svg>
+                      <svg class="icon icon-pause is-hidden" viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                      </svg>
+                    </button>
+                    
+                    <div class="volume-control">
+                      <button class="btn-icon" id="btn-mute" title="Mute">
+                        <svg class="icon icon-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                        </svg>
+                        <svg class="icon icon-muted is-hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                          <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+                        </svg>
+                      </button>
+                      <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.05" value="1">
+                    </div>
+                    
+                    <div class="controls__spacer"></div>
+                    
+                    <span class="now-playing" id="now-playing">No channel selected</span>
+                    
+                    <div class="controls__spacer"></div>
+                    
+                    <button class="btn-icon" id="btn-pip" title="Picture-in-Picture">
+                      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2"/>
+                        <rect x="11" y="9" width="9" height="6" rx="1"/>
+                      </svg>
+                    </button>
+                    
+                    <button class="btn-icon" id="btn-fullscreen" title="Fullscreen">
+                      <svg class="icon icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+                        <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+                      </svg>
+                      <svg class="icon icon-compress is-hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/>
+                        <line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/>
+                      </svg>
+                    </button>
+                    
+                    <button class="btn-icon" id="btn-copy-stream" title="Copy Stream URL">
+                      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
           
-          <!-- EPG Info (hidden when no EPG data) -->
-          <div class="epg-info" id="epg-info" hidden>
-            <div class="epg-now" id="epg-now">
-              <span class="epg-label">Now</span>
-              <span class="epg-title" id="epg-now-title">—</span>
-              <div class="epg-progress">
-                <div class="epg-progress__fill" id="epg-progress-fill"></div>
+          <!-- Bottom: Channel/Content List -->
+          <div class="epg-view__content">
+            <!-- Live TV: Channel Rows with Now/Next -->
+            <div class="channel-list channel-list--epg" id="channel-list" data-view="live">
+              <div class="channel-list__viewport" id="channel-viewport">
+                <div class="channel-list__content" id="channel-content">
+                  <!-- Channels rendered here as rows -->
+                </div>
               </div>
             </div>
-            <div class="epg-next" id="epg-next">
-              <span class="epg-label">Next</span>
-              <span class="epg-title" id="epg-next-title">—</span>
-              <span class="epg-time" id="epg-next-time"></span>
+            
+            <!-- Movies/Series: Grid Panels -->
+            <div class="content-grid" id="content-grid" data-view="vod" hidden>
+              <div class="content-grid__inner" id="content-grid-inner">
+                <!-- Grid of movie/series cards rendered here -->
+              </div>
             </div>
           </div>
           
-          <!-- Debug Actions -->
-          <div class="player__actions">
-            <button class="btn btn--outline btn--small" id="btn-copy-stream">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-              </svg>
-              Copy Stream URL
-            </button>
-          </div>
         </div>
       </section>
     </main>
@@ -483,6 +528,52 @@
       </div>
       
       <div class="settings-section">
+        <h3 class="settings-title">Search</h3>
+        <div class="settings-item">
+          <div class="settings-info">
+            <span class="settings-label">Content Language</span>
+            <span class="settings-value" id="settings-locale-info">Auto-detected</span>
+          </div>
+          <select class="input select--small" id="locale-select" style="width: auto; min-width: 160px;">
+            <option value="">Auto-detect</option>
+            <option value="GB">🇬🇧 United Kingdom</option>
+            <option value="US">🇺🇸 United States</option>
+            <option value="DE">🇩🇪 Germany</option>
+            <option value="FR">🇫🇷 France</option>
+            <option value="ES">🇪🇸 Spain</option>
+            <option value="IT">🇮🇹 Italy</option>
+            <option value="PT">🇵🇹 Portugal</option>
+            <option value="BR">🇧🇷 Brazil</option>
+            <option value="NL">🇳🇱 Netherlands</option>
+            <option value="PL">🇵🇱 Poland</option>
+            <option value="RU">🇷🇺 Russia</option>
+            <option value="TR">🇹🇷 Turkey</option>
+            <option value="SA">🇸🇦 Saudi Arabia</option>
+            <option value="AE">🇦🇪 UAE</option>
+            <option value="IN">🇮🇳 India</option>
+            <option value="JP">🇯🇵 Japan</option>
+            <option value="KR">🇰🇷 South Korea</option>
+            <option value="CN">🇨🇳 China</option>
+            <option value="AU">🇦🇺 Australia</option>
+            <option value="CA">🇨🇦 Canada</option>
+            <option value="MX">🇲🇽 Mexico</option>
+            <option value="SE">🇸🇪 Sweden</option>
+            <option value="NO">🇳🇴 Norway</option>
+            <option value="DK">🇩🇰 Denmark</option>
+            <option value="FI">🇫🇮 Finland</option>
+            <option value="GR">🇬🇷 Greece</option>
+            <option value="RO">🇷🇴 Romania</option>
+            <option value="HU">🇭🇺 Hungary</option>
+            <option value="CZ">🇨🇿 Czech Republic</option>
+            <option value="UA">🇺🇦 Ukraine</option>
+          </select>
+        </div>
+        <p class="settings-note">
+          💡 Search results will prioritize content in your preferred language. Auto-detect uses your browser locale or IP location.
+        </p>
+      </div>
+      
+      <div class="settings-section">
         <h3 class="settings-title">Data</h3>
         <div class="settings-item">
           <div class="settings-info">
@@ -554,7 +645,149 @@
   <!-- Toast Notifications -->
   <div class="toast-container" id="toast-container"></div>
   
+  <!-- Search Overlay (Netflix-style full-screen search) -->
+  <div class="search-overlay" id="search-overlay" hidden>
+    <div class="search-overlay__header">
+      <div class="search-overlay__bar">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input type="text" id="search-overlay-input" class="search-overlay__input" placeholder="Search movies, series, channels..." autocomplete="off" autofocus>
+        <button class="search-overlay__clear" id="search-overlay-clear" title="Clear search">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <button class="search-overlay__close" id="search-overlay-close" title="Close search">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+        <span>Close</span>
+      </button>
+    </div>
+    
+    <!-- Filter Tabs -->
+    <div class="search-overlay__filters" id="search-filters">
+      <button class="search-filter search-filter--active" data-filter="all">All</button>
+      <button class="search-filter" data-filter="live">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="7" width="20" height="15" rx="2" ry="2"/>
+          <polyline points="17 2 12 7 7 2"/>
+        </svg>
+        Live
+      </button>
+      <button class="search-filter" data-filter="vod">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+          <line x1="7" y1="2" x2="7" y2="22"/>
+          <line x1="17" y1="2" x2="17" y2="22"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+        </svg>
+        Movies
+      </button>
+      <button class="search-filter" data-filter="series">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 11a9 9 0 0 1 9 9"/>
+          <path d="M4 4a16 16 0 0 1 16 16"/>
+          <circle cx="5" cy="19" r="2"/>
+        </svg>
+        Series
+      </button>
+    </div>
+    
+    <!-- Results Info -->
+    <div class="search-overlay__info" id="search-info">
+      <span id="search-result-count">Type to search...</span>
+      <span id="search-loading-indicator" class="search-loading-indicator" hidden>
+        <span class="spinner-small"></span>
+        Loading movies & series...
+      </span>
+    </div>
+    
+    <!-- Results Grid -->
+    <div class="search-overlay__results" id="search-results">
+      <div class="search-grid" id="search-grid">
+        <!-- Cards rendered here -->
+      </div>
+      
+      <!-- Loading State -->
+      <div class="search-loading" id="search-loading" hidden>
+        <div class="spinner"></div>
+        <span>Loading content...</span>
+      </div>
+      
+      <!-- Empty State -->
+      <div class="search-empty" id="search-empty" hidden>
+        <svg class="icon icon--large" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <span>No results found</span>
+        <span class="search-empty__hint">Try a different search term</span>
+      </div>
+      
+      <!-- Initial State -->
+      <div class="search-initial" id="search-initial">
+        <svg class="icon icon--large" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <span>Search across all content</span>
+        <span class="search-initial__hint">Live channels, movies, and series</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- DOM Templates (PERF: cloning is faster than innerHTML parsing) -->
+  
+  <!-- Channel Row Template (used in virtual scroll) -->
+  <template id="channel-row-template">
+    <div class="channel-row">
+      <img class="channel-row__logo" alt="" loading="lazy">
+      <div class="channel-row__logo-placeholder"></div>
+      <div class="channel-row__name"></div>
+      <div class="channel-row__now">
+        <span class="channel-row__epg-label">Now</span>
+        <span class="channel-row__epg-title"></span>
+      </div>
+      <div class="channel-row__next">
+        <span class="channel-row__epg-label">Next</span>
+        <span class="channel-row__epg-title"></span>
+      </div>
+      <div class="channel-row__no-epg">Now and next not available</div>
+      <div class="channel-row__actions">
+        <button class="channel-favorite" title="Add to favorites">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </template>
+  
+  <!-- Search Card Template (used in content grid and search overlay) -->
+  <template id="search-card-template">
+    <div class="search-card" tabindex="0" role="button">
+      <div class="search-card__image-container">
+        <img class="search-card__image search-card__skeleton" alt="" loading="lazy">
+        <div class="search-card__placeholder"></div>
+        <div class="search-card__badge"></div>
+        <div class="search-card__play">
+          <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+        </div>
+      </div>
+      <div class="search-card__content">
+        <div class="search-card__title"></div>
+        <div class="search-card__meta"></div>
+      </div>
+    </div>
+  </template>
+  
   <!-- Scripts (ES modules) -->
-  <script type="module" src="src/js/app.js"></script>
+  <script type="module" src="src/js/app.js?v=27"></script>
 </body>
 </html>
