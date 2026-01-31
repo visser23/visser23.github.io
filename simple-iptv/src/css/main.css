@@ -821,6 +821,15 @@ body {
   opacity: 1;
 }
 
+.player__container.is-fullscreen .player__controls {
+  opacity: 0;
+}
+
+.player__container.is-fullscreen.is-controls-visible .player__controls,
+.player__container.is-fullscreen .player__controls:focus-within {
+  opacity: 1;
+}
+
 .controls__progress {
   margin-bottom: var(--space-2);
   padding: var(--space-2) 0;

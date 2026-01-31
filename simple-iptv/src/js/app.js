@@ -77,6 +77,7 @@ async function init() {
   
   // Set up player controls
   setupPlayerControls();
+  setupFullscreenControlVisibility();
   
   // Set up settings
   setupSettings();
@@ -678,6 +679,7 @@ async function handleChannelSelect(channel) {
   ui.updateNowPlayingPanel(channel); // Update the Now Playing panel
   
   try {
+    syncVolumeState();
     await player.play(channel);
     
     // Update EPG
@@ -1059,6 +1061,9 @@ function setupPlayerControls() {
   
   document.addEventListener('fullscreenchange', updateFullscreenIcon);
   document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+
+  // Ensure initial volume state is applied to the video element
+  syncVolumeState();
 }
 
 /**
@@ -1087,16 +1092,89 @@ function updateVolumeIcon() {
 }
 
 /**
+ * Sync volume + mute state from the slider to the video element
+ */
+function syncVolumeState() {
+  const video = document.getElementById('video');
+  const volumeSlider = document.getElementById('volume-slider');
+  if (!video || !volumeSlider) return;
+  
+  const vol = parseFloat(volumeSlider.value);
+  if (Number.isNaN(vol)) return;
+  
+  video.volume = vol;
+  if (vol > 0 && video.muted) {
+    video.muted = false;
+  }
+  if (vol === 0 && !video.muted) {
+    video.muted = true;
+  }
+  updateVolumeIcon();
+}
+
+/**
  * Update fullscreen icon based on state
  */
 function updateFullscreenIcon() {
   const expandIcon = document.querySelector('#btn-fullscreen .icon-expand');
   const compressIcon = document.querySelector('#btn-fullscreen .icon-compress');
+  const container = document.querySelector('.player__container');
   const isFs = player.isFullscreen();
   if (expandIcon && compressIcon) {
     expandIcon.classList.toggle('is-hidden', isFs);
     compressIcon.classList.toggle('is-hidden', !isFs);
   }
+  if (container) {
+    container.classList.toggle('is-fullscreen', isFs);
+    if (!isFs) {
+      container.classList.remove('is-controls-visible');
+    }
+  }
+}
+
+/**
+ * Auto-hide fullscreen controls after inactivity
+ */
+function setupFullscreenControlVisibility() {
+  const container = document.querySelector('.player__container');
+  if (!container) return;
+  
+  let hideTimeoutId = null;
+  
+  const scheduleHide = () => {
+    if (!player.isFullscreen()) return;
+    if (hideTimeoutId) clearTimeout(hideTimeoutId);
+    hideTimeoutId = setTimeout(() => {
+      container.classList.remove('is-controls-visible');
+    }, 2500);
+  };
+  
+  const showControls = () => {
+    if (!player.isFullscreen()) return;
+    container.classList.add('is-controls-visible');
+    scheduleHide();
+  };
+  
+  const handleInteraction = () => {
+    showControls();
+  };
+  
+  ['mousemove', 'mousedown', 'touchstart', 'touchmove', 'keydown'].forEach(eventName => {
+    document.addEventListener(eventName, handleInteraction, { passive: true });
+  });
+  
+  const handleFullscreenChange = () => {
+    if (player.isFullscreen()) {
+      container.classList.add('is-controls-visible');
+      scheduleHide();
+    } else {
+      container.classList.remove('is-controls-visible');
+      if (hideTimeoutId) clearTimeout(hideTimeoutId);
+    }
+  };
+  
+  document.addEventListener('fullscreenchange', handleFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 }
 
 /**
