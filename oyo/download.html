@@ -79,6 +79,15 @@
                     Download for Mac
                 </a>
                 <p class="platform-note">macOS 12 Monterey or later. Installer package (.pkg)</p>
+                <div class="install-notice">
+                    <div class="install-notice-header">
+                        <i data-lucide="shield-alert"></i>
+                        <strong>macOS Sequoia+ users</strong>
+                    </div>
+                    <p>macOS may block the installer because it isn't notarized yet. To install, open Terminal and run:</p>
+                    <code class="install-cmd">xattr -cr ~/Downloads/oyo-installer.pkg</code>
+                    <p>Then double-click the .pkg to install normally. We're adding notarization soon so this step won't be needed.</p>
+                </div>
             </div>
 
             <!-- Windows -->
