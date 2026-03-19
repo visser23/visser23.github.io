@@ -5,135 +5,200 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChatGPT Paste Fixer</title>
     <style>
-        /* Reset and base styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg-page: #171717;
+            --bg-surface: #212121;
+            --bg-elevated: #2f2f2f;
+            --bg-input: #303030;
+            --text-primary: #ececec;
+            --text-secondary: #b4b4b4;
+            --text-muted: #787878;
+            --accent: #10a37f;
+            --accent-hover: #1a7f64;
+            --border: rgba(255,255,255,0.08);
+            --border-focus: rgba(16,163,127,0.5);
+            --radius: 12px;
+            --radius-sm: 8px;
         }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: "Söhne", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+            font-family: "Söhne", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", sans-serif;
             line-height: 1.6;
-            color: #ffffff;
-            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            color: var(--text-primary);
+            background: var(--bg-page);
             min-height: 100vh;
             padding: 20px;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 80%, rgba(0, 255, 127, 0.1) 0%, transparent 50%);
-            animation: backgroundPulse 8s ease-in-out infinite;
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        @keyframes backgroundPulse {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.7; }
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1100px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 24px;
-            box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
+            background: var(--bg-surface);
+            border-radius: 16px;
+            border: 1px solid var(--border);
             overflow: hidden;
-            animation: containerFloat 6s ease-in-out infinite;
-        }
-
-        @keyframes containerFloat {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -50%;
-            width: 200%;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.8), transparent);
-            animation: borderGlow 3s linear infinite;
-        }
-
-        @keyframes borderGlow {
-            0% { left: -50%; }
-            100% { left: 100%; }
         }
 
         .header {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            color: #ffffff;
-            padding: 40px 30px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-            z-index: 1;
+            padding: 32px 32px 24px;
+            border-bottom: 1px solid var(--border);
         }
 
         .header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 12px;
+            font-size: 1.5rem;
+            font-weight: 600;
             letter-spacing: -0.02em;
-            background: linear-gradient(135deg, #00ffff 0%, #ff00ff 50%, #00ff7f 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: titleGlow 4s ease-in-out infinite;
-        }
-
-        @keyframes titleGlow {
-            0%, 100% { filter: brightness(1); }
-            50% { filter: brightness(1.3); }
+            color: var(--text-primary);
+            margin-bottom: 6px;
         }
 
         .header p {
-            font-size: 1.1rem;
-            color: rgba(255, 255, 255, 0.8);
-            font-weight: 400;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
         }
 
-        .main-content {
-            padding: 30px;
-            position: relative;
-            z-index: 1;
+        /* Settings Panel */
+        .settings-panel {
+            margin: 0;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-surface);
         }
+
+        .settings-panel summary {
+            padding: 12px 32px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            list-style: none;
+            user-select: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: color 0.15s;
+        }
+
+        .settings-panel summary:hover { color: var(--text-primary); }
+        .settings-panel summary::-webkit-details-marker { display: none; }
+
+        .settings-panel summary .chevron {
+            transition: transform 0.2s ease;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+        }
+
+        .settings-panel[open] summary .chevron { transform: rotate(180deg); }
+
+        .settings-body { padding: 0 32px 20px; }
+
+        .settings-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .settings-columns { grid-template-columns: 1fr; gap: 16px; }
+            .header, .main-content { padding-left: 20px; padding-right: 20px; }
+            .settings-body { padding-left: 20px; padding-right: 20px; }
+            .settings-panel summary { padding-left: 20px; padding-right: 20px; }
+        }
+
+        .settings-group h4 {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 8px;
+            border-radius: var(--radius-sm);
+            transition: background 0.12s;
+        }
+
+        .toggle-row:hover { background: rgba(255,255,255,0.04); }
+
+        .toggle-label {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+
+        .toggle-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mode-select {
+            font-size: 0.72rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
+            cursor: pointer;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .mode-select:focus { border-color: var(--border-focus); }
+        .mode-select option { background: var(--bg-elevated); color: var(--text-primary); }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #4e4f60;
+            border-radius: 20px;
+            transition: background 0.2s;
+        }
+
+        .slider::before {
+            content: '';
+            position: absolute;
+            height: 14px; width: 14px;
+            left: 3px; bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .switch input:checked + .slider { background: var(--accent); }
+        .switch input:checked + .slider::before { transform: translateX(16px); }
+
+        /* Main Content */
+        .main-content { padding: 24px 32px 32px; }
 
         .content-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
+            gap: 24px;
+            margin-bottom: 16px;
         }
 
         @media (max-width: 768px) {
-            .content-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
+            .content-grid { grid-template-columns: 1fr; gap: 16px; }
         }
 
         .input-section, .output-section {
@@ -142,298 +207,206 @@
         }
 
         .section-label {
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             font-weight: 500;
-            margin-bottom: 12px;
-            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 8px;
+            color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            position: relative;
-            padding-left: 20px;
-        }
-
-        .section-label::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 12px;
-            height: 12px;
-            background: linear-gradient(45deg, #00ffff, #00ff7f);
-            border-radius: 2px;
-            animation: labelPulse 2s ease-in-out infinite;
-        }
-
-        @keyframes labelPulse {
-            0%, 100% { opacity: 0.7; transform: translateY(-50%) scale(1); }
-            50% { opacity: 1; transform: translateY(-50%) scale(1.1); }
+            letter-spacing: 0.06em;
         }
 
         .content-area {
             width: 100%;
-            min-height: 320px;
+            min-height: 300px;
             max-height: 520px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
-            font-family: "Söhne", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
-            font-size: 14px;
-            line-height: 1.6;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: inherit;
+            font-size: 0.9rem;
+            line-height: 1.7;
             overflow-y: auto;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            color: #ffffff;
-            box-shadow: 
-                0 4px 16px rgba(0, 0, 0, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-            position: relative;
-        }
-
-        .content-area::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            border-radius: 16px;
-            padding: 1px;
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.5), rgba(255, 0, 255, 0.5), rgba(0, 255, 127, 0.5));
-            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            mask-composite: exclude;
-            -webkit-mask-composite: xor;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: border-color 0.15s;
+            background: var(--bg-input);
+            color: var(--text-primary);
         }
 
         .content-area:focus {
             outline: none;
-            transform: translateY(-2px);
-            box-shadow: 
-                0 8px 32px rgba(0, 255, 255, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        }
-
-        .content-area:focus::before {
-            opacity: 1;
+            border-color: var(--border-focus);
         }
 
         .content-area[contenteditable="false"] {
-            background: rgba(255, 255, 255, 0.05);
-            cursor: default;
+            background: var(--bg-elevated);
         }
 
         .content-area.placeholder::before {
             content: attr(data-placeholder);
-            color: rgba(255, 255, 255, 0.4);
-            font-style: italic;
-            z-index: 1;
-            position: relative;
+            color: var(--text-muted);
+            font-style: normal;
         }
 
-        .content-area p {
-            margin: 0 0 12px 0;
-        }
-
-        .content-area p:last-child {
-            margin-bottom: 0;
-        }
-
-        /* Preserve formatting for pasted content */
-        .content-area strong {
-            font-weight: bold;
-        }
-
-        .content-area em {
-            font-style: italic;
-        }
+        .content-area p { margin: 0 0 12px 0; }
+        .content-area p:last-child { margin-bottom: 0; }
+        .content-area strong { font-weight: 600; }
+        .content-area em { font-style: italic; }
 
         .content-area a {
-            color: #00ffff;
+            color: var(--accent);
             text-decoration: underline;
-            transition: color 0.2s ease;
+            text-underline-offset: 2px;
         }
 
-        .content-area a:hover {
-            color: #00ff7f;
-            text-shadow: 0 0 8px rgba(0, 255, 127, 0.5);
+        .content-area a:hover { color: var(--accent-hover); }
+
+        .content-area ul, .content-area ol { margin: 12px 0; padding-left: 24px; }
+        .content-area li { margin: 4px 0; }
+
+        /* Highlight Marks */
+        mark.mark-filler {
+            background: rgba(251, 146, 60, 0.22);
+            color: inherit;
+            border-radius: 3px;
+            padding: 1px 3px;
+            border-bottom: 2px solid rgba(251, 146, 60, 0.6);
+            cursor: help;
         }
 
-        .content-area ul, .content-area ol {
-            margin: 12px 0;
-            padding-left: 24px;
+        mark.mark-overused {
+            background: rgba(250, 204, 21, 0.18);
+            color: inherit;
+            border-radius: 3px;
+            padding: 1px 3px;
+            border-bottom: 2px solid rgba(250, 204, 21, 0.5);
+            cursor: help;
         }
 
-        .content-area li {
-            margin: 4px 0;
+        mark.mark-structural {
+            background: rgba(251, 113, 133, 0.22);
+            color: inherit;
+            border-radius: 3px;
+            padding: 1px 3px;
+            border-bottom: 2px solid rgba(251, 113, 133, 0.55);
+            cursor: help;
         }
 
-        .button-container {
-            text-align: center;
-            margin: 30px 0;
+        /* Stats Bar */
+        .stats-bar {
+            padding: 10px 14px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            display: none;
+            flex-wrap: wrap;
+            gap: 4px 14px;
+            align-items: center;
         }
+
+        .stats-bar.visible { display: flex; }
+
+        .stats-bar .stat-group { display: flex; align-items: center; gap: 6px; }
+        .stats-bar .stat-group-label {
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.65rem;
+            letter-spacing: 0.05em;
+        }
+
+        .stats-bar .stat { display: inline-flex; align-items: center; gap: 3px; }
+        .stats-bar .stat-count { font-weight: 600; color: var(--accent); }
+        .stats-bar .stat-sep { color: rgba(255,255,255,0.15); }
+        .stats-bar .divider { width: 1px; height: 14px; background: rgba(255,255,255,0.1); }
+
+        /* Buttons */
+        .button-container { text-align: center; margin: 16px 0 24px; }
 
         .btn {
-            background: linear-gradient(135deg, #00ffff 0%, #00ff7f 100%);
-            color: #000;
+            background: var(--accent);
+            color: #fff;
             border: none;
-            padding: 12px 24px;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 12px;
+            padding: 10px 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border-radius: var(--radius-sm);
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: "Söhne", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 
-                0 4px 16px rgba(0, 255, 255, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transition: background 0.15s;
+            font-family: inherit;
         }
 
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-            transition: left 0.6s ease;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 
-                0 8px 24px rgba(0, 255, 255, 0.5),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4);
-        }
-
-        .btn:hover::before {
-            left: 100%;
-        }
+        .btn:hover { background: var(--accent-hover); }
 
         .btn:disabled {
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.4);
+            background: var(--bg-elevated);
+            color: var(--text-muted);
             cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
         }
 
         .status-message {
             text-align: center;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-top: 16px;
-            font-size: 14px;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            margin-top: 12px;
+            font-size: 0.82rem;
             font-weight: 500;
             opacity: 0;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            position: relative;
-            overflow: hidden;
+            transition: opacity 0.2s;
         }
 
-        .status-message.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        .status-message.show { opacity: 1; }
 
         .status-message.success {
-            background: rgba(0, 255, 127, 0.2);
-            color: #00ff7f;
-            border: 1px solid rgba(0, 255, 127, 0.3);
-            box-shadow: 0 4px 16px rgba(0, 255, 127, 0.2);
+            background: rgba(16, 163, 127, 0.15);
+            color: #34d399;
         }
 
         .status-message.error {
-            background: rgba(255, 0, 127, 0.2);
-            color: #ff007f;
-            border: 1px solid rgba(255, 0, 127, 0.3);
-            box-shadow: 0 4px 16px rgba(255, 0, 127, 0.2);
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
         }
 
+        /* Instructions */
         .instructions {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            padding: 24px;
-            border-radius: 16px;
-            margin-top: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 
-                0 4px 16px rgba(0, 0, 0, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            position: relative;
+            background: var(--bg-elevated);
+            padding: 20px;
+            border-radius: var(--radius);
+            margin-top: 8px;
+            border: 1px solid var(--border);
         }
 
         .instructions h3 {
-            color: #ffffff;
-            margin-bottom: 16px;
+            color: var(--text-primary);
+            margin-bottom: 12px;
             font-weight: 600;
-            font-size: 1.1rem;
-            background: linear-gradient(135deg, #00ffff 0%, #00ff7f 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-size: 0.9rem;
         }
 
         .instructions ul {
-            list-style-type: none;
+            list-style: none;
             padding-left: 0;
             display: grid;
-            gap: 12px;
+            gap: 6px;
         }
 
         .instructions li {
-            padding: 12px 16px 12px 32px;
-            position: relative;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 14px;
+            padding: 8px 12px;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
             line-height: 1.5;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            border-left: 3px solid rgba(0, 255, 127, 0.6);
-            transition: all 0.2s ease;
+            border-radius: 6px;
         }
 
-        .instructions li:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateX(4px);
-        }
-
-        .instructions li::before {
-            content: '';
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 8px;
-            height: 8px;
-            background: linear-gradient(45deg, #00ffff, #00ff7f);
-            border-radius: 50%;
-            animation: bulletPulse 3s ease-in-out infinite;
-        }
-
-        @keyframes bulletPulse {
-            0%, 100% { opacity: 0.6; transform: translateY(-50%) scale(1); }
-            50% { opacity: 1; transform: translateY(-50%) scale(1.2); }
-        }
+        .instructions li strong { color: var(--text-primary); }
 
         .footer {
             text-align: center;
-            padding: 24px;
-            color: rgba(255, 255, 255, 0.6);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 13px;
-            background: rgba(255, 255, 255, 0.03);
-            position: relative;
-            z-index: 1;
+            padding: 16px 32px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            font-size: 0.75rem;
         }
     </style>
 </head>
@@ -441,474 +414,787 @@
     <div class="container">
         <div class="header">
             <h1>ChatGPT Paste Fixer</h1>
-            <p>Clean up AI-generated research content by formatting URLs and removing tracking parameters</p>
+            <p>Clean formatting artifacts and detect AI writing patterns in pasted content</p>
         </div>
-        
+
+        <details class="settings-panel" id="settingsPanel">
+            <summary>
+                <span>Processing Settings</span>
+                <span class="chevron">&#9660;</span>
+            </summary>
+            <div class="settings-body">
+                <div class="settings-columns">
+                    <div class="settings-group">
+                        <h4>Formatting Fixes</h4>
+                        <div class="toggle-row">
+                            <span class="toggle-label">Invisible Characters</span>
+                            <label class="switch"><input type="checkbox" data-proc="invisibleChars" checked><span class="slider"></span></label>
+                        </div>
+                        <div class="toggle-row">
+                            <span class="toggle-label">Unicode Normalisation</span>
+                            <label class="switch"><input type="checkbox" data-proc="unicodeNorm" checked><span class="slider"></span></label>
+                        </div>
+                        <div class="toggle-row">
+                            <span class="toggle-label">Em Dash Cleanup</span>
+                            <label class="switch"><input type="checkbox" data-proc="emDash" checked><span class="slider"></span></label>
+                        </div>
+                        <div class="toggle-row">
+                            <span class="toggle-label">Whitespace Normalisation</span>
+                            <label class="switch"><input type="checkbox" data-proc="whitespace" checked><span class="slider"></span></label>
+                        </div>
+                        <div class="toggle-row">
+                            <span class="toggle-label">URL &amp; Link Cleanup</span>
+                            <label class="switch"><input type="checkbox" data-proc="urlCleanup" checked><span class="slider"></span></label>
+                        </div>
+                        <div class="toggle-row">
+                            <span class="toggle-label">Bold-First Bullets</span>
+                            <label class="switch"><input type="checkbox" data-proc="boldBullet" checked><span class="slider"></span></label>
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <h4>AI Tell Detection</h4>
+                        <div class="toggle-row">
+                            <span class="toggle-label">Filler Phrases</span>
+                            <div class="toggle-controls">
+                                <select data-mode="fillerPhrasesMode" class="mode-select">
+                                    <option value="strip">Auto-strip</option>
+                                    <option value="highlight">Highlight</option>
+                                </select>
+                                <label class="switch"><input type="checkbox" data-proc="fillerPhrases" checked><span class="slider"></span></label>
+                            </div>
+                        </div>
+                        <div class="toggle-row">
+                            <span class="toggle-label">Overused Words</span>
+                            <label class="switch"><input type="checkbox" data-proc="overusedWords"><span class="slider"></span></label>
+                        </div>
+                        <div class="toggle-row">
+                            <span class="toggle-label">Structural Patterns</span>
+                            <label class="switch"><input type="checkbox" data-proc="structuralPatterns"><span class="slider"></span></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </details>
+
         <div class="main-content">
             <div class="content-grid">
                 <div class="input-section">
-                    <div class="section-label">Input (Paste your research content here)</div>
-                    <div 
-                        id="inputContent" 
-                        class="content-area" 
-                        contenteditable="true" 
+                    <div class="section-label">Input (Paste your content here)</div>
+                    <div
+                        id="inputContent"
+                        class="content-area"
+                        contenteditable="true"
                         data-placeholder="Paste your HTML or text content here..."
                     ></div>
                 </div>
-                
                 <div class="output-section">
                     <div class="section-label">Cleaned Output</div>
-                    <div 
-                        id="outputContent" 
-                        class="content-area" 
-                        contenteditable="false" 
+                    <div
+                        id="outputContent"
+                        class="content-area"
+                        contenteditable="false"
                         data-placeholder="Your cleaned content will appear here automatically..."
                     ></div>
                 </div>
             </div>
-            
+
+            <div class="stats-bar" id="statsBar"></div>
+
             <div class="button-container">
                 <button id="copyBtn" class="btn" disabled>Copy Output</button>
                 <div id="statusMessage" class="status-message"></div>
             </div>
-            
+
             <div class="instructions">
                 <h3>How it works:</h3>
                 <ul>
                     <li>Automatically processes content as you type or paste</li>
-                    <li>Removes ChatGPT tracking parameters (?utm_source=chatgpt.com)</li>
-                    <li>Replaces em dashes (—) with normal dashes (-)</li>
-                    <li>Finds single anchor tags and converts text to "(via text)"</li>
-                    <li>Groups consecutive anchor tags as "(via link1, link2)"</li>
-                    <li>Works entirely locally in your browser - no data is sent anywhere</li>
+                    <li><strong>Formatting:</strong> strips invisible Unicode, normalises smart quotes/arrows, fixes em dashes, cleans whitespace, removes UTM tracking, reformats citation links, un-bolds bullet keywords</li>
+                    <li><strong>Filler phrases:</strong> detects ~30 zero-value AI phrases ("It's worth noting that", "In the ever-evolving landscape of", etc.) and auto-strips or highlights them</li>
+                    <li><strong>Overused words:</strong> highlights ~40 words that appear 10-50x more in AI text than human writing (delve, tapestry, leverage, etc.)</li>
+                    <li><strong>Structural patterns:</strong> highlights sentence-level AI tells like negative parallelism, rhetorical self-answers, and "serves as" dodges</li>
+                    <li>Toggle any category on/off in Processing Settings above &mdash; preferences are saved locally</li>
+                    <li>Works entirely in your browser &mdash; no data is sent anywhere</li>
                 </ul>
             </div>
         </div>
-        
+
         <div class="footer">
-            <p>ChatGPT Paste Fixer v1.0 | Local processing, privacy-focused | No data leaves your browser</p>
+            <p>ChatGPT Paste Fixer v2.0 | Local processing, privacy-focused | No data leaves your browser</p>
         </div>
     </div>
 
     <script>
-        /**
-         * URLProcessor - Handles ChatGPT anchor tag processing and UTM removal
-         */
-        class URLProcessor {
-            constructor() {
-                // UTM parameter to remove
-                this.utmPattern = /\?utm_source=chatgpt\.com/gi;
+    // ================================================================
+    // Utilities
+    // ================================================================
+
+    function getTextNodes(root) {
+        const nodes = [];
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+        let n;
+        while (n = walker.nextNode()) nodes.push(n);
+        return nodes;
+    }
+
+    function replaceInTextNodes(root, pattern, replacement) {
+        let count = 0;
+        for (const node of getTextNodes(root)) {
+            const orig = node.textContent;
+            const updated = orig.replace(pattern, (...args) => {
+                count++;
+                return typeof replacement === 'function' ? replacement(...args) : replacement;
+            });
+            if (updated !== orig) node.textContent = updated;
+        }
+        return count;
+    }
+
+    function highlightInTextNodes(root, pattern, className, title) {
+        let count = 0;
+        const nodes = getTextNodes(root);
+        for (const textNode of nodes) {
+            if (textNode.parentNode && textNode.parentNode.tagName === 'MARK') continue;
+            const text = textNode.textContent;
+            if (!text) continue;
+
+            const parts = [];
+            let lastIdx = 0;
+            let m;
+            const re = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
+            re.lastIndex = 0;
+
+            while ((m = re.exec(text)) !== null) {
+                if (m.index > lastIdx) {
+                    parts.push(document.createTextNode(text.slice(lastIdx, m.index)));
+                }
+                const mark = document.createElement('mark');
+                mark.className = className;
+                mark.title = title;
+                mark.textContent = m[0];
+                parts.push(mark);
+                count++;
+                lastIdx = re.lastIndex;
+                if (m[0].length === 0) { re.lastIndex++; }
             }
 
-            /**
-             * Main processing entry point
-             * @param {HTMLElement} element - The input DOM element to process
-             * @returns {HTMLElement} - A new processed DOM element
-             */
-            processContent(element) {
-                if (!element || !element.innerHTML.trim()) {
-                    return element.cloneNode(true);
+            if (parts.length > 0) {
+                if (lastIdx < text.length) {
+                    parts.push(document.createTextNode(text.slice(lastIdx)));
                 }
-
-                try {
-                    // Clone the element to avoid modifying the original
-                    const processedElement = element.cloneNode(true);
-                    
-                    // Step 1: Remove UTM parameters from all URLs
-                    this.removeUTMParameters(processedElement);
-                    
-                    // Step 2: Replace em dashes with normal dashes
-                    this.replaceEmDashes(processedElement);
-                    
-                    // Step 3: Process anchor tags
-                    this.processAnchorTags(processedElement);
-                    
-                    return processedElement;
-                } catch (error) {
-                    console.error('Error processing content:', error);
-                    throw new Error('Failed to process content. Please check your input and try again.');
-                }
+                const frag = document.createDocumentFragment();
+                parts.forEach(p => frag.appendChild(p));
+                textNode.parentNode.replaceChild(frag, textNode);
             }
+        }
+        return count;
+    }
 
-            /**
-             * Remove UTM parameters from all URLs in the element
-             * @param {HTMLElement} element - Element to process
-             */
-            removeUTMParameters(element) {
-                // Process anchor tags
-                const anchors = element.querySelectorAll('a[href]');
-                anchors.forEach(anchor => {
-                    anchor.href = anchor.href.replace(this.utmPattern, '');
+    // ================================================================
+    // Processors
+    // ================================================================
+
+    class InvisibleCharCleaner {
+        process(el, stats) {
+            const re = /[\u200B\u200C\u200D\uFEFF\uE200\uE201\u200E\u200F\u202A-\u202E\u2066-\u2069\u00AD]/g;
+            stats.invisibleChars = replaceInTextNodes(el, re, '');
+        }
+    }
+
+    class UnicodeNormalizer {
+        process(el, stats) {
+            let c = 0;
+            c += replaceInTextNodes(el, /\u00A0/g, ' ');
+            c += replaceInTextNodes(el, /[\u2018\u2019\u201B]/g, "'");
+            c += replaceInTextNodes(el, /[\u201C\u201D\u201F]/g, '"');
+            c += replaceInTextNodes(el, /\u2192/g, '->');
+            c += replaceInTextNodes(el, /\u2190/g, '<-');
+            c += replaceInTextNodes(el, /\u2026/g, '...');
+            stats.unicodeNorm = c;
+        }
+    }
+
+    class EmDashProcessor {
+        process(el, stats) {
+            stats.emDash = replaceInTextNodes(el, /\s*\u2014\s*/g, ' -- ');
+        }
+    }
+
+    class WhitespaceNormalizer {
+        process(el, stats) {
+            let c = 0;
+            c += replaceInTextNodes(el, / {2,}/g, ' ');
+            c += replaceInTextNodes(el, /\n{3,}/g, '\n\n');
+            c += replaceInTextNodes(el, /[ \t]+$/gm, '');
+            stats.whitespace = c;
+        }
+    }
+
+    class URLProcessor {
+        constructor() {
+            this.utmPattern = /\?utm_source=chatgpt\.com/gi;
+        }
+
+        process(el, stats) {
+            let c = 0;
+
+            el.querySelectorAll('a[href]').forEach(a => {
+                const orig = a.getAttribute('href');
+                const cleaned = orig.replace(this.utmPattern, '');
+                if (cleaned !== orig) { a.setAttribute('href', cleaned); c++; }
+            });
+
+            c += replaceInTextNodes(el, this.utmPattern, '');
+            c += this.processAnchorTags(el);
+            stats.urlCleanup = c;
+        }
+
+        processAnchorTags(el) {
+            const anchors = Array.from(el.querySelectorAll('a[href]'));
+            if (!anchors.length) return 0;
+
+            let count = 0;
+            const groups = this.groupAnchors(anchors);
+
+            for (const group of groups) {
+                const frag = document.createDocumentFragment();
+                frag.appendChild(document.createTextNode(' (via '));
+
+                group.forEach((anchor, i) => {
+                    if (i > 0) frag.appendChild(document.createTextNode(', '));
+                    const clean = anchor.cloneNode(true);
+                    const href = clean.getAttribute('href');
+                    if (href) clean.setAttribute('href', href.replace(this.utmPattern, ''));
+                    frag.appendChild(clean);
                 });
-                
-                // Process text content for any raw URLs
-                const walker = document.createTreeWalker(
-                    element,
-                    NodeFilter.SHOW_TEXT,
-                    null,
-                    false
+
+                frag.appendChild(document.createTextNode(')'));
+
+                const containers = group.map(a => this.findContainer(a));
+                containers[0].parentNode.insertBefore(frag, containers[0]);
+                containers.forEach(c => { if (c.parentNode) c.parentNode.removeChild(c); });
+                count += group.length;
+            }
+            return count;
+        }
+
+        groupAnchors(anchors) {
+            const groups = [];
+            const used = new Set();
+
+            for (let i = 0; i < anchors.length; i++) {
+                if (used.has(anchors[i])) continue;
+                const group = [anchors[i]];
+                used.add(anchors[i]);
+
+                for (let j = i + 1; j < anchors.length; j++) {
+                    if (used.has(anchors[j])) continue;
+                    if (this.areConsecutive(group[group.length - 1], anchors[j])) {
+                        group.push(anchors[j]);
+                        used.add(anchors[j]);
+                    }
+                }
+                groups.push(group);
+            }
+            return groups;
+        }
+
+        areConsecutive(a, b) {
+            const ca = this.findContainer(a);
+            const cb = this.findContainer(b);
+            let cur = ca.nextSibling;
+            while (cur && cur !== cb) {
+                if (cur.nodeType === Node.TEXT_NODE && cur.textContent.trim()) return false;
+                if (cur.nodeType === Node.ELEMENT_NODE && cur.textContent.trim()) return false;
+                cur = cur.nextSibling;
+            }
+            return cur === cb;
+        }
+
+        findContainer(anchor) {
+            let container = anchor;
+            while (container.parentNode) {
+                const p = container.parentNode;
+                if (p.id === 'inputContent' || p.id === 'outputContent') break;
+                if (p.tagName === 'SPAN' &&
+                    (p.hasAttribute('data-testid') || p.classList.contains('ms-1') ||
+                     p.getAttribute('data-state') === 'closed')) {
+                    container = p;
+                } else {
+                    break;
+                }
+            }
+            return container;
+        }
+    }
+
+    class BoldBulletCleaner {
+        process(el, stats) {
+            let c = 0;
+            el.querySelectorAll('li').forEach(li => {
+                const bold = li.firstElementChild;
+                if (!bold || (bold.tagName !== 'STRONG' && bold.tagName !== 'B')) return;
+
+                let prev = bold.previousSibling;
+                while (prev) {
+                    if (prev.nodeType === Node.TEXT_NODE && prev.textContent.trim()) return;
+                    prev = prev.previousSibling;
+                }
+
+                const next = bold.nextSibling;
+                if (!next || next.nodeType !== Node.TEXT_NODE) return;
+                const txt = next.textContent;
+
+                if (/^:\s/.test(txt) || /^\s*[-\u2013]\s/.test(txt)) {
+                    const plainText = document.createTextNode(bold.textContent);
+                    bold.parentNode.replaceChild(plainText, bold);
+                    c++;
+                }
+            });
+            stats.boldBullets = c;
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Filler Phrases
+    // ----------------------------------------------------------------
+
+    const FILLER_PHRASES = [
+        { text: "It's worth noting that" },
+        { text: "It is worth noting that" },
+        { text: "It's important to note that" },
+        { text: "It is important to note that" },
+        { text: "It bears mentioning that" },
+        { text: "In today's fast-paced world" },
+        { text: "In today's digital age" },
+        { text: "In the ever-evolving landscape of" },
+        { text: "In the realm of" },
+        { text: "At the end of the day" },
+        { text: "When it comes to" },
+        { text: "Let's dive in" },
+        { text: "Let's dive into" },
+        { text: "Let's break this down" },
+        { text: "Let's unpack this" },
+        { text: "Let's explore" },
+        { text: "In conclusion" },
+        { text: "To sum up" },
+        { text: "In summary" },
+        { text: "Here's the thing" },
+        { text: "Here's the kicker" },
+        { text: "Here's where it gets interesting" },
+        { text: "It goes without saying that" },
+        { text: "It goes without saying" },
+        { text: "In order to", replacement: match => /^[A-Z]/.test(match) ? 'To ' : 'to ' },
+        { text: "Importantly" },
+        { text: "Interestingly" },
+        { text: "Notably" },
+    ];
+
+    class FillerPhraseProcessor {
+        constructor() {
+            const sorted = [...FILLER_PHRASES].sort((a, b) => b.text.length - a.text.length);
+            const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/'/g, "['\u2019]");
+
+            this.stripEntries = sorted.map(p => ({
+                pattern: new RegExp('\\b' + esc(p.text) + ',?\\s*', 'gi'),
+                replacement: p.replacement || ''
+            }));
+
+            const alt = sorted.map(p => esc(p.text)).join('|');
+            this.highlightPattern = new RegExp('\\b(?:' + alt + '),?\\s*', 'gi');
+        }
+
+        process(el, stats, mode) {
+            if (mode === 'highlight') {
+                stats.fillerPhrases = highlightInTextNodes(
+                    el, this.highlightPattern, 'mark-filler', 'AI filler phrase'
                 );
-                
-                const textNodes = [];
-                let node;
-                while (node = walker.nextNode()) {
-                    textNodes.push(node);
-                }
-                
-                textNodes.forEach(textNode => {
-                    const originalText = textNode.textContent;
-                    const cleanedText = originalText.replace(this.utmPattern, '');
-                    if (cleanedText !== originalText) {
-                        textNode.textContent = cleanedText;
-                    }
-                });
-            }
-
-            /**
-             * Replace em dashes with normal dashes throughout the content
-             * @param {HTMLElement} element - Element to process
-             */
-            replaceEmDashes(element) {
-                // Create a tree walker to find all text nodes
-                const walker = document.createTreeWalker(
-                    element,
-                    NodeFilter.SHOW_TEXT,
-                    null,
-                    false
-                );
-                
-                const textNodes = [];
-                let node;
-                while (node = walker.nextNode()) {
-                    textNodes.push(node);
-                }
-                
-                // Replace em dashes (—) with normal dashes (-) in all text content
-                textNodes.forEach(textNode => {
-                    const originalText = textNode.textContent;
-                    const cleanedText = originalText.replace(/—/g, '-');
-                    if (cleanedText !== originalText) {
-                        textNode.textContent = cleanedText;
-                    }
-                });
-            }
-
-            /**
-             * Process all anchor tags and organize them into single and consecutive groups
-             * @param {HTMLElement} element - Element to process
-             */
-            processAnchorTags(element) {
-                const anchors = Array.from(element.querySelectorAll('a[href]'));
-                
-                if (anchors.length === 0) return;
-                
-                // Organize anchors into groups
-                const groups = this.organizeAnchorsIntoGroups(anchors);
-                
-                // Process each group
-                groups.forEach(group => {
-                    if (group.length === 1) {
-                        // Single anchor - wrap with "(via ...)"
-                        const anchor = group[0];
-                        
-                        // Create a document fragment to hold the new structure
-                        const fragment = document.createDocumentFragment();
-                        
-                        // Add " (via " text (with leading space)
-                        fragment.appendChild(document.createTextNode(' (via '));
-                        
-                        // Clone and clean the anchor
-                        const cleanedAnchor = anchor.cloneNode(true);
-                        cleanedAnchor.href = cleanedAnchor.href.replace(this.utmPattern, '');
-                        fragment.appendChild(cleanedAnchor);
-                        
-                        // Add ")" text
-                        fragment.appendChild(document.createTextNode(')'));
-                        
-                        // Replace the original anchor
-                        anchor.parentNode.insertBefore(fragment, anchor);
-                        anchor.remove();
-                    } else {
-                        // Multiple consecutive anchors - group them
-                        this.processConsecutiveAnchors(group);
-                    }
-                });
-            }
-
-            /**
-             * Organize anchors into groups of consecutive and single anchors
-             * @param {Array} anchors - Array of anchor elements
-             * @returns {Array} - Array of groups (each group is an array of anchors)
-             */
-            organizeAnchorsIntoGroups(anchors) {
-                const groups = [];
-                const processed = new Set();
-                
-                for (let i = 0; i < anchors.length; i++) {
-                    if (processed.has(anchors[i])) continue;
-                    
-                    const group = [anchors[i]];
-                    processed.add(anchors[i]);
-                    
-                    // Look for consecutive anchors
-                    for (let j = i + 1; j < anchors.length; j++) {
-                        if (processed.has(anchors[j])) continue;
-                        
-                        const lastInGroup = group[group.length - 1];
-                        if (this.areAnchorsConsecutive(lastInGroup, anchors[j])) {
-                            group.push(anchors[j]);
-                            processed.add(anchors[j]);
-                        }
-                    }
-                    
-                    groups.push(group);
-                }
-                
-                return groups;
-            }
-
-            /**
-             * Check if two anchors are consecutive in the DOM
-             * @param {HTMLElement} anchor1 - First anchor
-             * @param {HTMLElement} anchor2 - Second anchor
-             * @returns {boolean} - True if they are consecutive
-             */
-            areAnchorsConsecutive(anchor1, anchor2) {
-                // Find the outermost container for each anchor (usually spans in ChatGPT format)
-                const container1 = this.findAnchorContainer(anchor1);
-                const container2 = this.findAnchorContainer(anchor2);
-                
-                // Check if containers are directly adjacent
-                if (container1.nextSibling === container2) {
-                    return true;
-                }
-                
-                // Check if there's only whitespace between them
-                let current = container1.nextSibling;
-                while (current && current !== container2) {
-                    if (current.nodeType === Node.TEXT_NODE) {
-                        if (current.textContent.trim() !== '') {
-                            return false;
-                        }
-                    } else if (current.nodeType === Node.ELEMENT_NODE) {
-                        if (current.textContent.trim() !== '') {
-                            return false;
-                        }
-                    }
-                    current = current.nextSibling;
-                }
-                
-                return current === container2;
-            }
-
-            /**
-             * Find the container element for an anchor (ChatGPT wraps anchors in spans)
-             * @param {HTMLElement} anchor - The anchor element
-             * @returns {HTMLElement} - The container element
-             */
-            findAnchorContainer(anchor) {
-                let container = anchor;
-                
-                // Walk up to find the span container (ChatGPT structure)
-                while (container.parentNode) {
-                    const parent = container.parentNode;
-                    
-                    // Stop at the content area
-                    if (parent.id === 'inputContent' || parent.id === 'outputContent') {
-                        break;
-                    }
-                    
-                    // Look for ChatGPT citation markers
-                    if (parent.tagName === 'SPAN' && 
-                        (parent.hasAttribute('data-testid') || 
-                         parent.classList.contains('ms-1') ||
-                         parent.getAttribute('data-state') === 'closed')) {
-                        container = parent;
-                    } else {
-                        break;
-                    }
-                }
-                
-                return container;
-            }
-
-            /**
-             * Process a group of consecutive anchors
-             * @param {Array} anchors - Array of consecutive anchor elements
-             */
-            processConsecutiveAnchors(anchors) {
-                // Create a document fragment to hold the new structure
-                const fragment = document.createDocumentFragment();
-                
-                // Add " (via " text (with leading space)
-                fragment.appendChild(document.createTextNode(' (via '));
-                
-                // Add each anchor with cleaned URLs, separated by commas
-                anchors.forEach((anchor, index) => {
-                    if (index > 0) {
-                        // Add comma and space before subsequent anchors
-                        fragment.appendChild(document.createTextNode(', '));
-                    }
-                    
-                    // Clone and clean the anchor
-                    const cleanedAnchor = anchor.cloneNode(true);
-                    cleanedAnchor.href = cleanedAnchor.href.replace(this.utmPattern, '');
-                    fragment.appendChild(cleanedAnchor);
-                });
-                
-                // Add ")" text
-                fragment.appendChild(document.createTextNode(')'));
-                
-                // Find all containers that need to be replaced
-                const containers = anchors.map(anchor => this.findAnchorContainer(anchor));
-                
-                // Insert replacement before the first container
-                const firstContainer = containers[0];
-                firstContainer.parentNode.insertBefore(fragment, firstContainer);
-                
-                // Remove all containers
-                containers.forEach(container => {
-                    if (container.parentNode) {
-                        container.parentNode.removeChild(container);
-                    }
-                });
+            } else {
+                stats.fillerPhrases = this.strip(el);
             }
         }
 
-        /**
-         * UIController - Handles user interface interactions
-         */
-        class UIController {
-            constructor() {
-                this.urlProcessor = new URLProcessor();
-                this.inputContent = document.getElementById('inputContent');
-                this.outputContent = document.getElementById('outputContent');
-                this.copyBtn = document.getElementById('copyBtn');
-                this.statusMessage = document.getElementById('statusMessage');
-                
-                this.init();
-            }
+        strip(el) {
+            let total = 0;
+            for (const node of getTextNodes(el)) {
+                if (node.parentNode && node.parentNode.tagName === 'MARK') continue;
+                let text = node.textContent;
+                let changed = false;
 
-            init() {
-                // Event listeners
-                this.copyBtn.addEventListener('click', () => this.handleCopyClick());
-                
-                // Handle placeholder visibility
-                this.inputContent.addEventListener('input', () => this.updatePlaceholder(this.inputContent));
-                this.inputContent.addEventListener('focus', () => this.updatePlaceholder(this.inputContent));
-                this.inputContent.addEventListener('blur', () => this.updatePlaceholder(this.inputContent));
-                
-                // Auto-process on input with debouncing
-                let debounceTimer;
-                this.inputContent.addEventListener('input', () => {
-                    clearTimeout(debounceTimer);
-                    debounceTimer = setTimeout(() => {
-                        if (this.inputContent.innerHTML.trim()) {
-                            this.handleProcessClick();
-                        }
-                    }, 1000);
-                });
-
-                // Handle paste events
-                this.inputContent.addEventListener('paste', (e) => {
-                    // Let the paste happen naturally, then process after a short delay
-                    setTimeout(() => {
-                        if (this.inputContent.innerHTML.trim()) {
-                            this.handleProcessClick();
-                        }
-                    }, 100);
-                });
-
-                // Initialize placeholder state
-                this.updatePlaceholder(this.inputContent);
-                this.updatePlaceholder(this.outputContent);
-            }
-
-            handleProcessClick() {
-                try {
-                    if (!this.inputContent.innerHTML.trim()) {
-                        this.showMessage('Please paste some content first.', 'error');
-                        return;
-                    }
-
-                    // Process the content
-                    const processed = this.urlProcessor.processContent(this.inputContent);
-                    
-                    // Update output
-                    this.outputContent.innerHTML = processed.innerHTML;
-                    this.updatePlaceholder(this.outputContent);
-                    
-                    // Enable copy button
-                    this.copyBtn.disabled = false;
-                    
-                    this.showMessage('Content processed successfully!', 'success');
-                } catch (error) {
-                    console.error('Processing error:', error);
-                    this.showMessage('Error processing content: ' + error.message, 'error');
-                }
-            }
-
-            async handleCopyClick() {
-                try {
-                    const content = this.outputContent.innerHTML;
-                    if (!content.trim()) {
-                        this.showMessage('No content to copy.', 'error');
-                        return;
-                    }
-
-                    // Copy both HTML and plain text
-                    await this.copyAsHTML(content);
-                    this.showMessage('Content copied to clipboard!', 'success');
-                } catch (error) {
-                    console.error('Copy error:', error);
-                    // Fallback to plain text copy
-                    try {
-                        await navigator.clipboard.writeText(this.outputContent.textContent);
-                        this.showMessage('Content copied as plain text.', 'success');
-                    } catch (fallbackError) {
-                        this.showMessage('Failed to copy content.', 'error');
-                    }
-                }
-            }
-
-            async copyAsHTML(htmlContent) {
-                if (navigator.clipboard && window.ClipboardItem) {
-                    const blob = new Blob([htmlContent], { type: 'text/html' });
-                    const textBlob = new Blob([this.outputContent.textContent], { type: 'text/plain' });
-                    const item = new ClipboardItem({
-                        'text/html': blob,
-                        'text/plain': textBlob
+                for (const { pattern, replacement } of this.stripEntries) {
+                    pattern.lastIndex = 0;
+                    const before = text;
+                    text = text.replace(pattern, (...args) => {
+                        total++;
+                        changed = true;
+                        return typeof replacement === 'function' ? replacement(args[0]) : replacement;
                     });
-                    await navigator.clipboard.write([item]);
+                }
+
+                if (changed) {
+                    text = text.replace(/^\s*([a-z])/, (m, c) => m.replace(c, c.toUpperCase()));
+                    text = text.replace(/([.!?]\s+)([a-z])/g, (m, p, c) => p + c.toUpperCase());
+                    node.textContent = text;
+                }
+            }
+            return total;
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Overused Words
+    // ----------------------------------------------------------------
+
+    const OVERUSED_WORD_PATTERNS = [
+        'delv(?:e|es|ed|ing)',
+        'tapestry', 'tapestries',
+        'landscapes?',
+        'leverag(?:e|es|ed|ing)',
+        'multifaceted',
+        'nuanced',
+        'comprehensive',
+        'robust',
+        'pivotal',
+        'paradigms?',
+        'synerg(?:y|ies|istic)',
+        'holistic',
+        'transformative',
+        'intricat(?:e|ely)',
+        'beacons?',
+        'cornerstones?',
+        'foster(?:s|ed|ing)?',
+        'embark(?:s|ed|ing)?',
+        'underscore[sd]?|underscoring',
+        'unveil(?:s|ed|ing)?',
+        'unwavering',
+        'meticulous(?:ly)?',
+        'compelling',
+        'profound(?:ly)?',
+        'seamless(?:ly)?',
+        'cutting-edge',
+        'game-chang(?:er|ers|ing)',
+        'bustling',
+        'realms?',
+        'journeys?',
+        'quests?',
+        'crucial(?:ly)?',
+        'vital(?:ly)?',
+        'essential(?:ly)?',
+        'harness(?:es|ed|ing)?',
+        'streamlin(?:e|es|ed|ing)',
+        'navigat(?:e|es|ed|ing|ion)',
+        'innovat(?:ive|ion|ions)',
+        'interplay',
+        'spearhead(?:s|ed|ing)?',
+    ];
+
+    class OverusedWordHighlighter {
+        constructor() {
+            this.pattern = new RegExp(
+                '\\b(?:' + OVERUSED_WORD_PATTERNS.join('|') + ')\\b', 'gi'
+            );
+        }
+
+        process(el, stats) {
+            stats.overusedWords = highlightInTextNodes(
+                el, this.pattern, 'mark-overused', 'AI-overused word'
+            );
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Structural Patterns
+    // ----------------------------------------------------------------
+
+    const STRUCTURAL_PATTERNS = [
+        { re: /It[''\u2019]s not .{3,40}\s*[-\u2014]+\s*it[''\u2019]s /gi, name: 'Negative parallelism' },
+        { re: /(?:The|This|That) \w[\w\s]{1,25}\?\s+[A-Z]/g, name: 'Rhetorical self-answer' },
+        { re: /\bserves as an?\s/gi, name: '"Serves as" dodge' },
+        { re: /\bstands as an?\s/gi, name: '"Stands as" dodge' },
+        { re: /\bDespite (?:these |its |the ).{0,30}challenges/gi, name: '"Despite challenges" dismissal' },
+        { re: /\bThink of it (?:as|like) /gi, name: 'Patronising analogy' },
+        { re: /\bImagine a (?:world|future|scenario) /gi, name: 'Futurism opener' },
+    ];
+
+    class StructuralPatternHighlighter {
+        process(el, stats) {
+            let c = 0;
+            for (const { re, name } of STRUCTURAL_PATTERNS) {
+                c += highlightInTextNodes(el, re, 'mark-structural', name);
+            }
+            stats.structuralPatterns = c;
+        }
+    }
+
+    // ================================================================
+    // Processing Pipeline
+    // ================================================================
+
+    const PIPELINE_ORDER = [
+        'invisibleChars', 'unicodeNorm', 'emDash', 'whitespace',
+        'urlCleanup', 'boldBullet',
+        'fillerPhrases', 'overusedWords', 'structuralPatterns'
+    ];
+
+    class ProcessorPipeline {
+        constructor() {
+            this.processors = new Map([
+                ['invisibleChars',    new InvisibleCharCleaner()],
+                ['unicodeNorm',       new UnicodeNormalizer()],
+                ['emDash',            new EmDashProcessor()],
+                ['whitespace',        new WhitespaceNormalizer()],
+                ['urlCleanup',        new URLProcessor()],
+                ['boldBullet',        new BoldBulletCleaner()],
+                ['fillerPhrases',     new FillerPhraseProcessor()],
+                ['overusedWords',     new OverusedWordHighlighter()],
+                ['structuralPatterns', new StructuralPatternHighlighter()],
+            ]);
+        }
+
+        run(element, settings) {
+            const clone = element.cloneNode(true);
+            clone.removeAttribute('id');
+            const stats = {};
+
+            for (const id of PIPELINE_ORDER) {
+                if (!settings[id]) continue;
+                const proc = this.processors.get(id);
+                if (id === 'fillerPhrases') {
+                    proc.process(clone, stats, settings.fillerPhrasesMode || 'strip');
                 } else {
-                    // Fallback for older browsers
+                    proc.process(clone, stats);
+                }
+            }
+
+            return { element: clone, stats };
+        }
+    }
+
+    // ================================================================
+    // UI Controller
+    // ================================================================
+
+    const SETTINGS_KEY = 'chatgptPasteFixerSettings';
+
+    const DEFAULT_SETTINGS = {
+        invisibleChars: true,
+        unicodeNorm: true,
+        emDash: true,
+        whitespace: true,
+        urlCleanup: true,
+        boldBullet: true,
+        fillerPhrases: true,
+        fillerPhrasesMode: 'strip',
+        overusedWords: false,
+        structuralPatterns: false,
+    };
+
+    class UIController {
+        constructor() {
+            this.pipeline = new ProcessorPipeline();
+            this.inputContent = document.getElementById('inputContent');
+            this.outputContent = document.getElementById('outputContent');
+            this.copyBtn = document.getElementById('copyBtn');
+            this.statusMessage = document.getElementById('statusMessage');
+            this.statsBar = document.getElementById('statsBar');
+
+            this.settings = this.loadSettings();
+            this.applySettingsToUI();
+            this.bindEvents();
+            this.updatePlaceholder(this.inputContent);
+            this.updatePlaceholder(this.outputContent);
+        }
+
+        loadSettings() {
+            try {
+                const stored = localStorage.getItem(SETTINGS_KEY);
+                if (stored) return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+            } catch (_) {}
+            return { ...DEFAULT_SETTINGS };
+        }
+
+        saveSettings() {
+            try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(this.settings)); } catch (_) {}
+        }
+
+        applySettingsToUI() {
+            document.querySelectorAll('[data-proc]').forEach(input => {
+                input.checked = !!this.settings[input.dataset.proc];
+            });
+            document.querySelectorAll('[data-mode]').forEach(select => {
+                select.value = this.settings[select.dataset.mode] || select.options[0].value;
+            });
+        }
+
+        readSettingsFromUI() {
+            document.querySelectorAll('[data-proc]').forEach(input => {
+                this.settings[input.dataset.proc] = input.checked;
+            });
+            document.querySelectorAll('[data-mode]').forEach(select => {
+                this.settings[select.dataset.mode] = select.value;
+            });
+        }
+
+        bindEvents() {
+            this.copyBtn.addEventListener('click', () => this.handleCopy());
+
+            this.inputContent.addEventListener('input', () => this.updatePlaceholder(this.inputContent));
+            this.inputContent.addEventListener('focus', () => this.updatePlaceholder(this.inputContent));
+            this.inputContent.addEventListener('blur', () => this.updatePlaceholder(this.inputContent));
+
+            let debounce;
+            this.inputContent.addEventListener('input', () => {
+                clearTimeout(debounce);
+                debounce = setTimeout(() => this.processIfContent(), 800);
+            });
+
+            this.inputContent.addEventListener('paste', () => {
+                setTimeout(() => this.processIfContent(), 100);
+            });
+
+            document.querySelectorAll('[data-proc], [data-mode]').forEach(el => {
+                el.addEventListener('change', () => {
+                    this.readSettingsFromUI();
+                    this.saveSettings();
+                    this.processIfContent();
+                });
+            });
+        }
+
+        processIfContent() {
+            if (!this.inputContent.innerHTML.trim()) return;
+            this.handleProcess();
+        }
+
+        handleProcess() {
+            try {
+                if (!this.inputContent.innerHTML.trim()) {
+                    this.showMessage('Please paste some content first.', 'error');
+                    return;
+                }
+
+                const { element, stats } = this.pipeline.run(this.inputContent, this.settings);
+
+                this.outputContent.innerHTML = element.innerHTML;
+                this.updatePlaceholder(this.outputContent);
+                this.copyBtn.disabled = false;
+                this.renderStats(stats);
+                this.showMessage('Content processed successfully!', 'success');
+            } catch (err) {
+                console.error('Processing error:', err);
+                this.showMessage('Error: ' + err.message, 'error');
+            }
+        }
+
+        renderStats(stats) {
+            const STAT_LABELS = {
+                invisibleChars: 'invisible chars',
+                unicodeNorm: 'unicode fixes',
+                emDash: 'em dashes',
+                whitespace: 'whitespace',
+                urlCleanup: 'links/UTMs',
+                boldBullets: 'bold bullets',
+            };
+            const HIGHLIGHT_LABELS = {
+                fillerPhrases: 'filler phrases',
+                overusedWords: 'overused words',
+                structuralPatterns: 'structural patterns',
+            };
+
+            const fixParts = [];
+            const highlightParts = [];
+
+            for (const [key, label] of Object.entries(STAT_LABELS)) {
+                if (stats[key] > 0) {
+                    fixParts.push(`<span class="stat"><span class="stat-count">${stats[key]}</span> ${label}</span>`);
+                }
+            }
+
+            const fpMode = this.settings.fillerPhrasesMode || 'strip';
+            for (const [key, label] of Object.entries(HIGHLIGHT_LABELS)) {
+                if (stats[key] > 0) {
+                    if (key === 'fillerPhrases' && fpMode === 'strip') {
+                        fixParts.push(`<span class="stat"><span class="stat-count">${stats[key]}</span> ${label}</span>`);
+                    } else {
+                        highlightParts.push(`<span class="stat"><span class="stat-count">${stats[key]}</span> ${label}</span>`);
+                    }
+                }
+            }
+
+            if (fixParts.length === 0 && highlightParts.length === 0) {
+                this.statsBar.classList.remove('visible');
+                return;
+            }
+
+            let html = '';
+            if (fixParts.length) {
+                html += `<span class="stat-group"><span class="stat-group-label">Fixed:</span> ${fixParts.join('<span class="stat-sep"> &middot; </span>')}</span>`;
+            }
+            if (fixParts.length && highlightParts.length) {
+                html += '<span class="divider"></span>';
+            }
+            if (highlightParts.length) {
+                html += `<span class="stat-group"><span class="stat-group-label">Highlighted:</span> ${highlightParts.join('<span class="stat-sep"> &middot; </span>')}</span>`;
+            }
+
+            this.statsBar.innerHTML = html;
+            this.statsBar.classList.add('visible');
+        }
+
+        async handleCopy() {
+            try {
+                const html = this.outputContent.innerHTML;
+                if (!html.trim()) { this.showMessage('No content to copy.', 'error'); return; }
+
+                const cleanHtml = this.stripHighlightMarks(html);
+
+                if (navigator.clipboard && window.ClipboardItem) {
+                    const htmlBlob = new Blob([cleanHtml], { type: 'text/html' });
+                    const textBlob = new Blob([this.outputContent.textContent], { type: 'text/plain' });
+                    await navigator.clipboard.write([new ClipboardItem({ 'text/html': htmlBlob, 'text/plain': textBlob })]);
+                } else {
                     await navigator.clipboard.writeText(this.outputContent.textContent);
                 }
-            }
-
-            updatePlaceholder(element) {
-                if (element.innerHTML.trim() === '' || element.innerHTML === '<br>') {
-                    element.classList.add('placeholder');
-                } else {
-                    element.classList.remove('placeholder');
+                this.showMessage('Content copied to clipboard!', 'success');
+            } catch (err) {
+                console.error('Copy error:', err);
+                try {
+                    await navigator.clipboard.writeText(this.outputContent.textContent);
+                    this.showMessage('Content copied as plain text.', 'success');
+                } catch (_) {
+                    this.showMessage('Failed to copy content.', 'error');
                 }
-            }
-
-            showMessage(message, type) {
-                this.statusMessage.textContent = message;
-                this.statusMessage.className = `status-message ${type} show`;
-                
-                // Hide message after 3 seconds
-                setTimeout(() => {
-                    this.statusMessage.classList.remove('show');
-                }, 3000);
             }
         }
 
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', () => {
-            new UIController();
-        });
+        stripHighlightMarks(html) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            tmp.querySelectorAll('mark.mark-filler, mark.mark-overused, mark.mark-structural').forEach(mark => {
+                mark.replaceWith(...mark.childNodes);
+            });
+            return tmp.innerHTML;
+        }
+
+        updatePlaceholder(el) {
+            if (!el.innerHTML.trim() || el.innerHTML === '<br>') {
+                el.classList.add('placeholder');
+            } else {
+                el.classList.remove('placeholder');
+            }
+        }
+
+        showMessage(message, type) {
+            this.statusMessage.textContent = message;
+            this.statusMessage.className = `status-message ${type} show`;
+            setTimeout(() => this.statusMessage.classList.remove('show'), 3000);
+        }
+    }
+
+    // ================================================================
+    // Init
+    // ================================================================
+    document.addEventListener('DOMContentLoaded', () => { new UIController(); });
     </script>
 </body>
 </html>
