@@ -25,13 +25,18 @@ body {
   left: 50%;
   transform: translateX(-50%);
   font-family: monospace;
-  font-size: 13px;
+  font-size: clamp(11px, 2.6vw, 13px);
   color: #4dff6e;
   background: rgba(0,0,0,0.9);
-  padding: 8px 16px;
+  padding: 8px 12px;
   border-radius: 4px;
   border: 1px solid #1a8c32;
-  white-space: nowrap;
+  width: max-content;
+  max-width: min(96vw, 740px);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+  line-height: 1.35;
   z-index: 10;
   opacity: 1;
   transition: opacity 2s ease 8s;
@@ -39,8 +44,8 @@ body {
 }
 #hint.fade { opacity: 0; }
 #hint.dsk-hint {
-  font-size: 15px;
-  padding: 10px 20px;
+  font-size: clamp(12px, 2.8vw, 15px);
+  padding: 9px 14px;
   border: 2px solid #4dff6e;
   box-shadow: 0 0 20px rgba(77,255,110,0.3);
 }
@@ -84,6 +89,66 @@ body {
     }
 
     var mobileKbd = document.getElementById('mobile-kbd');
+    var virtualValue = '';
+    var canvas = document.getElementById('canvas');
+
+    function keyCodeForKey(key) {
+      if (!key) return 0;
+      if (key.length === 1) return key.toUpperCase().charCodeAt(0);
+      if (key === 'Enter') return 13;
+      if (key === 'Backspace') return 8;
+      if (key === 'Tab') return 9;
+      if (key === 'Escape') return 27;
+      if (key === ' ') return 32;
+      if (key === 'ArrowLeft') return 37;
+      if (key === 'ArrowUp') return 38;
+      if (key === 'ArrowRight') return 39;
+      if (key === 'ArrowDown') return 40;
+      return 0;
+    }
+
+    function codeForKey(key) {
+      if (!key) return '';
+      if (key.length === 1) {
+        var upper = key.toUpperCase();
+        if (upper >= 'A' && upper <= 'Z') return 'Key' + upper;
+        if (upper >= '0' && upper <= '9') return 'Digit' + upper;
+      }
+      if (key === 'Enter') return 'Enter';
+      if (key === 'Backspace') return 'Backspace';
+      if (key === 'Tab') return 'Tab';
+      if (key === 'Escape') return 'Escape';
+      if (key === ' ') return 'Space';
+      if (key.indexOf('Arrow') === 0) return key;
+      return '';
+    }
+
+    function dispatchVirtualKey(type, key) {
+      var keyCode = keyCodeForKey(key);
+      var code = codeForKey(key);
+      var evt = new KeyboardEvent(type, {
+        key: key,
+        code: code,
+        keyCode: keyCode,
+        which: keyCode,
+        charCode: type === 'keypress' ? keyCode : 0,
+        bubbles: true,
+        cancelable: true
+      });
+      (canvas || document.body).dispatchEvent(evt);
+      document.dispatchEvent(evt);
+      window.dispatchEvent(evt);
+    }
+
+    function sendKeyToEmulator(key) {
+      if (!key) return;
+      dispatchVirtualKey('keydown', key);
+      if (key.length === 1 || key === 'Enter' || key === ' ') {
+        dispatchVirtualKey('keypress', key);
+      }
+      dispatchVirtualKey('keyup', key);
+    }
+
     function focusMobileKeyboard() {
       if (!isTouchDevice || !mobileKbd) return;
       mobileKbd.focus({ preventScroll: true });
@@ -97,6 +162,28 @@ body {
       if (event && event.data && event.data.type === 'cpc-focus-keyboard') {
         focusMobileKeyboard();
       }
+    });
+
+    mobileKbd.addEventListener('keydown', function(event) {
+      sendKeyToEmulator(event.key);
+      if (event.key === 'Backspace') {
+        virtualValue = virtualValue.slice(0, -1);
+      }
+      event.preventDefault();
+    });
+
+    mobileKbd.addEventListener('input', function() {
+      var nextValue = mobileKbd.value || '';
+      if (nextValue.length > virtualValue.length) {
+        var typed = nextValue.slice(virtualValue.length);
+        for (var i = 0; i < typed.length; i++) {
+          sendKeyToEmulator(typed.charAt(i));
+        }
+      } else if (nextValue.length < virtualValue.length) {
+        sendKeyToEmulator('Backspace');
+      }
+      virtualValue = '';
+      mobileKbd.value = '';
     });
 
     var Module = {
