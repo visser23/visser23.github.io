@@ -1120,11 +1120,11 @@ const PLACEHOLDERS = {
   },
   redbutton(w, h) {
     return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-      <rect width="${w}" height="${h}" fill="#1a1818"/>
-      <rect x="${w*.05}" y="${h*.1}" width="${w*.9}" height="${h*.45}" rx="3" fill="#1a1818"/>
+      <rect width="${w}" height="${h}" fill="#eeeae1"/>
+      <rect x="${w*.05}" y="${h*.1}" width="${w*.9}" height="${h*.45}" rx="3" fill="#f7f4ed" stroke="#d6d0c3" stroke-width="1"/>
       <image href="assets/images/logos/bbc-red-button.svg" x="${w*.08}" y="${h*.15}" width="${w*.84}" height="${h*.35}" preserveAspectRatio="xMidYMid meet"/>
-      <text x="${w*.5}" y="${h*.72}" font-family="sans-serif" font-size="${h*.065}" fill="#888" text-anchor="middle">Technical Product Manager</text>
-      <text x="${w*.5}" y="${h*.84}" font-family="sans-serif" font-size="${h*.06}" fill="#555" text-anchor="middle">2014</text>
+      <text x="${w*.5}" y="${h*.72}" font-family="sans-serif" font-size="${h*.065}" fill="#666" text-anchor="middle">Technical Product Manager</text>
+      <text x="${w*.5}" y="${h*.84}" font-family="sans-serif" font-size="${h*.06}" fill="#4f4f4f" text-anchor="middle">2014</text>
     </svg>`;
   },
   broadcast(w, h) {
@@ -1187,10 +1187,10 @@ const PLACEHOLDERS = {
   moj(w, h) {
     return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
       <rect width="${w}" height="${h}" fill="#dad6cc"/>
-      <rect x="${w*.08}" y="${h*.06}" width="${w*.84}" height="${h*.5}" rx="2" fill="#ece8de" stroke="#c6c0b3" stroke-width="1"/>
-      <image href="assets/images/logos/moj-logo.svg" x="${w*.16}" y="${h*.1}" width="${w*.68}" height="${h*.4}" preserveAspectRatio="xMidYMid meet"/>
-      <text x="${w*.5}" y="${h*.68}" font-family="monospace" font-size="${h*.055}" fill="#1f7a34" text-anchor="middle">LLM · CHATBOT · DATA</text>
-      <text x="${w*.5}" y="${h*.82}" font-family="sans-serif" font-size="${h*.055}" fill="#666" text-anchor="middle">2024</text>
+      <rect x="${w*.08}" y="${h*.05}" width="${w*.84}" height="${h*.6}" rx="2" fill="#ece8de" stroke="#c6c0b3" stroke-width="1"/>
+      <image href="assets/images/logos/moj-logo.svg" x="${w*.22}" y="${h*.08}" width="${w*.56}" height="${h*.48}" preserveAspectRatio="xMidYMid meet"/>
+      <text x="${w*.5}" y="${h*.75}" font-family="monospace" font-size="${h*.055}" fill="#1f7a34" text-anchor="middle">LLM · CHATBOT · DATA</text>
+      <text x="${w*.5}" y="${h*.83}" font-family="sans-serif" font-size="${h*.055}" fill="#666" text-anchor="middle">2024</text>
     </svg>`;
   },
   default(w, h) {
