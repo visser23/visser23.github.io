@@ -663,6 +663,8 @@ body {
   justify-content: center;
   flex-direction: column;
   gap: 0;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 10px calc(10px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
 }
 #game-overlay.on { display: flex; }
 
@@ -774,8 +776,18 @@ body {
 }
 
 @media (max-width: 600px) {
-  #game-bezel { padding: 8px; border-radius: 8px; }
-  #game-screen { width: 95vw; height: 70vh; max-width: 95vw; }
+  #game-bezel {
+    width: 100%;
+    max-width: 96vw;
+    padding: 8px;
+    border-radius: 8px;
+    box-sizing: border-box;
+  }
+  #game-screen {
+    width: 100%;
+    max-width: 100%;
+    height: min(68vh, calc((96vw - 16px) * 0.7083));
+  }
   #game-close { top: -10px; right: -10px; width: 28px; height: 28px; font-size: 0.85rem; }
 }
 
@@ -1499,6 +1511,7 @@ function openGameEmulator(game) {
   const params = new URLSearchParams();
   params.set('file', game.file);
   if (game.joystick) params.set('joystick', 'true');
+  if (game.run) params.set('run', game.run);
 
   iframe.src = `games/cpc.html?${params.toString()}`;
   nowPlaying.textContent = `${game.title} (${game.year})`;
@@ -1528,6 +1541,12 @@ function closeGameEmulator() {
 }
 
 document.getElementById('game-close').addEventListener('click', closeGameEmulator);
+document.getElementById('game-screen').addEventListener('pointerdown', () => {
+  const iframe = document.getElementById('game-iframe');
+  iframe.focus();
+  iframe.contentWindow?.focus();
+  iframe.contentWindow?.postMessage({ type: 'cpc-focus-keyboard' }, '*');
+});
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.getElementById('game-overlay').classList.contains('on')) {
     closeGameEmulator();
