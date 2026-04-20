@@ -56,35 +56,30 @@ body {
   cursor: pointer;
 }
 #mobile-input button:active { background: #3acc5a; }
-#tap-hint {
+#kbd-btn {
   display: none;
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0,0,0,0.85);
-  color: #4dff6e;
-  font-family: monospace;
-  font-size: 18px;
-  padding: 20px 30px;
+  bottom: 12px;
+  right: 12px;
+  width: 56px;
+  height: 56px;
+  background: rgba(0,0,0,0.9);
   border: 2px solid #4dff6e;
-  border-radius: 8px;
+  border-radius: 50%;
+  color: #4dff6e;
+  font-size: 24px;
   z-index: 50;
-  text-align: center;
-  pointer-events: none;
-  animation: pulse 2s ease-in-out infinite;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(77,255,110,0.3);
 }
-#tap-hint.on { display: block; }
-@keyframes pulse {
-  0%, 100% { opacity: 0.9; }
-  50% { opacity: 0.5; }
-}
+#kbd-btn.on { display: flex; align-items: center; justify-content: center; }
+#kbd-btn:active { background: #1a3d1a; }
 </style>
 </head>
 <body>
   <canvas class="game" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
   
-  <div id="tap-hint">Tap here to type</div>
+  <button id="kbd-btn" aria-label="Open keyboard">⌨</button>
   
   <div id="mobile-input">
     <input type="text" id="cmd-input" placeholder="Type command..." autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" />
@@ -127,7 +122,7 @@ body {
     var mobileInput = document.getElementById('mobile-input');
     var cmdInput = document.getElementById('cmd-input');
     var sendBtn = document.getElementById('send-btn');
-    var tapHint = document.getElementById('tap-hint');
+    var kbdBtn = document.getElementById('kbd-btn');
     var inputActive = false;
     
     // Key code mappings
@@ -261,32 +256,40 @@ body {
     function showMobileInput() {
       inputActive = true;
       mobileInput.classList.add('on');
-      tapHint.classList.remove('on');
-      setTimeout(function() { cmdInput.focus(); }, 100);
+      kbdBtn.classList.remove('on');
+      // Focus MUST happen synchronously in the touch handler for iOS
+      cmdInput.focus();
     }
     
     function hideMobileInput() {
       inputActive = false;
       mobileInput.classList.remove('on');
+      // Show keyboard button again after a delay
+      setTimeout(function() {
+        if (!inputActive) kbdBtn.classList.add('on');
+      }, 500);
     }
     
-    // On touch devices, show tap hint and handle tap to open input
+    // On touch devices, show keyboard button
     if (isTouchDevice) {
-      // Show hint after a short delay (let emulator load first)
+      // Show keyboard button after emulator loads
       setTimeout(function() {
-        tapHint.classList.add('on');
-      }, 1500);
+        kbdBtn.classList.add('on');
+      }, 1000);
       
-      canvas.addEventListener('click', function() {
-        if (!inputActive) {
-          showMobileInput();
-        }
+      // Keyboard button opens input - use touchend for immediate focus
+      kbdBtn.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showMobileInput();
       });
       
-      // Hide hint when canvas gets real interaction
-      canvas.addEventListener('touchstart', function() {
-        tapHint.classList.remove('on');
-      }, { once: true });
+      // Fallback for click (some devices)
+      kbdBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!inputActive) showMobileInput();
+      });
     }
   </script>
   <script async src="cpc.js"></script>
