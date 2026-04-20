@@ -1528,13 +1528,13 @@ function openGameEmulator(game) {
   nowPlaying.textContent = `${game.title} (${game.year})`;
 
   const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  const mobileNote = isMobile ? '<span class="note">Tap the screen to open keyboard</span>' : '';
+  const mobileNote = isMobile ? '<span class="note">Tap ⌨ for on-screen controls</span>' : '';
   
   if (game.format === 'dsk') {
     const runCmd = game.run || 'CAT';
-    hint.innerHTML = `Type <span class="cmd">${runCmd}</span> then press <span class="cmd">ENTER</span>${mobileNote}`;
+    hint.innerHTML = `Type <span class="cmd">${runCmd}</span> then <span class="cmd">ENTER</span>${mobileNote}`;
   } else {
-    hint.innerHTML = `Joystick: <span class="cmd">Ctrl/Alt</span> + <span class="cmd">Arrow Keys</span>${mobileNote}`;
+    hint.innerHTML = `Controls: <span class="cmd">Arrow Keys</span> + <span class="cmd">Space</span>${mobileNote}`;
   }
 
   gameOverlay.classList.add('on');

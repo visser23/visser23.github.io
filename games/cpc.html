@@ -5,10 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"/>
 <title>CPC 464</title>
 <style>
+* { box-sizing: border-box; }
 body {
   margin: 0;
   background: #040d04;
   overflow: hidden;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .game {
   position: absolute;
@@ -19,44 +24,135 @@ body {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
-#mobile-input {
+
+/* Virtual Keyboard */
+#vkbd {
   display: none;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(0,0,0,0.95);
-  padding: 8px;
-  z-index: 100;
+  background: linear-gradient(to bottom, #0a1a0a 0%, #000 100%);
   border-top: 2px solid #4dff6e;
+  z-index: 100;
+  padding: 6px 4px 10px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
 }
-#mobile-input.on { display: flex; gap: 8px; }
-#mobile-input input {
+#vkbd.on { display: block; }
+
+/* Keyboard tabs */
+.kbd-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+  padding: 0 4px;
+}
+.kbd-tab {
   flex: 1;
   background: #001a00;
-  border: 1px solid #4dff6e;
+  border: 1px solid #1a4d1a;
   color: #4dff6e;
   font-family: monospace;
-  font-size: 16px;
-  padding: 10px 12px;
-  border-radius: 4px;
-  outline: none;
-  text-transform: uppercase;
-}
-#mobile-input input::placeholder { color: #1a6630; }
-#mobile-input button {
-  background: #4dff6e;
-  color: #001a00;
-  border: none;
-  padding: 10px 16px;
-  font-family: monospace;
-  font-size: 14px;
-  font-weight: bold;
+  font-size: 11px;
+  padding: 6px 8px;
   border-radius: 4px;
   cursor: pointer;
 }
-#mobile-input button:active { background: #3acc5a; }
-#kbd-btn {
+.kbd-tab.active {
+  background: #1a4d1a;
+  border-color: #4dff6e;
+}
+
+/* Keyboard pages */
+.kbd-page { display: none; }
+.kbd-page.active { display: block; }
+
+/* Key styles */
+.kbd-row {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.key {
+  background: linear-gradient(to bottom, #1a3d1a 0%, #0d1f0d 100%);
+  border: 1px solid #4dff6e;
+  border-radius: 6px;
+  color: #4dff6e;
+  font-family: monospace;
+  font-size: 14px;
+  min-width: 36px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.key:active, .key.pressed {
+  background: #4dff6e;
+  color: #001a00;
+}
+.key.wide { min-width: 54px; }
+.key.wider { min-width: 72px; flex: 1; max-width: 90px; }
+.key.space { flex: 2; max-width: 180px; }
+
+/* D-pad layout */
+.dpad-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 16px;
+}
+.dpad {
+  display: grid;
+  grid-template-columns: 52px 52px 52px;
+  grid-template-rows: 52px 52px 52px;
+  gap: 4px;
+}
+.dpad .key {
+  width: 52px;
+  height: 52px;
+  min-width: unset;
+  font-size: 20px;
+}
+.dpad .key.center {
+  background: #0d1f0d;
+  border-color: #1a4d1a;
+  cursor: default;
+}
+.action-keys {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.action-keys .key {
+  width: 80px;
+  height: 56px;
+  font-size: 13px;
+}
+
+/* Close button */
+#kbd-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: transparent;
+  border: 1px solid #4dff6e;
+  color: #4dff6e;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#kbd-close:active { background: #1a3d1a; }
+
+/* Toggle button */
+#kbd-toggle {
   display: none;
   position: fixed;
   bottom: 12px;
@@ -71,27 +167,157 @@ body {
   z-index: 50;
   cursor: pointer;
   box-shadow: 0 0 20px rgba(77,255,110,0.3);
+  align-items: center;
+  justify-content: center;
 }
-#kbd-btn.on { display: flex; align-items: center; justify-content: center; }
-#kbd-btn:active { background: #1a3d1a; }
+#kbd-toggle.on { display: flex; }
+#kbd-toggle:active { background: #1a3d1a; }
+
+/* Modifier indicator */
+.mod-indicator {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: monospace;
+  font-size: 10px;
+  color: #4dff6e;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.mod-indicator.on { opacity: 1; }
 </style>
 </head>
 <body>
   <canvas class="game" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
   
-  <button id="kbd-btn" aria-label="Open keyboard">⌨</button>
+  <button id="kbd-toggle" aria-label="Open keyboard">⌨</button>
   
-  <div id="mobile-input">
-    <input type="text" id="cmd-input" placeholder="Type command..." autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" />
-    <button id="send-btn">ENTER</button>
+  <div id="vkbd">
+    <button id="kbd-close" aria-label="Close keyboard">×</button>
+    <div class="mod-indicator" id="mod-indicator"></div>
+    
+    <div class="kbd-tabs">
+      <button class="kbd-tab active" data-page="game">🎮 Game</button>
+      <button class="kbd-tab" data-page="text">ABC</button>
+      <button class="kbd-tab" data-page="special">!@#</button>
+    </div>
+    
+    <!-- Page 1: Game Controls -->
+    <div class="kbd-page active" id="page-game">
+      <div class="dpad-container">
+        <div class="dpad">
+          <div class="key center"></div>
+          <div class="key" data-key="ArrowUp">▲</div>
+          <div class="key center"></div>
+          <div class="key" data-key="ArrowLeft">◀</div>
+          <div class="key center"></div>
+          <div class="key" data-key="ArrowRight">▶</div>
+          <div class="key center"></div>
+          <div class="key" data-key="ArrowDown">▼</div>
+          <div class="key center"></div>
+        </div>
+        <div class="action-keys">
+          <div class="key" data-key=" ">SPACE</div>
+          <div class="key" data-key="Enter">ENTER</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Page 2: Text Input -->
+    <div class="kbd-page" id="page-text">
+      <div class="kbd-row">
+        <div class="key" data-key="1">1</div>
+        <div class="key" data-key="2">2</div>
+        <div class="key" data-key="3">3</div>
+        <div class="key" data-key="4">4</div>
+        <div class="key" data-key="5">5</div>
+        <div class="key" data-key="6">6</div>
+        <div class="key" data-key="7">7</div>
+        <div class="key" data-key="8">8</div>
+        <div class="key" data-key="9">9</div>
+        <div class="key" data-key="0">0</div>
+      </div>
+      <div class="kbd-row">
+        <div class="key" data-key="Q">Q</div>
+        <div class="key" data-key="W">W</div>
+        <div class="key" data-key="E">E</div>
+        <div class="key" data-key="R">R</div>
+        <div class="key" data-key="T">T</div>
+        <div class="key" data-key="Y">Y</div>
+        <div class="key" data-key="U">U</div>
+        <div class="key" data-key="I">I</div>
+        <div class="key" data-key="O">O</div>
+        <div class="key" data-key="P">P</div>
+      </div>
+      <div class="kbd-row">
+        <div class="key" data-key="A">A</div>
+        <div class="key" data-key="S">S</div>
+        <div class="key" data-key="D">D</div>
+        <div class="key" data-key="F">F</div>
+        <div class="key" data-key="G">G</div>
+        <div class="key" data-key="H">H</div>
+        <div class="key" data-key="J">J</div>
+        <div class="key" data-key="K">K</div>
+        <div class="key" data-key="L">L</div>
+      </div>
+      <div class="kbd-row">
+        <div class="key" data-key="Z">Z</div>
+        <div class="key" data-key="X">X</div>
+        <div class="key" data-key="C">C</div>
+        <div class="key" data-key="V">V</div>
+        <div class="key" data-key="B">B</div>
+        <div class="key" data-key="N">N</div>
+        <div class="key" data-key="M">M</div>
+        <div class="key wide" data-key="Backspace">⌫</div>
+      </div>
+      <div class="kbd-row">
+        <div class="key wider" data-key=" ">SPACE</div>
+        <div class="key" data-key='"'>"</div>
+        <div class="key wider" data-key="Enter">ENTER</div>
+      </div>
+    </div>
+    
+    <!-- Page 3: Special Keys -->
+    <div class="kbd-page" id="page-special">
+      <div class="kbd-row">
+        <div class="key wide" data-mod="shift">SHIFT</div>
+        <div class="key wide" data-mod="ctrl">CTRL</div>
+        <div class="key wide" data-mod="alt">ALT</div>
+      </div>
+      <div class="kbd-row">
+        <div class="key" data-key=".">.</div>
+        <div class="key" data-key=",">,</div>
+        <div class="key" data-key="-">-</div>
+        <div class="key" data-key="+">=</div>
+        <div class="key" data-key="/">/</div>
+        <div class="key" data-key="*">*</div>
+        <div class="key" data-key=":"">:</div>
+        <div class="key" data-key=";">;</div>
+      </div>
+      <div class="kbd-row">
+        <div class="key" data-key="(">(</div>
+        <div class="key" data-key=")">)</div>
+        <div class="key" data-key="[">[</div>
+        <div class="key" data-key="]">]</div>
+        <div class="key" data-key="'">'</div>
+        <div class="key" data-key='"'>"</div>
+        <div class="key" data-key="!">!</div>
+        <div class="key" data-key="?">?</div>
+      </div>
+      <div class="kbd-row">
+        <div class="key wide" data-key="Escape">ESC</div>
+        <div class="key wide" data-key="Tab">TAB</div>
+        <div class="key wider" data-key=" ">SPACE</div>
+        <div class="key wider" data-key="Enter">ENTER</div>
+      </div>
+    </div>
   </div>
 
   <script>
-    // Detect touch device
     var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     
-    // HACK 1: Override isTrusted on KeyboardEvent prototype
-    // This tricks code that checks event.isTrusted into accepting synthetic events
+    // Override isTrusted
     (function() {
       var origDesc = Object.getOwnPropertyDescriptor(Event.prototype, 'isTrusted');
       if (origDesc && origDesc.get) {
@@ -104,191 +330,174 @@ body {
     
     var Module = {
       preRun: [],
-      print: function(text) {
-        text = Array.prototype.slice.call(arguments).join(' ');
-        console.log(text);
-      },
-      printErr: function(text) {
-        text = Array.prototype.slice.call(arguments).join(' ');
-        console.error(text);
-      },
+      print: function(t) { console.log(Array.prototype.slice.call(arguments).join(' ')); },
+      printErr: function(t) { console.error(Array.prototype.slice.call(arguments).join(' ')); },
     };
-    window.onerror = function(event) {
-      console.log("onerror: " + event);
-    };
+    window.onerror = function(e) { console.log("onerror: " + e); };
     
-    // Mobile input handling
+    // Elements
     var canvas = document.getElementById('canvas');
-    var mobileInput = document.getElementById('mobile-input');
-    var cmdInput = document.getElementById('cmd-input');
-    var sendBtn = document.getElementById('send-btn');
-    var kbdBtn = document.getElementById('kbd-btn');
-    var inputActive = false;
+    var vkbd = document.getElementById('vkbd');
+    var kbdToggle = document.getElementById('kbd-toggle');
+    var kbdClose = document.getElementById('kbd-close');
+    var modIndicator = document.getElementById('mod-indicator');
     
-    // Key code mappings
-    function getKeyCode(key) {
-      if (key.length === 1) {
-        var code = key.toUpperCase().charCodeAt(0);
-        if (code >= 65 && code <= 90) return code; // A-Z
-        if (code >= 48 && code <= 57) return code; // 0-9
-        // Special chars
-        var specials = {' ':32, '"':222, "'":222, '.':190, ',':188, '/':191, '\\':220, '-':189, '=':187, '[':219, ']':221, ';':186, ':':186};
-        return specials[key] || code;
-      }
-      var codes = {'Enter':13, 'Backspace':8, 'Tab':9, 'Escape':27, 'ArrowLeft':37, 'ArrowUp':38, 'ArrowRight':39, 'ArrowDown':40};
-      return codes[key] || 0;
-    }
+    // Modifier state
+    var modifiers = { shift: false, ctrl: false, alt: false };
     
-    function getKeyName(key) {
+    // Key mappings
+    var KEY_CODES = {
+      'A':65,'B':66,'C':67,'D':68,'E':69,'F':70,'G':71,'H':72,'I':73,'J':74,'K':75,'L':76,'M':77,
+      'N':78,'O':79,'P':80,'Q':81,'R':82,'S':83,'T':84,'U':85,'V':86,'W':87,'X':88,'Y':89,'Z':90,
+      '0':48,'1':49,'2':50,'3':51,'4':52,'5':53,'6':54,'7':55,'8':56,'9':57,
+      ' ':32,'Enter':13,'Backspace':8,'Tab':9,'Escape':27,
+      'ArrowUp':38,'ArrowDown':40,'ArrowLeft':37,'ArrowRight':39,
+      '.':190,',':188,'-':189,'+':187,'/':191,'*':106,':':186,';':186,
+      '(':57,')':48,'[':219,']':221,"'":222,'"':222,'!':49,'?':191
+    };
+    
+    function getCode(key) {
       if (key.length === 1) {
-        var upper = key.toUpperCase();
-        if (upper >= 'A' && upper <= 'Z') return 'Key' + upper;
-        if (upper >= '0' && upper <= '9') return 'Digit' + upper;
-        return 'Key' + key;
+        if (key >= 'A' && key <= 'Z') return 'Key' + key;
+        if (key >= '0' && key <= '9') return 'Digit' + key;
       }
       return key;
     }
     
-    // Dispatch synthetic keyboard event
-    function sendKey(key, shiftKey) {
-      var keyCode = getKeyCode(key);
-      var code = getKeyName(key);
-      var eventKey = key.length === 1 ? key.toUpperCase() : key;
+    // Send key event immediately
+    function sendKey(key, type) {
+      var keyCode = KEY_CODES[key] || KEY_CODES[key.toUpperCase()] || key.charCodeAt(0);
+      var code = getCode(key);
       
       var opts = {
-        key: eventKey,
+        key: key,
         code: code,
         keyCode: keyCode,
         which: keyCode,
-        charCode: 0,
-        shiftKey: !!shiftKey,
+        charCode: type === 'keypress' ? keyCode : 0,
+        shiftKey: modifiers.shift,
+        ctrlKey: modifiers.ctrl,
+        altKey: modifiers.alt,
         bubbles: true,
         cancelable: true,
         view: window
       };
       
-      // Try dispatching to multiple targets
-      var targets = [canvas, document, window];
+      var evt = new KeyboardEvent(type, opts);
+      canvas.dispatchEvent(evt);
+      document.dispatchEvent(evt);
+      window.dispatchEvent(evt);
+    }
+    
+    // Handle key press (down + press + up)
+    function pressKey(key) {
+      sendKey(key, 'keydown');
+      if (key.length === 1 || key === 'Enter' || key === ' ') {
+        sendKey(key, 'keypress');
+      }
+      sendKey(key, 'keyup');
       
-      ['keydown', 'keypress', 'keyup'].forEach(function(type) {
-        if (type === 'keypress') {
-          opts.charCode = keyCode;
-        }
-        var evt = new KeyboardEvent(type, opts);
-        targets.forEach(function(t) {
-          try { t.dispatchEvent(evt); } catch(e) {}
+      // Clear modifiers after key press
+      if (modifiers.shift || modifiers.ctrl || modifiers.alt) {
+        modifiers.shift = false;
+        modifiers.ctrl = false;
+        modifiers.alt = false;
+        updateModIndicator();
+        document.querySelectorAll('[data-mod]').forEach(function(el) {
+          el.classList.remove('pressed');
         });
+      }
+    }
+    
+    // Toggle modifier
+    function toggleMod(mod) {
+      modifiers[mod] = !modifiers[mod];
+      updateModIndicator();
+    }
+    
+    function updateModIndicator() {
+      var parts = [];
+      if (modifiers.shift) parts.push('SHIFT');
+      if (modifiers.ctrl) parts.push('CTRL');
+      if (modifiers.alt) parts.push('ALT');
+      modIndicator.textContent = parts.join(' + ');
+      modIndicator.classList.toggle('on', parts.length > 0);
+    }
+    
+    // Page switching
+    document.querySelectorAll('.kbd-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        var page = this.dataset.page;
+        document.querySelectorAll('.kbd-tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.kbd-page').forEach(function(p) { p.classList.remove('active'); });
+        this.classList.add('active');
+        document.getElementById('page-' + page).classList.add('active');
       });
-    }
+    });
     
-    // Send a string character by character
-    function sendString(str) {
-      var i = 0;
-      function next() {
-        if (i >= str.length) {
-          // Send Enter at the end
-          setTimeout(function() { sendKey('Enter'); }, 50);
-          return;
-        }
-        var char = str.charAt(i);
-        var needsShift = char === '"' || (char >= 'A' && char <= 'Z');
-        sendKey(char, needsShift);
-        i++;
-        setTimeout(next, 30); // Small delay between keys
+    // Key press handling
+    document.querySelectorAll('.key[data-key]').forEach(function(key) {
+      function handlePress(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        key.classList.add('pressed');
+        pressKey(key.dataset.key);
       }
-      next();
-    }
-    
-    // HACK 2: Try using the emulator's paste function directly
-    function tryPasteHack(text) {
-      // The emulator exposes __sapp_emsc_onpaste which handles pasted text
-      // We need to allocate the string in WASM memory and call it
-      if (typeof Module._malloc === 'function' && typeof Module.__sapp_emsc_onpaste === 'function') {
-        try {
-          var len = Module.lengthBytesUTF8 ? Module.lengthBytesUTF8(text) : text.length * 3;
-          var ptr = Module._malloc(len + 1);
-          if (Module.stringToUTF8) {
-            Module.stringToUTF8(text, ptr, len + 1);
-          } else {
-            // Manual UTF8 encode
-            for (var i = 0; i < text.length; i++) {
-              Module.HEAPU8[ptr + i] = text.charCodeAt(i);
-            }
-            Module.HEAPU8[ptr + text.length] = 0;
-          }
-          Module.__sapp_emsc_onpaste(ptr);
-          Module._free(ptr);
-          return true;
-        } catch(e) {
-          console.log('Paste hack failed:', e);
-        }
-      }
-      return false;
-    }
-    
-    // Handle send button
-    function handleSend() {
-      var text = cmdInput.value.toUpperCase();
-      if (!text) return;
-      
-      // Try paste hack first (most reliable)
-      var pasted = tryPasteHack(text + '\n');
-      
-      if (!pasted) {
-        // Fall back to synthetic key events
-        sendString(text);
+      function handleRelease() {
+        key.classList.remove('pressed');
       }
       
-      cmdInput.value = '';
-      cmdInput.blur();
-      hideMobileInput();
+      key.addEventListener('touchstart', handlePress, { passive: false });
+      key.addEventListener('touchend', handleRelease, { passive: false });
+      key.addEventListener('mousedown', handlePress);
+      key.addEventListener('mouseup', handleRelease);
+      key.addEventListener('mouseleave', handleRelease);
+    });
+    
+    // Modifier handling
+    document.querySelectorAll('.key[data-mod]').forEach(function(key) {
+      function handlePress(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var mod = key.dataset.mod;
+        toggleMod(mod);
+        key.classList.toggle('pressed', modifiers[mod]);
+      }
+      
+      key.addEventListener('touchstart', handlePress, { passive: false });
+      key.addEventListener('click', handlePress);
+    });
+    
+    // Show/hide keyboard
+    function showKeyboard() {
+      vkbd.classList.add('on');
+      kbdToggle.classList.remove('on');
+    }
+    
+    function hideKeyboard() {
+      vkbd.classList.remove('on');
+      kbdToggle.classList.add('on');
       canvas.focus();
     }
     
-    sendBtn.addEventListener('click', handleSend);
-    cmdInput.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        handleSend();
-      }
+    kbdClose.addEventListener('click', hideKeyboard);
+    kbdClose.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      hideKeyboard();
     });
     
-    function showMobileInput() {
-      inputActive = true;
-      mobileInput.classList.add('on');
-      kbdBtn.classList.remove('on');
-      // Focus MUST happen synchronously in the touch handler for iOS
-      cmdInput.focus();
-    }
-    
-    function hideMobileInput() {
-      inputActive = false;
-      mobileInput.classList.remove('on');
-      // Show keyboard button again after a delay
-      setTimeout(function() {
-        if (!inputActive) kbdBtn.classList.add('on');
-      }, 500);
-    }
-    
-    // On touch devices, show keyboard button
+    // Mobile: show toggle button
     if (isTouchDevice) {
-      // Show keyboard button after emulator loads
-      setTimeout(function() {
-        kbdBtn.classList.add('on');
-      }, 1000);
+      setTimeout(function() { kbdToggle.classList.add('on'); }, 800);
       
-      // Keyboard button opens input - use touchend for immediate focus
-      kbdBtn.addEventListener('touchend', function(e) {
+      kbdToggle.addEventListener('touchend', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        showMobileInput();
+        showKeyboard();
       });
-      
-      // Fallback for click (some devices)
-      kbdBtn.addEventListener('click', function(e) {
+      kbdToggle.addEventListener('click', function(e) {
         e.preventDefault();
-        e.stopPropagation();
-        if (!inputActive) showMobileInput();
+        showKeyboard();
       });
     }
   </script>
