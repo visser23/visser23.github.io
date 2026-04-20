@@ -7,6 +7,7 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/favicon.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -257,8 +258,8 @@ body {
 }
 .card-type-cassette .polaroid-year,
 .card-type-cassette .polaroid-title,
-.card-type-cassette .polaroid-text { color: #d4c8a8; }
-.card-type-cassette .polaroid-title { color: #f0e8d0; }
+.card-type-cassette .polaroid-text { color: #514b3b; }
+.card-type-cassette .polaroid-title { color: #1d1d1d; }
 .card-type-cassette .polaroid-photo { background: #0a0a0a; }
 
 /* Terminal / AI */
@@ -844,6 +845,7 @@ body {
   <div id="nav-links">
     <a href="#story">Story</a>
     <a href="#machine-section">Projects</a>
+    <a href="https://www.google.com" target="_blank" rel="noopener">Google</a>
     <a href="https://www.linkedin.com/in/matt-visser" target="_blank" rel="noopener">LinkedIn</a>
   </div>
 </nav>
@@ -869,7 +871,6 @@ body {
 
 <!-- ── Amstrad / Projects ── -->
 <section id="machine-section" aria-label="Projects">
-  <p id="machine-intro">The machine that explains the continuity.</p>
   <div id="amstrad" role="region" aria-label="Project launcher">
     <!-- Monitor -->
     <div id="monitor">
@@ -931,11 +932,12 @@ body {
 
 <!-- ── Footer ── -->
 <footer id="footer">
-  <p>Greater Manchester, England. Building things since before it was a career.</p>
+  <p>Greater Manchester, England. Building computer things since I was a nipper.</p>
   <div id="contact-links">
     <a href="https://www.linkedin.com/in/matt-visser" target="_blank" rel="noopener">linkedin</a>
     <a href="https://github.com/visser23" target="_blank" rel="noopener">github</a>
     <a href="https://www.oyo-app.com" target="_blank" rel="noopener">oyo-app.com</a>
+    <a href="/policies/cookie-policy.html">cookie policy</a>
     <a href="mailto:matt.visser@servita.com">email</a>
   </div>
 </footer>
@@ -1584,6 +1586,86 @@ async function init() {
 }
 
 init();
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js"></script>
+<script>
+const GA_MEASUREMENT_ID = 'G-KF0G80MEGS';
+let gaLoaded = false;
+
+function gtag(){ window.dataLayer.push(arguments); }
+
+function loadGoogleAnalytics() {
+  if (gaLoaded) return;
+  gaLoaded = true;
+  window.dataLayer = window.dataLayer || [];
+
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+  document.head.appendChild(script);
+
+  gtag('js', new Date());
+  gtag('config', GA_MEASUREMENT_ID);
+}
+
+function deleteCookieEverywhere(name) {
+  const hostname = window.location.hostname;
+  const domains = [hostname];
+  if (hostname.includes('.')) domains.push('.' + hostname);
+  for (const domain of domains) {
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${domain}; SameSite=Lax`;
+  }
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`;
+}
+
+function destroyTrackingCookies() {
+  const cookies = document.cookie.split(';').map(c => c.trim().split('=')[0]).filter(Boolean);
+  const gaSuffix = GA_MEASUREMENT_ID.replace(/^G-/, '');
+  const known = ['_ga', '_gid', '_gat', `_ga_${gaSuffix}`];
+  for (const cookieName of cookies) {
+    if (known.includes(cookieName) || cookieName.startsWith('_ga_') || cookieName.startsWith('_gat_')) {
+      deleteCookieEverywhere(cookieName);
+    }
+  }
+}
+
+function initCookieBanner() {
+  if (!window.cookieconsent) return;
+  window.cookieconsent.initialise({
+    palette: {
+      popup: { background: '#1f1a14', text: '#f0ebe0' },
+      button: { background: '#4dff6e', text: '#040d04' }
+    },
+    theme: 'classic',
+    type: 'opt-in',
+    revokable: true,
+    location: true,
+    law: { regionalLaw: true },
+    content: {
+      message: 'This site uses optional analytics cookies to understand visits. You can accept or decline.',
+      allow: 'Accept',
+      deny: 'Decline',
+      link: 'Cookie Policy',
+      href: '/policies/cookie-policy.html'
+    },
+    onInitialise: function() {
+      if (this.hasConsented()) loadGoogleAnalytics();
+      else destroyTrackingCookies();
+    },
+    onStatusChange: function() {
+      if (this.hasConsented()) loadGoogleAnalytics();
+      else destroyTrackingCookies();
+    },
+    onRevokeChoice: function() {
+      destroyTrackingCookies();
+    },
+    onNoCookieLaw: function() {
+      loadGoogleAnalytics();
+    }
+  });
+}
+
+window.addEventListener('load', initCookieBanner);
 </script>
 </body>
 </html>
