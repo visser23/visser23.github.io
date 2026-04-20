@@ -37,6 +37,7 @@
     "year": "1995",
     "title": "Doom, CD-ROMs and the point of no return",
     "caption": "Doom 2, a CD-ROM drive and a faster PC turned games into raw material. They were there to be opened up, edited and improved.",
+    "image": "assets/images/doom-cover.jpg",
     "type": "photo",
     "placeholder": "cdrom",
     "tag": "childhood",
@@ -144,18 +145,6 @@
     "rotation": -3
   },
   {
-    "id": "bbc-connected-tv",
-    "year": "2012",
-    "title": "BBC Sport Connected TV App",
-    "caption": "The Connected TV App that brought BBC Sport to smart TVs. Formula 1, football, Olympics coverage — built for the biggest screen in the house.",
-    "image": "assets/images/bbc-sport-f1-app.png",
-    "type": "photo",
-    "placeholder": "bbc",
-    "tag": "bbc",
-    "chapter": 4,
-    "rotation": 1
-  },
-  {
     "id": "bbc-tpm",
     "year": "2014",
     "title": "Technical Product Manager",
@@ -171,7 +160,7 @@
     "year": "2015",
     "title": "Big events, bigger systems",
     "caption": "iPlayer, BBC Sport TV App, Red Button — and major broadcast events. Olympics, World Cup, Wimbledon, Glastonbury. When things go wrong on those scales, everyone notices.",
-    "image": "assets/images/glastonbury.png",
+    "image": "assets/images/glastonbury.jpeg",
     "type": "photo",
     "placeholder": "broadcast",
     "tag": "bbc",

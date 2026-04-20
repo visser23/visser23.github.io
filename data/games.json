@@ -1,5 +1,15 @@
 [
   {
+    "title": "Striker",
+    "slug": "striker",
+    "year": 1990,
+    "publisher": "Cult Games",
+    "file": "roms/striker.bin",
+    "format": "dsk",
+    "joystick": false,
+    "summary": "Be the striker you dreamed of"
+  },
+  {
     "title": "Chuckie Egg",
     "slug": "chuckie-egg",
     "year": 1985,
@@ -7,6 +17,7 @@
     "file": "roms/chuckie_egg.dsk",
     "format": "dsk",
     "joystick": true,
+    "run": "RUN\"CHUCKIE",
     "summary": "Collect eggs, avoid the hens"
   },
   {
@@ -17,6 +28,7 @@
     "file": "roms/ghostbusters.dsk",
     "format": "dsk",
     "joystick": false,
+    "run": "RUN\"GHOST",
     "summary": "Who you gonna call?"
   },
   {
@@ -27,6 +39,7 @@
     "file": "roms/batman.dsk",
     "format": "dsk",
     "joystick": true,
+    "run": "RUN\"BATMAN",
     "summary": "3D isometric Batcave action"
   },
   {
@@ -37,6 +50,7 @@
     "file": "roms/thundercats.dsk",
     "format": "dsk",
     "joystick": true,
+    "run": "RUN\"TCATS",
     "summary": "Thunder, Thunder, Thundercats!"
   },
   {
@@ -47,6 +61,7 @@
     "file": "roms/match_day_2.dsk",
     "format": "dsk",
     "joystick": true,
+    "run": "RUN\"MATCH",
     "summary": "The football game"
   },
   {

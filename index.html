@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Matt Visser</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -264,7 +267,7 @@ body {
   border: 1px solid #1a3a1a;
 }
 .card-type-terminal .polaroid-year { color: var(--phosphor2); }
-.card-type-terminal .polaroid-title { color: var(--phosphor); font-family: var(--mono); font-size: 0.75rem; }
+.card-type-terminal .polaroid-title { color: #1f7a34; font-family: var(--mono); font-size: 0.75rem; font-weight: 600; }
 .card-type-terminal .polaroid-text { color: #2a7a3a; font-family: var(--mono); font-size: 0.65rem; font-style: normal; }
 .card-type-terminal .polaroid-photo { background: var(--screen-bg); }
 
@@ -1106,24 +1109,22 @@ const PLACEHOLDERS = {
       <rect width="${w}" height="${h}" fill="#f8f0d8"/>
       <rect x="${w*.08}" y="${h*.06}" width="${w*.84}" height="${h*.88}" rx="3" fill="none" stroke="#c8a840" stroke-width="1.5"/>
       <rect x="${w*.12}" y="${h*.1}" width="${w*.76}" height="${h*.8}" rx="2" fill="none" stroke="#e0c060" stroke-width=".5"/>
-      <text x="${w*.5}" y="${h*.2}" font-family="serif" font-size="${h*.065}" fill="#8a6010" text-anchor="middle">CONTENT INNOVATION</text>
-      <line x1="${w*.2}" y1="${h*.24}" x2="${w*.8}" y2="${h*.24}" stroke="#c8a840" stroke-width=".5"/>
-      <text x="${w*.5}" y="${h*.38}" font-family="serif" font-size="${h*.065}" fill="#8a6010" text-anchor="middle">CANNES 2018</text>
-      <image href="assets/images/logos/bbc-logo.svg" x="${w*.3}" y="${h*.42}" width="${w*.4}" height="${h*.18}" preserveAspectRatio="xMidYMid meet"/>
-      <text x="${w*.5}" y="${h*.72}" font-family="serif" font-size="${h*.09}" fill="#5a3a08" text-anchor="middle" font-weight="bold">★</text>
-      <text x="${w*.5}" y="${h*.84}" font-family="sans-serif" font-size="${h*.06}" fill="#7a5a18" text-anchor="middle">TV App of the Year</text>
-      <text x="${w*.5}" y="${h*.93}" font-family="sans-serif" font-size="${h*.055}" fill="#8a6a28" text-anchor="middle">BBC Sport TV App</text>
+      <text x="${w*.5}" y="${h*.18}" font-family="serif" font-size="${h*.06}" fill="#8a6010" text-anchor="middle">CONTENT INNOVATION</text>
+      <line x1="${w*.2}" y1="${h*.22}" x2="${w*.8}" y2="${h*.22}" stroke="#c8a840" stroke-width=".5"/>
+      <text x="${w*.5}" y="${h*.34}" font-family="serif" font-size="${h*.06}" fill="#8a6010" text-anchor="middle">CANNES 2018</text>
+      <image href="assets/images/logos/bbc-logo.svg" x="${w*.3}" y="${h*.38}" width="${w*.4}" height="${h*.16}" preserveAspectRatio="xMidYMid meet"/>
+      <text x="${w*.5}" y="${h*.64}" font-family="serif" font-size="${h*.08}" fill="#5a3a08" text-anchor="middle" font-weight="bold">★</text>
+      <text x="${w*.5}" y="${h*.76}" font-family="sans-serif" font-size="${h*.055}" fill="#7a5a18" text-anchor="middle">TV App of the Year</text>
+      <text x="${w*.5}" y="${h*.86}" font-family="sans-serif" font-size="${h*.05}" fill="#8a6a28" text-anchor="middle">BBC Sport TV App</text>
     </svg>`;
   },
   redbutton(w, h) {
-    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
       <rect width="${w}" height="${h}" fill="#1a1818"/>
-      <rect x="${w*.1}" y="${h*.08}" width="${w*.8}" height="${h*.55}" rx="3" fill="#0a0808"/>
-      <circle cx="${w*.5}" cy="${h*.36}" r="${w*.2}" fill="#cc0000"/>
-      <circle cx="${w*.5}" cy="${h*.36}" r="${w*.15}" fill="#dd1111"/>
-      <text x="${w*.5}" y="${h*.4}" font-family="sans-serif" font-size="${h*.1}" fill="white" text-anchor="middle" font-weight="bold">●</text>
-      <text x="${w*.5}" y="${h*.74}" font-family="sans-serif" font-size="${h*.07}" fill="#888" text-anchor="middle">Red Button</text>
-      <text x="${w*.5}" y="${h*.84}" font-family="sans-serif" font-size="${h*.065}" fill="#555" text-anchor="middle">TPM 2014</text>
+      <rect x="${w*.05}" y="${h*.1}" width="${w*.9}" height="${h*.45}" rx="3" fill="#1a1818"/>
+      <image href="assets/images/logos/bbc-red-button.svg" x="${w*.08}" y="${h*.15}" width="${w*.84}" height="${h*.35}" preserveAspectRatio="xMidYMid meet"/>
+      <text x="${w*.5}" y="${h*.72}" font-family="sans-serif" font-size="${h*.065}" fill="#888" text-anchor="middle">Technical Product Manager</text>
+      <text x="${w*.5}" y="${h*.84}" font-family="sans-serif" font-size="${h*.06}" fill="#555" text-anchor="middle">2014</text>
     </svg>`;
   },
   broadcast(w, h) {
@@ -1141,7 +1142,7 @@ const PLACEHOLDERS = {
   banking(w, h) {
     return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
       <rect width="${w}" height="${h}" fill="#6935D3"/>
-      <image href="assets/images/logos/starling-logo.svg" x="${w*.08}" y="${h*.08}" width="${w*.84}" height="${h*.35}" preserveAspectRatio="xMidYMid meet"/>
+      <image href="assets/images/logos/starling-logo.svg" x="${w*.2}" y="${h*.08}" width="${w*.6}" height="${h*.35}" preserveAspectRatio="xMidYMid meet"/>
       <text x="${w*.5}" y="${h*.58}" font-family="monospace" font-size="${h*.06}" fill="rgba(255,255,255,0.85)" text-anchor="middle">SEPA INSTANT</text>
       <text x="${w*.5}" y="${h*.68}" font-family="monospace" font-size="${h*.06}" fill="rgba(255,255,255,0.7)" text-anchor="middle">DIRECT DEBIT</text>
       <text x="${w*.5}" y="${h*.78}" font-family="monospace" font-size="${h*.06}" fill="rgba(255,255,255,0.55)" text-anchor="middle">ORIGINATION</text>
@@ -1184,15 +1185,12 @@ const PLACEHOLDERS = {
     </svg>`;
   },
   moj(w, h) {
-    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${w}" height="${h}" fill="#1d1d1b"/>
-      <text x="${w*.5}" y="${h*.2}" font-family="serif" font-size="${h*.12}" fill="#c8a84a" text-anchor="middle">♚</text>
-      <text x="${w*.5}" y="${h*.35}" font-family="sans-serif" font-size="${h*.055}" fill="white" text-anchor="middle" font-weight="bold" letter-spacing="0.1em">HM GOVERNMENT</text>
-      <line x1="${w*.2}" y1="${h*.4}" x2="${w*.8}" y2="${h*.4}" stroke="#555" stroke-width="0.5"/>
-      <text x="${w*.5}" y="${h*.52}" font-family="sans-serif" font-size="${h*.065}" fill="white" text-anchor="middle">Ministry of</text>
-      <text x="${w*.5}" y="${h*.63}" font-family="sans-serif" font-size="${h*.065}" fill="white" text-anchor="middle">Justice</text>
-      <text x="${w*.5}" y="${h*.78}" font-family="monospace" font-size="${h*.055}" fill="#4dff6e" text-anchor="middle">LLM · CHATBOT · DATA</text>
-      <text x="${w*.5}" y="${h*.9}" font-family="sans-serif" font-size="${h*.055}" fill="#666" text-anchor="middle">2024</text>
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <rect width="${w}" height="${h}" fill="#dad6cc"/>
+      <rect x="${w*.08}" y="${h*.06}" width="${w*.84}" height="${h*.5}" rx="2" fill="#ece8de" stroke="#c6c0b3" stroke-width="1"/>
+      <image href="assets/images/logos/moj-logo.svg" x="${w*.16}" y="${h*.1}" width="${w*.68}" height="${h*.4}" preserveAspectRatio="xMidYMid meet"/>
+      <text x="${w*.5}" y="${h*.68}" font-family="monospace" font-size="${h*.055}" fill="#1f7a34" text-anchor="middle">LLM · CHATBOT · DATA</text>
+      <text x="${w*.5}" y="${h*.82}" font-family="sans-serif" font-size="${h*.055}" fill="#666" text-anchor="middle">2024</text>
     </svg>`;
   },
   default(w, h) {
@@ -1504,7 +1502,8 @@ function openGameEmulator(game) {
   nowPlaying.textContent = `${game.title} (${game.year})`;
 
   if (game.format === 'dsk') {
-    hint.textContent = 'DSK loaded \u2014 type RUN" then ENTER to start \u2022 Joystick: Ctrl/Alt + Arrows \u2022 ESC to close';
+    const runCmd = game.run || 'CAT (to list files)';
+    hint.textContent = `Type: ${runCmd} then ENTER \u2022 Joystick: Ctrl/Alt + Arrows \u2022 ESC to close`;
   } else {
     hint.textContent = 'Joystick: Ctrl/Alt + Arrow Keys \u2022 ESC to close';
   }
