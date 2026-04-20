@@ -654,6 +654,7 @@ body {
 
 /* ── Game Emulator Overlay ── */
 #game-overlay {
+  --game-mobile-kb: 0px;
   display: none;
   position: fixed;
   inset: 0;
@@ -802,7 +803,7 @@ body {
   #game-screen {
     width: 100%;
     max-width: 100%;
-    height: min(68vh, calc((96vw - 16px) * 0.7083));
+    height: min(86vh, calc((96vw - 16px) * 0.7083 + var(--game-mobile-kb)));
   }
   #game-close { top: -10px; right: -10px; width: 28px; height: 28px; font-size: 0.85rem; }
 }
@@ -1523,12 +1524,13 @@ function openGameEmulator(game) {
   const iframe = document.getElementById('game-iframe');
   const nowPlaying = document.getElementById('game-now-playing');
   const hint = document.getElementById('game-hint');
+  gameOverlay.style.setProperty('--game-mobile-kb', '0px');
 
   iframe.src = `games/cpc.html?file=${encodeURIComponent(game.file)}`;
   nowPlaying.textContent = `${game.title} (${game.year})`;
 
   const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  const mobileNote = isMobile ? '<span class="note">Tap ⌨ for on-screen controls</span>' : '';
+  const mobileNote = isMobile ? '<span class="note">On-screen controls shown by default on mobile</span>' : '';
   
   if (game.format === 'dsk') {
     const runCmd = game.run || 'CAT';
@@ -1550,9 +1552,20 @@ function closeGameEmulator() {
   const gameOverlay = document.getElementById('game-overlay');
   const iframe = document.getElementById('game-iframe');
   gameOverlay.classList.remove('on');
+  gameOverlay.style.setProperty('--game-mobile-kb', '0px');
   iframe.src = 'about:blank';
   document.body.style.overflow = '';
 }
+
+window.addEventListener('message', (event) => {
+  if (!event?.data || event.data.type !== 'cpc-keyboard-layout') return;
+  const gameOverlay = document.getElementById('game-overlay');
+  if (!gameOverlay.classList.contains('on')) return;
+  const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  if (!isMobile) return;
+  const keyboardHeight = Number(event.data.keyboardHeight) || 0;
+  gameOverlay.style.setProperty('--game-mobile-kb', `${Math.max(0, keyboardHeight)}px`);
+});
 
 document.getElementById('game-close').addEventListener('click', closeGameEmulator);
 document.getElementById('game-screen').addEventListener('pointerdown', () => {

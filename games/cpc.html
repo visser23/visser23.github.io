@@ -481,6 +481,11 @@ body.keyboard-open .game {
       }
       document.body.style.setProperty('--vkbd-height', h + 'px');
       document.body.classList.toggle('keyboard-open', h > 0);
+      window.parent?.postMessage({
+        type: 'cpc-keyboard-layout',
+        keyboardHeight: h,
+        open: h > 0
+      }, '*');
     }
 
     function showKeyboard() {
@@ -505,7 +510,9 @@ body.keyboard-open .game {
     
     // Mobile: show toggle button
     if (isTouchDevice) {
-      setTimeout(function() { kbdToggle.classList.add('on'); }, 800);
+      showKeyboard();
+      kbdToggle.style.display = 'none';
+      kbdClose.style.display = 'none';
       
       kbdToggle.addEventListener('touchend', function(e) {
         e.preventDefault();
