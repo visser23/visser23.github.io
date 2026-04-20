@@ -1,0 +1,132 @@
+[
+  {
+    "title": "Chuckie Egg",
+    "slug": "chuckie-egg",
+    "year": 1985,
+    "publisher": "A&F Software",
+    "file": "roms/chuckie_egg.dsk",
+    "format": "dsk",
+    "joystick": true,
+    "summary": "Collect eggs, avoid the hens"
+  },
+  {
+    "title": "Ghostbusters",
+    "slug": "ghostbusters",
+    "year": 1985,
+    "publisher": "Activision",
+    "file": "roms/ghostbusters.dsk",
+    "format": "dsk",
+    "joystick": false,
+    "summary": "Who you gonna call?"
+  },
+  {
+    "title": "Batman",
+    "slug": "batman",
+    "year": 1986,
+    "publisher": "Ocean",
+    "file": "roms/batman.dsk",
+    "format": "dsk",
+    "joystick": true,
+    "summary": "3D isometric Batcave action"
+  },
+  {
+    "title": "Thundercats",
+    "slug": "thundercats",
+    "year": 1987,
+    "publisher": "Elite Systems",
+    "file": "roms/thundercats.dsk",
+    "format": "dsk",
+    "joystick": true,
+    "summary": "Thunder, Thunder, Thundercats!"
+  },
+  {
+    "title": "Match Day II",
+    "slug": "match-day-2",
+    "year": 1987,
+    "publisher": "Ocean",
+    "file": "roms/match_day_2.dsk",
+    "format": "dsk",
+    "joystick": true,
+    "summary": "The football game"
+  },
+  {
+    "title": "Bomb Jack",
+    "slug": "bomb-jack",
+    "year": 1986,
+    "publisher": "Elite",
+    "file": "roms/bomb_jack.sna",
+    "format": "sna",
+    "joystick": true,
+    "summary": "Collect the bombs, dodge the baddies"
+  },
+  {
+    "title": "Chase H.Q.",
+    "slug": "chase-hq",
+    "year": 1989,
+    "publisher": "Ocean",
+    "file": "roms/chase_hq.sna",
+    "format": "sna",
+    "joystick": true,
+    "summary": "Let's go Mr. Driver!"
+  },
+  {
+    "title": "Ghosts'n'Goblins",
+    "slug": "gng",
+    "year": 1986,
+    "publisher": "Elite",
+    "file": "roms/ghosts_n_goblins.sna",
+    "format": "sna",
+    "joystick": true,
+    "summary": "Arthur vs the undead"
+  },
+  {
+    "title": "Rick Dangerous",
+    "slug": "rick-dangerous",
+    "year": 1989,
+    "publisher": "Firebird",
+    "file": "roms/rick_dangerous.sna",
+    "format": "sna",
+    "joystick": true,
+    "summary": "Temple-raiding platformer"
+  },
+  {
+    "title": "Bruce Lee",
+    "slug": "bruce-lee",
+    "year": 1984,
+    "publisher": "US Gold",
+    "file": "roms/bruce_lee.sna",
+    "format": "sna",
+    "joystick": true,
+    "summary": "Martial arts platformer"
+  },
+  {
+    "title": "Boulder Dash",
+    "slug": "boulder-dash",
+    "year": 1984,
+    "publisher": "First Star",
+    "file": "roms/boulder_dash.sna",
+    "format": "sna",
+    "joystick": true,
+    "summary": "Dig and dodge the rocks"
+  },
+  {
+    "title": "Head Over Heels",
+    "slug": "head-over-heels",
+    "year": 1987,
+    "publisher": "Ocean",
+    "file": "roms/head_over_heels.sna",
+    "format": "sna",
+    "joystick": true,
+    "summary": "Isometric puzzle platformer"
+  },
+  {
+    "title": "Arkanoid",
+    "slug": "arkanoid",
+    "year": 1987,
+    "publisher": "Imagine",
+    "file": "roms/arkanoid.sna",
+    "format": "sna",
+    "joystick": true,
+    "summary": "Breakout evolved"
+  }
+]

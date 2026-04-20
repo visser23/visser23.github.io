@@ -112,7 +112,7 @@
   {
     "id": "media-career",
     "year": "2010",
-    "title": "Snapdragon media",
+    "title": "Snap Media",
     "caption": "Copywriting, SEO, video, editing and development in a fast-moving consumer environment. Everything at once, which turned out to be good training.",
     "type": "photo",
     "placeholder": "media",
@@ -134,13 +134,26 @@
   {
     "id": "bbc-north-star",
     "year": "2012",
-    "title": "BBC North Star",
-    "caption": "BBC North Star Award for the Sport Connected TV App. The kind of recognition that means more when you were also the one debugging it at 2am.",
+    "title": "BBC North Star Award",
+    "caption": "Personal excellence award in Olympic year, where Matt headed the marketing for London 2012. The kind of recognition that means more when you know what it took.",
+    "image": "assets/images/bbc-olympics-2012.png",
     "type": "certificate",
     "placeholder": "award",
     "tag": "bbc",
     "chapter": 4,
     "rotation": -3
+  },
+  {
+    "id": "bbc-connected-tv",
+    "year": "2012",
+    "title": "BBC Sport Connected TV App",
+    "caption": "The Connected TV App that brought BBC Sport to smart TVs. Formula 1, football, Olympics coverage — built for the biggest screen in the house.",
+    "image": "assets/images/bbc-sport-f1-app.png",
+    "type": "photo",
+    "placeholder": "bbc",
+    "tag": "bbc",
+    "chapter": 4,
+    "rotation": 1
   },
   {
     "id": "bbc-tpm",
@@ -158,6 +171,7 @@
     "year": "2015",
     "title": "Big events, bigger systems",
     "caption": "iPlayer, BBC Sport TV App, Red Button — and major broadcast events. Olympics, World Cup, Wimbledon, Glastonbury. When things go wrong on those scales, everyone notices.",
+    "image": "assets/images/glastonbury.png",
     "type": "photo",
     "placeholder": "broadcast",
     "tag": "bbc",
@@ -170,7 +184,7 @@
     "title": "TV App of the Year",
     "caption": "Content Innovation Awards, Cannes. BBC Sport TV App. The work had been good for a while — this was just when a room full of people agreed.",
     "type": "certificate",
-    "placeholder": "award",
+    "placeholder": "cannes",
     "tag": "bbc",
     "chapter": 4,
     "rotation": 3
@@ -213,6 +227,7 @@
     "year": "2021",
     "title": "Head of Product, national appointments",
     "caption": "Led the design and development of an aggregated system for patient appointments and referrals across NHS App and NHS.uk. Used by millions of people who never thought about how it worked.",
+    "image": "assets/images/nhs-app-appointments.jpeg",
     "type": "photo",
     "placeholder": "nhs",
     "tag": "nhs",
@@ -247,7 +262,7 @@
     "title": "Government AI systems",
     "caption": "Built secure LLM-enabled systems for the Ministry of Justice. Chatbot capability and dynamic data dashboards against live government datasets. Security-first, no shortcuts.",
     "type": "terminal",
-    "placeholder": "ai",
+    "placeholder": "moj",
     "tag": "ai",
     "chapter": 6,
     "rotation": -3

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"/>
+<title>CPC 464</title>
+<style>
+body {
+  margin: 0;
+  background: #040d04;
+  overflow: hidden;
+}
+.game {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+#hint {
+  position: fixed;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: monospace;
+  font-size: 11px;
+  color: #1a8c32;
+  background: rgba(0,0,0,0.8);
+  padding: 4px 12px;
+  border-radius: 3px;
+  white-space: nowrap;
+  z-index: 10;
+  opacity: 1;
+  transition: opacity 2s ease 8s;
+  pointer-events: none;
+}
+#hint.fade { opacity: 0; }
+</style>
+</head>
+<body>
+  <canvas class="game" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+  <div id="hint"></div>
+  <script>
+    var params = new URLSearchParams(location.search);
+    var gameFile = params.get('file') || '';
+    var isDsk = gameFile.toLowerCase().endsWith('.dsk');
+    var joystick = params.get('joystick') === 'true';
+
+    var hint = document.getElementById('hint');
+    if (isDsk) {
+      hint.textContent = 'Auto-running disk...';
+    } else {
+      hint.textContent = joystick ? 'Joystick: Ctrl/Alt + Arrow Keys' : 'Click to start \u2014 use keyboard to play';
+    }
+    setTimeout(function() { hint.classList.add('fade'); }, 100);
+
+    function sendKey(canvas, keyCode, key, shift) {
+      var opts = { keyCode: keyCode, key: key, code: 'Key' + key.toUpperCase(), bubbles: true, cancelable: true };
+      if (shift) { opts.shiftKey = true; }
+      canvas.dispatchEvent(new KeyboardEvent('keydown', opts));
+      setTimeout(function() {
+        canvas.dispatchEvent(new KeyboardEvent('keyup', opts));
+      }, 50);
+    }
+
+    function autoRunDsk() {
+      var canvas = document.getElementById('canvas');
+      if (!canvas) return;
+      // Type: RUN"  (R, U, N, Shift+2 for " on CPC keyboard)
+      var seq = [
+        { delay: 0,   keyCode: 82,  key: 'r' },
+        { delay: 120, keyCode: 85,  key: 'u' },
+        { delay: 240, keyCode: 78,  key: 'n' },
+        { delay: 360, keyCode: 50,  key: '2', shift: true },
+        { delay: 520, keyCode: 13,  key: 'Enter' }
+      ];
+      seq.forEach(function(s) {
+        setTimeout(function() { sendKey(canvas, s.keyCode, s.key, s.shift); }, s.delay);
+      });
+    }
+
+    if (isDsk) {
+      setTimeout(autoRunDsk, 3000);
+    }
+
+    var Module = {
+      preRun: [],
+      print: function(text) {
+        text = Array.prototype.slice.call(arguments).join(' ');
+        console.log(text);
+      },
+      printErr: function(text) {
+        text = Array.prototype.slice.call(arguments).join(' ');
+        console.error(text);
+      },
+    };
+    window.onerror = function(event) {
+      console.log("onerror: " + event);
+    };
+  </script>
+  <script async src="cpc.js"></script>
+</body>
+</html>

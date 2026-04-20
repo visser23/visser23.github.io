@@ -84,9 +84,10 @@ body {
 /* ── Intro ── */
 #intro {
   padding: 80px 32px 0;
-  max-width: 560px;
+  max-width: 720px;
   margin: 0 auto;
   text-align: center;
+  white-space: nowrap;
 }
 #intro p {
   font-size: 1.1rem;
@@ -384,13 +385,19 @@ body {
   background: var(--screen-bg);
   border-radius: 4px;
   padding: 20px 24px;
-  min-height: 200px;
+  height: 280px;
   box-shadow:
     inset 0 0 20px rgba(0,0,0,0.8),
     inset 0 0 60px rgba(0,0,0,0.4);
   position: relative;
   overflow: hidden;
   cursor: default;
+}
+#project-list {
+  max-height: 160px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--phosphor2) var(--screen-bg);
 }
 /* Scanline overlay */
 #screen::before {
@@ -641,6 +648,133 @@ body {
   background: rgba(255,255,255,0.03);
 }
 
+/* ── Game Emulator Overlay ── */
+#game-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,0.92);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0;
+}
+#game-overlay.on { display: flex; }
+
+#game-bezel {
+  background: linear-gradient(160deg, #d8d4c4 0%, #b0ac9c 100%);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow:
+    0 0 60px rgba(77,255,110,0.08),
+    inset -2px -2px 6px rgba(0,0,0,0.15),
+    inset 1px 1px 4px rgba(255,255,255,0.35);
+  position: relative;
+  max-width: 90vw;
+  max-height: 80vh;
+}
+#game-bezel::after {
+  content: 'CTM644';
+  position: absolute;
+  bottom: 20px;
+  right: 22px;
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  color: rgba(0,0,0,0.25);
+  letter-spacing: 0.1em;
+}
+
+#game-screen {
+  background: var(--screen-bg);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  box-shadow:
+    inset 0 0 30px rgba(0,0,0,0.8),
+    inset 0 0 80px rgba(0,0,0,0.4);
+  width: 768px;
+  height: 544px;
+  max-width: 85vw;
+  max-height: 70vh;
+}
+#game-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.06) 2px,
+    rgba(0,0,0,0.06) 4px
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+#game-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(77,255,110,0.03) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+#game-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+#game-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 32px;
+  height: 32px;
+  background: #cc0000;
+  color: white;
+  border: 2px solid #aa0000;
+  border-radius: 50%;
+  font-family: var(--mono);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  transition: background 0.15s;
+}
+#game-close:hover { background: #ee2222; }
+
+#game-title-bar {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-align: center;
+  padding: 10px 0 0;
+  letter-spacing: 0.06em;
+}
+#game-title-bar span { color: var(--phosphor); }
+
+#game-hint {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--phosphor2);
+  text-align: center;
+  padding: 6px 0 0;
+  opacity: 0.7;
+}
+
+@media (max-width: 600px) {
+  #game-bezel { padding: 8px; border-radius: 8px; }
+  #game-screen { width: 95vw; height: 70vh; max-width: 95vw; }
+  #game-close { top: -10px; right: -10px; width: 28px; height: 28px; font-size: 0.85rem; }
+}
+
 /* ── Footer ── */
 #footer {
   padding: 40px 24px 48px;
@@ -745,7 +879,7 @@ body {
             <span class="screen-tab" data-mode="games" tabindex="0" role="button">GAMES</span>
           </div>
           <div id="project-list" role="listbox" aria-label="Projects"></div>
-          <div class="screen-footer" id="screen-hint">&#8593;&#8595; navigate &nbsp; ENTER launch &nbsp; click also works</div>
+          <div class="screen-footer" id="screen-hint">&#8593;&#8595; navigate &nbsp; ENTER launch &nbsp; GAMES tab plays real CPC games</div>
         </div>
         <div id="tape-overlay" aria-live="assertive">
           <div id="tape-text"></div>
@@ -780,6 +914,18 @@ body {
   </div>
 </section>
 
+<!-- ── Game Emulator Overlay ── -->
+<div id="game-overlay" role="dialog" aria-label="CPC Game">
+  <div id="game-bezel">
+    <button id="game-close" aria-label="Close game" title="Close (Esc)">×</button>
+    <div id="game-screen">
+      <iframe id="game-iframe" sandbox="allow-scripts allow-same-origin" title="Amstrad CPC Emulator"></iframe>
+    </div>
+  </div>
+  <div id="game-title-bar">Now playing: <span id="game-now-playing"></span></div>
+  <div id="game-hint"></div>
+</div>
+
 <!-- ── Footer ── -->
 <footer id="footer">
   <p>Greater Manchester, England. Building things since before it was a career.</p>
@@ -800,9 +946,12 @@ const PLACEHOLDERS = {
       <rect x="${w*.15}" y="${h*.08}" width="${w*.7}" height="${h*.52}" rx="4" fill="#b0a888"/>
       <rect x="${w*.18}" y="${h*.11}" width="${w*.64}" height="${h*.44}" fill="#0a180a"/>
       <rect x="${w*.2}" y="${h*.14}" width="${w*.6}" height="${h*.38}" fill="#050d05"/>
-      <text x="${w*.25}" y="${h*.3}" font-family="monospace" font-size="${h*.08}" fill="#33dd55">10 PRINT "HELLO"</text>
-      <text x="${w*.25}" y="${h*.4}" font-family="monospace" font-size="${h*.08}" fill="#33dd55">20 GOTO 10</text>
-      <text x="${w*.25}" y="${h*.5}" font-family="monospace" font-size="${h*.08}" fill="#1a8c32">RUN</text>
+      <defs><clipPath id="sc"><rect x="${w*.2}" y="${h*.14}" width="${w*.6}" height="${h*.38}"/></clipPath></defs>
+      <g clip-path="url(#sc)">
+        <text x="${w*.23}" y="${h*.29}" font-family="monospace" font-size="${h*.08}" fill="#33dd55">10 PRINT "HELLO"</text>
+        <text x="${w*.23}" y="${h*.39}" font-family="monospace" font-size="${h*.08}" fill="#33dd55">20 GOTO 10</text>
+        <text x="${w*.23}" y="${h*.49}" font-family="monospace" font-size="${h*.08}" fill="#1a8c32">RUN</text>
+      </g>
       <rect x="${w*.3}" y="${h*.64}" width="${w*.4}" height="${h*.06}" rx="2" fill="#9a9280"/>
       <rect x="${w*.1}" y="${h*.72}" width="${w*.8}" height="${h*.22}" rx="3" fill="#b8b0a0"/>
       <rect x="${w*.14}" y="${h*.78}" width="${w*.5}" height="${h*.08}" rx="1" fill="#2a261e" opacity=".6"/>
@@ -822,27 +971,25 @@ const PLACEHOLDERS = {
     </svg>`;
   },
   ibm486(w, h) {
-    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
       <rect width="${w}" height="${h}" fill="#b8b0a0"/>
       <rect x="${w*.08}" y="${h*.05}" width="${w*.84}" height="${h*.6}" rx="3" fill="#c0b8a8"/>
       <rect x="${w*.11}" y="${h*.08}" width="${w*.78}" height="${h*.52}" fill="#181410"/>
       <rect x="${w*.14}" y="${h*.1}" width="${w*.72}" height="${h*.46}" fill="#101008"/>
-      <rect x="${w*.2}" y="${h*.2}" width="${w*.6}" height="${h*.3}" fill="#181410" rx="2"/>
-      <text x="${w*.5}" y="${h*.38}" font-family="monospace" font-size="${h*.1}" fill="#aaaaaa" text-anchor="middle">IBM</text>
-      <text x="${w*.5}" y="${h*.48}" font-family="monospace" font-size="${h*.07}" fill="#666666" text-anchor="middle">486SX</text>
+      <image href="assets/images/logos/ibm-logo.svg" x="${w*.22}" y="${h*.18}" width="${w*.56}" height="${h*.22}" preserveAspectRatio="xMidYMid meet"/>
+      <text x="${w*.5}" y="${h*.48}" font-family="monospace" font-size="${h*.07}" fill="#666666" text-anchor="middle">486SX · Windows 3.11</text>
       <rect x="${w*.3}" y="${h*.68}" width="${w*.4}" height="${h*.06}" rx="2" fill="#aaa8a0"/>
       <rect x="${w*.05}" y="${h*.76}" width="${w*.9}" height="${h*.2}" rx="2" fill="#c4bfb0"/>
     </svg>`;
   },
   cdrom(w, h) {
     return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${w}" height="${h}" fill="#1a1810"/>
-      <circle cx="${w*.5}" cy="${h*.45}" r="${w*.35}" fill="none" stroke="#888" stroke-width="1"/>
-      <circle cx="${w*.5}" cy="${h*.45}" r="${w*.3}" fill="#c0b8c0" stroke="#aaa" stroke-width=".5"/>
-      <circle cx="${w*.5}" cy="${h*.45}" r="${w*.25}" fill="#d4ccd8"/>
-      <circle cx="${w*.5}" cy="${h*.45}" r="${w*.08}" fill="#2a2830"/>
-      <text x="${w*.5}" y="${h*.8}" font-family="monospace" font-size="${h*.08}" fill="#888" text-anchor="middle">DOOM II</text>
-      <text x="${w*.5}" y="${h*.88}" font-family="monospace" font-size="${h*.07}" fill="#555" text-anchor="middle">id Software 1994</text>
+      <rect width="${w}" height="${h}" fill="#1a0800"/>
+      <rect x="${w*.1}" y="${h*.1}" width="${w*.8}" height="${h*.55}" rx="2" fill="#0a0400"/>
+      <text x="${w*.5}" y="${h*.38}" font-family="Impact, sans-serif" font-size="${h*.22}" fill="#cc2200" text-anchor="middle" font-weight="bold" letter-spacing="-0.02em">DOOM</text>
+      <text x="${w*.5}" y="${h*.55}" font-family="Impact, sans-serif" font-size="${h*.14}" fill="#aa1100" text-anchor="middle" font-weight="bold">II</text>
+      <text x="${w*.5}" y="${h*.76}" font-family="monospace" font-size="${h*.06}" fill="#884400" text-anchor="middle">Hell on Earth</text>
+      <text x="${w*.5}" y="${h*.88}" font-family="monospace" font-size="${h*.055}" fill="#553300" text-anchor="middle">id Software · 1994</text>
     </svg>`;
   },
   modem(w, h) {
@@ -934,25 +1081,38 @@ const PLACEHOLDERS = {
     </svg>`;
   },
   bbc(w, h) {
-    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
       <rect width="${w}" height="${h}" fill="#e8e0d0"/>
-      <rect x="${w*.15}" y="${h*.15}" width="${w*.7}" height="${h*.5}" rx="4" fill="#1a1a1a"/>
-      <text x="${w*.5}" y="${h*.5}" font-family="sans-serif" font-size="${h*.22}" fill="white" text-anchor="middle" font-weight="bold">BBC</text>
-      <rect x="${w*.35}" y="${h*.66}" width="${w*.1}" height="${h*.08}" fill="#888"/>
-      <rect x="${w*.2}" y="${h*.74}" width="${w*.6}" height="${h*.06}" rx="2" fill="#aaa"/>
-      <text x="${w*.5}" y="${h*.88}" font-family="sans-serif" font-size="${h*.07}" fill="#6a5a40" text-anchor="middle">2010 — 2019</text>
+      <image href="assets/images/logos/bbc-logo.svg" x="${w*.2}" y="${h*.15}" width="${w*.6}" height="${h*.45}" preserveAspectRatio="xMidYMid meet"/>
+      <text x="${w*.5}" y="${h*.78}" font-family="sans-serif" font-size="${h*.065}" fill="#6a5a40" text-anchor="middle">MediaCity, Salford</text>
+      <text x="${w*.5}" y="${h*.88}" font-family="sans-serif" font-size="${h*.065}" fill="#8a7a60" text-anchor="middle">2010 — 2019</text>
     </svg>`;
   },
   award(w, h) {
-    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
       <rect width="${w}" height="${h}" fill="#f8f0d8"/>
       <rect x="${w*.08}" y="${h*.06}" width="${w*.84}" height="${h*.88}" rx="3" fill="none" stroke="#c8a840" stroke-width="1.5"/>
       <rect x="${w*.12}" y="${h*.1}" width="${w*.76}" height="${h*.8}" rx="2" fill="none" stroke="#e0c060" stroke-width=".5"/>
-      <text x="${w*.5}" y="${h*.28}" font-family="serif" font-size="${h*.085}" fill="#8a6010" text-anchor="middle">AWARD</text>
-      <line x1="${w*.2}" y1="${h*.33}" x2="${w*.8}" y2="${h*.33}" stroke="#c8a840" stroke-width=".5"/>
-      <text x="${w*.5}" y="${h*.48}" font-family="serif" font-size="${h*.11}" fill="#5a3a08" text-anchor="middle" font-weight="bold">★</text>
-      <text x="${w*.5}" y="${h*.63}" font-family="sans-serif" font-size="${h*.07}" fill="#7a5a18" text-anchor="middle">BBC Sport</text>
-      <text x="${w*.5}" y="${h*.73}" font-family="sans-serif" font-size="${h*.065}" fill="#8a6a28" text-anchor="middle">Connected TV App</text>
+      <text x="${w*.5}" y="${h*.22}" font-family="serif" font-size="${h*.075}" fill="#8a6010" text-anchor="middle">AWARD</text>
+      <line x1="${w*.2}" y1="${h*.26}" x2="${w*.8}" y2="${h*.26}" stroke="#c8a840" stroke-width=".5"/>
+      <image href="assets/images/logos/bbc-logo.svg" x="${w*.3}" y="${h*.3}" width="${w*.4}" height="${h*.2}" preserveAspectRatio="xMidYMid meet"/>
+      <text x="${w*.5}" y="${h*.62}" font-family="serif" font-size="${h*.1}" fill="#5a3a08" text-anchor="middle" font-weight="bold">★</text>
+      <text x="${w*.5}" y="${h*.76}" font-family="sans-serif" font-size="${h*.065}" fill="#7a5a18" text-anchor="middle">North Star</text>
+      <text x="${w*.5}" y="${h*.86}" font-family="sans-serif" font-size="${h*.06}" fill="#8a6a28" text-anchor="middle">Personal Excellence</text>
+    </svg>`;
+  },
+  cannes(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <rect width="${w}" height="${h}" fill="#f8f0d8"/>
+      <rect x="${w*.08}" y="${h*.06}" width="${w*.84}" height="${h*.88}" rx="3" fill="none" stroke="#c8a840" stroke-width="1.5"/>
+      <rect x="${w*.12}" y="${h*.1}" width="${w*.76}" height="${h*.8}" rx="2" fill="none" stroke="#e0c060" stroke-width=".5"/>
+      <text x="${w*.5}" y="${h*.2}" font-family="serif" font-size="${h*.065}" fill="#8a6010" text-anchor="middle">CONTENT INNOVATION</text>
+      <line x1="${w*.2}" y1="${h*.24}" x2="${w*.8}" y2="${h*.24}" stroke="#c8a840" stroke-width=".5"/>
+      <text x="${w*.5}" y="${h*.38}" font-family="serif" font-size="${h*.065}" fill="#8a6010" text-anchor="middle">CANNES 2018</text>
+      <image href="assets/images/logos/bbc-logo.svg" x="${w*.3}" y="${h*.42}" width="${w*.4}" height="${h*.18}" preserveAspectRatio="xMidYMid meet"/>
+      <text x="${w*.5}" y="${h*.72}" font-family="serif" font-size="${h*.09}" fill="#5a3a08" text-anchor="middle" font-weight="bold">★</text>
+      <text x="${w*.5}" y="${h*.84}" font-family="sans-serif" font-size="${h*.06}" fill="#7a5a18" text-anchor="middle">TV App of the Year</text>
+      <text x="${w*.5}" y="${h*.93}" font-family="sans-serif" font-size="${h*.055}" fill="#8a6a28" text-anchor="middle">BBC Sport TV App</text>
     </svg>`;
   },
   redbutton(w, h) {
@@ -979,55 +1139,60 @@ const PLACEHOLDERS = {
     </svg>`;
   },
   banking(w, h) {
-    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${w}" height="${h}" fill="#0a1a0a"/>
-      <rect x="${w*.08}" y="${h*.1}" width="${w*.84}" height="${h*.3}" rx="5" fill="#0f2a1f"/>
-      <text x="${w*.5}" y="${h*.28}" font-family="monospace" font-size="${h*.1}" fill="#00ff88" text-anchor="middle">£ STARLING</text>
-      <text x="${w*.5}" y="${h*.52}" font-family="monospace" font-size="${h*.065}" fill="#009944" text-anchor="middle">SEPA INSTANT</text>
-      <text x="${w*.5}" y="${h*.62}" font-family="monospace" font-size="${h*.065}" fill="#007733" text-anchor="middle">DIRECT DEBIT</text>
-      <text x="${w*.5}" y="${h*.72}" font-family="monospace" font-size="${h*.065}" fill="#005522" text-anchor="middle">ORIGINATION</text>
-      <text x="${w*.5}" y="${h*.86}" font-family="sans-serif" font-size="${h*.065}" fill="#335533" text-anchor="middle">2019—2021</text>
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <rect width="${w}" height="${h}" fill="#6935D3"/>
+      <image href="assets/images/logos/starling-logo.svg" x="${w*.08}" y="${h*.08}" width="${w*.84}" height="${h*.35}" preserveAspectRatio="xMidYMid meet"/>
+      <text x="${w*.5}" y="${h*.58}" font-family="monospace" font-size="${h*.06}" fill="rgba(255,255,255,0.85)" text-anchor="middle">SEPA INSTANT</text>
+      <text x="${w*.5}" y="${h*.68}" font-family="monospace" font-size="${h*.06}" fill="rgba(255,255,255,0.7)" text-anchor="middle">DIRECT DEBIT</text>
+      <text x="${w*.5}" y="${h*.78}" font-family="monospace" font-size="${h*.06}" fill="rgba(255,255,255,0.55)" text-anchor="middle">ORIGINATION</text>
+      <text x="${w*.5}" y="${h*.92}" font-family="sans-serif" font-size="${h*.06}" fill="rgba(255,255,255,0.4)" text-anchor="middle">BJSS · 2019—2021</text>
     </svg>`;
   },
   covid(w, h) {
-    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${w}" height="${h}" fill="#f0f0f0"/>
-      <text x="${w*.5}" y="${h*.25}" font-family="sans-serif" font-size="${h*.085}" fill="#333" text-anchor="middle">UK GOV</text>
-      <text x="${w*.5}" y="${h*.38}" font-family="sans-serif" font-size="${h*.075}" fill="#555" text-anchor="middle">COVID-19</text>
-      <text x="${w*.5}" y="${h*.5}" font-family="sans-serif" font-size="${h*.075}" fill="#555" text-anchor="middle">RESPONSE</text>
-      <rect x="${w*.2}" y="${h*.58}" width="${w*.6}" height="${h*.04}" fill="#888" rx="1"/>
-      <text x="${w*.5}" y="${h*.73}" font-family="sans-serif" font-size="${h*.065}" fill="#777" text-anchor="middle">national infrastructure</text>
-      <text x="${w*.5}" y="${h*.83}" font-family="sans-serif" font-size="${h*.065}" fill="#888" text-anchor="middle">2020—2021</text>
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <rect width="${w}" height="${h}" fill="#005eb8"/>
+      <image href="assets/images/logos/nhs-covid-app.png" x="${w*.3}" y="${h*.08}" width="${w*.4}" height="${h*.4}" preserveAspectRatio="xMidYMid meet"/>
+      <text x="${w*.5}" y="${h*.6}" font-family="sans-serif" font-size="${h*.075}" fill="white" text-anchor="middle" font-weight="bold">TEST &amp; TRACE</text>
+      <text x="${w*.5}" y="${h*.73}" font-family="sans-serif" font-size="${h*.06}" fill="rgba(255,255,255,0.8)" text-anchor="middle">national infrastructure</text>
+      <text x="${w*.5}" y="${h*.86}" font-family="sans-serif" font-size="${h*.06}" fill="rgba(255,255,255,0.6)" text-anchor="middle">2020 — 2021</text>
     </svg>`;
   },
   nhs(w, h) {
-    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${w}" height="${h}" fill="#003087"/>
-      <rect x="${w*.2}" y="${h*.3}" width="${w*.6}" height="${h*.4}" fill="white"/>
-      <rect x="${w*.1}" y="${h*.4}" width="${w*.8}" height="${h*.2}" fill="white"/>
-      <text x="${w*.5}" y="${h*.55}" font-family="sans-serif" font-size="${h*.2}" fill="#003087" text-anchor="middle" font-weight="bold">NHS</text>
-      <text x="${w*.5}" y="${h*.84}" font-family="sans-serif" font-size="${h*.07}" fill="#80a0c8" text-anchor="middle">England</text>
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <rect width="${w}" height="${h}" fill="#005eb8"/>
+      <image href="assets/images/logos/nhs-logo.svg" x="${w*.1}" y="${h*.15}" width="${w*.8}" height="${h*.55}" preserveAspectRatio="xMidYMid meet"/>
+      <text x="${w*.5}" y="${h*.88}" font-family="sans-serif" font-size="${h*.07}" fill="rgba(255,255,255,0.6)" text-anchor="middle">England</text>
     </svg>`;
   },
   healthtech(w, h) {
-    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${w}" height="${h}" fill="#0a1a2a"/>
-      <circle cx="${w*.5}" cy="${h*.38}" r="${w*.25}" fill="none" stroke="#1a6aaa" stroke-width="1.5"/>
-      <rect x="${w*.46}" y="${h*.2}" width="${w*.08}" height="${w*.36}" rx="2" fill="#2a9aee"/>
-      <rect x="${w*.32}" y="${h*.34}" width="${w*.36}" height="${w*.08}" rx="2" fill="#2a9aee"/>
-      <text x="${w*.5}" y="${h*.76}" font-family="monospace" font-size="${h*.07}" fill="#4a8aaa" text-anchor="middle">HEALTH CALL</text>
-      <text x="${w*.5}" y="${h*.86}" font-family="monospace" font-size="${h*.065}" fill="#2a5a7a" text-anchor="middle">CPTO 2022—2024</text>
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <rect width="${w}" height="${h}" fill="#ffffff"/>
+      <image href="assets/images/logos/healthcall-logo.png" x="${w*.08}" y="${h*.12}" width="${w*.84}" height="${h*.45}" preserveAspectRatio="xMidYMid meet"/>
+      <text x="${w*.5}" y="${h*.76}" font-family="sans-serif" font-size="${h*.065}" fill="#333" text-anchor="middle">CPTO</text>
+      <text x="${w*.5}" y="${h*.87}" font-family="sans-serif" font-size="${h*.06}" fill="#888" text-anchor="middle">2022 — 2024</text>
     </svg>`;
   },
   ai(w, h) {
     return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${w}" height="${h}" fill="${this.screen_bg || '#040d04'}"/>
+      <rect width="${w}" height="${h}" fill="#040d04"/>
       <text x="${w*.08}" y="${h*.18}" font-family="monospace" font-size="${h*.075}" fill="#1a8c32">$ python ai_test.py</text>
       <text x="${w*.08}" y="${h*.3}" font-family="monospace" font-size="${h*.065}" fill="#33ff66">Loading model...</text>
       <text x="${w*.08}" y="${h*.41}" font-family="monospace" font-size="${h*.065}" fill="#1a8c32">tokens: 117M</text>
       <text x="${w*.08}" y="${h*.53}" font-family="monospace" font-size="${h*.065}" fill="#33ff66">&gt; "write a poem"</text>
       <text x="${w*.08}" y="${h*.64}" font-family="monospace" font-size="${h*.065}" fill="#1a8c32">In silicon dreams...</text>
       <text x="${w*.08}" y="${h*.78}" font-family="monospace" font-size="${h*.07}" fill="#0a5a18">GPT-2 · 2023</text>
+    </svg>`;
+  },
+  moj(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#1d1d1b"/>
+      <text x="${w*.5}" y="${h*.2}" font-family="serif" font-size="${h*.12}" fill="#c8a84a" text-anchor="middle">♚</text>
+      <text x="${w*.5}" y="${h*.35}" font-family="sans-serif" font-size="${h*.055}" fill="white" text-anchor="middle" font-weight="bold" letter-spacing="0.1em">HM GOVERNMENT</text>
+      <line x1="${w*.2}" y1="${h*.4}" x2="${w*.8}" y2="${h*.4}" stroke="#555" stroke-width="0.5"/>
+      <text x="${w*.5}" y="${h*.52}" font-family="sans-serif" font-size="${h*.065}" fill="white" text-anchor="middle">Ministry of</text>
+      <text x="${w*.5}" y="${h*.63}" font-family="sans-serif" font-size="${h*.065}" fill="white" text-anchor="middle">Justice</text>
+      <text x="${w*.5}" y="${h*.78}" font-family="monospace" font-size="${h*.055}" fill="#4dff6e" text-anchor="middle">LLM · CHATBOT · DATA</text>
+      <text x="${w*.5}" y="${h*.9}" font-family="sans-serif" font-size="${h*.055}" fill="#666" text-anchor="middle">2024</text>
     </svg>`;
   },
   default(w, h) {
@@ -1083,7 +1248,9 @@ function renderStory(data) {
 
     const rotStyle = `rotate(${card.rotation || 0}deg)`;
 
-    const photo = getPlaceholder(card.placeholder || 'default', 190, 160);
+    const photo = card.image
+      ? `<img src="${card.image}" alt="${card.title}" style="width:100%;height:100%;object-fit:cover;">`
+      : getPlaceholder(card.placeholder || 'default', 190, 160);
     const typeClass = `card-type-${card.type || 'photo'}`;
 
     wrap.innerHTML = `
@@ -1233,15 +1400,12 @@ let selectedProject = 0;
 let currentMode = 'projects';
 let launching = false;
 
-const GAMES_PLACEHOLDER = [
-  { title: "Manic Miner (Browser)", slug: "manic-miner", summary: "Classic ZX Spectrum platformer", link: "https://www.classicgamesarcade.com/game/21662/manic-miner.html", external: true },
-  { title: "Jet Set Willy", slug: "jet-set-willy", summary: "Semaphore Signal House awaits", link: "https://www.classicgamesarcade.com/game/21661/jet-set-willy.html", external: true }
-];
+let gamesData = [];
 
 function renderProjectList(data, mode) {
   const list = document.getElementById('project-list');
   list.innerHTML = '';
-  const items = mode === 'games' ? GAMES_PLACEHOLDER : data;
+  const items = mode === 'games' ? gamesData : data;
 
   items.forEach((proj, i) => {
     const el = document.createElement('div');
@@ -1269,11 +1433,14 @@ function renderProjectList(data, mode) {
 }
 
 function selectProject(i) {
-  const items = currentMode === 'games' ? GAMES_PLACEHOLDER : projectData;
+  const items = currentMode === 'games' ? gamesData : projectData;
   selectedProject = Math.max(0, Math.min(items.length - 1, i));
   renderProjectList(projectData, currentMode);
   const el = document.querySelector('.project-item.selected');
-  if (el) el.focus();
+  if (el) {
+    el.focus();
+    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
 }
 
 const LOADING_MESSAGES = [
@@ -1285,7 +1452,7 @@ const LOADING_MESSAGES = [
 
 function launchProject(i) {
   if (launching) return;
-  const items = currentMode === 'games' ? GAMES_PLACEHOLDER : projectData;
+  const items = currentMode === 'games' ? gamesData : projectData;
   const proj = items[i];
   if (!proj) return;
 
@@ -1298,17 +1465,73 @@ function launchProject(i) {
   bar.style.width = '0';
 
   const name = proj.title.toUpperCase().replace(/\s/g, '_');
-  tapeText.textContent = `READ"${name}"\nMotor on.\nThis used to take longer.`;
 
-  setTimeout(() => { bar.style.width = '60%'; }, 100);
-  setTimeout(() => { bar.style.width = '100%'; }, 700);
-  setTimeout(() => {
-    overlay.classList.remove('on');
-    bar.style.width = '0';
-    launching = false;
-    window.open(proj.link, '_blank', 'noopener,noreferrer');
-  }, 1100);
+  if (currentMode === 'games' && proj.file) {
+    tapeText.textContent = `RUN"${name}"\nMotor on.\nLoading ${proj.title}...`;
+    setTimeout(() => { bar.style.width = '40%'; }, 100);
+    setTimeout(() => { bar.style.width = '80%'; }, 600);
+    setTimeout(() => { bar.style.width = '100%'; }, 1200);
+    setTimeout(() => {
+      overlay.classList.remove('on');
+      bar.style.width = '0';
+      launching = false;
+      openGameEmulator(proj);
+    }, 1500);
+  } else {
+    tapeText.textContent = `READ"${name}"\nMotor on.\nThis used to take longer.`;
+    setTimeout(() => { bar.style.width = '60%'; }, 100);
+    setTimeout(() => { bar.style.width = '100%'; }, 700);
+    setTimeout(() => {
+      overlay.classList.remove('on');
+      bar.style.width = '0';
+      launching = false;
+      window.open(proj.link, '_blank', 'noopener,noreferrer');
+    }, 1100);
+  }
 }
+
+function openGameEmulator(game) {
+  const gameOverlay = document.getElementById('game-overlay');
+  const iframe = document.getElementById('game-iframe');
+  const nowPlaying = document.getElementById('game-now-playing');
+  const hint = document.getElementById('game-hint');
+
+  const params = new URLSearchParams();
+  params.set('file', game.file);
+  if (game.joystick) params.set('joystick', 'true');
+
+  iframe.src = `games/cpc.html?${params.toString()}`;
+  nowPlaying.textContent = `${game.title} (${game.year})`;
+
+  if (game.format === 'dsk') {
+    hint.textContent = 'DSK loaded \u2014 type RUN" then ENTER to start \u2022 Joystick: Ctrl/Alt + Arrows \u2022 ESC to close';
+  } else {
+    hint.textContent = 'Joystick: Ctrl/Alt + Arrow Keys \u2022 ESC to close';
+  }
+
+  gameOverlay.classList.add('on');
+  document.body.style.overflow = 'hidden';
+
+  setTimeout(() => {
+    iframe.focus();
+    iframe.contentWindow?.focus();
+  }, 300);
+}
+
+function closeGameEmulator() {
+  const gameOverlay = document.getElementById('game-overlay');
+  const iframe = document.getElementById('game-iframe');
+  gameOverlay.classList.remove('on');
+  iframe.src = 'about:blank';
+  document.body.style.overflow = '';
+}
+
+document.getElementById('game-close').addEventListener('click', closeGameEmulator);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('game-overlay').classList.contains('on')) {
+    closeGameEmulator();
+  }
+});
 
 // Mode tabs
 document.querySelectorAll('.screen-tab').forEach(tab => {
@@ -1324,9 +1547,9 @@ document.querySelectorAll('.screen-tab').forEach(tab => {
   });
 });
 
-// Screen keyboard navigation
+// Screen keyboard navigation (only when no project-item is focused, to avoid double-step)
 document.getElementById('screen').addEventListener('keydown', e => {
-  const items = currentMode === 'games' ? GAMES_PLACEHOLDER : projectData;
+  if (e.target.closest('.project-item')) return;
   if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); selectProject(selectedProject + 1); }
   if (e.key === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); selectProject(selectedProject - 1); }
   if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); launchProject(selectedProject); }
@@ -1335,13 +1558,15 @@ document.getElementById('screen').addEventListener('keydown', e => {
 // ── Load Data ──
 async function loadData() {
   try {
-    const [storyRes, projectsRes] = await Promise.all([
+    const [storyRes, projectsRes, gamesRes] = await Promise.all([
       fetch('data/story.json'),
-      fetch('data/projects.json')
+      fetch('data/projects.json'),
+      fetch('data/games.json')
     ]);
     const story = await storyRes.json();
     const projects = await projectsRes.json();
-    return { story, projects };
+    const games = await gamesRes.json();
+    return { story, projects, games };
   } catch (e) {
     console.warn('Could not load data files, using inline fallback');
     return null;
@@ -1352,6 +1577,7 @@ async function init() {
   const data = await loadData();
   if (data) {
     projectData = data.projects;
+    gamesData = data.games;
     initRailDrag();
     renderStory(data.story);
     renderProjectList(data.projects, 'projects');
