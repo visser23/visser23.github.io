@@ -7,6 +7,7 @@
 <style>
 * { box-sizing: border-box; }
 body {
+  --vkbd-height: 0px;
   margin: 0;
   background: #040d04;
   overflow: hidden;
@@ -23,6 +24,10 @@ body {
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  transition: height 0.12s ease-out;
+}
+body.keyboard-open .game {
+  height: calc(100% - var(--vkbd-height));
 }
 
 /* Virtual Keyboard */
@@ -292,7 +297,7 @@ body {
         <div class="key" data-key="+">=</div>
         <div class="key" data-key="/">/</div>
         <div class="key" data-key="*">*</div>
-        <div class="key" data-key=":"">:</div>
+        <div class="key" data-key=":">:</div>
         <div class="key" data-key=";">;</div>
       </div>
       <div class="kbd-row">
@@ -469,14 +474,26 @@ body {
     });
     
     // Show/hide keyboard
+    function syncViewportForKeyboard() {
+      var h = 0;
+      if (vkbd.classList.contains('on')) {
+        h = Math.ceil(vkbd.getBoundingClientRect().height);
+      }
+      document.body.style.setProperty('--vkbd-height', h + 'px');
+      document.body.classList.toggle('keyboard-open', h > 0);
+    }
+
     function showKeyboard() {
       vkbd.classList.add('on');
       kbdToggle.classList.remove('on');
+      requestAnimationFrame(syncViewportForKeyboard);
+      setTimeout(syncViewportForKeyboard, 60);
     }
     
     function hideKeyboard() {
       vkbd.classList.remove('on');
       kbdToggle.classList.add('on');
+      syncViewportForKeyboard();
       canvas.focus();
     }
     
@@ -498,6 +515,11 @@ body {
       kbdToggle.addEventListener('click', function(e) {
         e.preventDefault();
         showKeyboard();
+      });
+
+      window.addEventListener('resize', syncViewportForKeyboard);
+      window.addEventListener('orientationchange', function() {
+        setTimeout(syncViewportForKeyboard, 80);
       });
     }
   </script>
