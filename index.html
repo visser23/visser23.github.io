@@ -3,1075 +3,1362 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MATT-OS v1.0</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%230000AA'/><rect x='1' y='1' width='14' height='10' rx='1' fill='%23808080'/><rect x='2' y='2' width='12' height='8' fill='%23000080'/><rect x='3' y='5' width='5' height='1' fill='%2300FF00'/><rect x='3' y='7' width='3' height='1' fill='%2300FF00'/><rect x='8' y='7' width='1' height='1' fill='%2300FF00' opacity='0.7'/><rect x='6' y='11' width='4' height='2' fill='%23808080'/><rect x='4' y='13' width='8' height='1' fill='%23808080'/></svg>">
-<link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap" rel="stylesheet">
+<title>Matt Visser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{width:100vw;height:100vh;overflow:hidden;background:#000;font-family:'VT323',monospace;cursor:default;user-select:none}
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
 
-/* ─── BOOT ─── */
-#boot{position:fixed;inset:0;background:#000;color:#AAAAAA;font-family:'Courier New',monospace;font-size:13px;line-height:1.5;padding:20px;z-index:9999;white-space:pre-wrap;overflow:hidden}
-#boot.gone{display:none}
-#bcursor{display:inline-block;background:#AAAAAA;width:8px;height:13px;animation:blink .7s step-start infinite;vertical-align:text-bottom}
-@keyframes blink{50%{opacity:0}}
+/* ── Tokens ── */
+:root {
+  --wall:       #f0ebe0;
+  --wall2:      #e8e2d6;
+  --rope:       #7a5c2e;
+  --peg:        #5c3d1a;
+  --card:       #faf8f2;
+  --card-edge:  #e8e2d4;
+  --shadow:     rgba(40,28,12,0.14);
+  --shadow2:    rgba(40,28,12,0.28);
+  --phosphor:   #4dff6e;
+  --phosphor2:  #1a8c32;
+  --screen-bg:  #040d04;
+  --amstrad:    #ccc8b8;
+  --amstrad-dk: #3a3228;
+  --text:       #2a2318;
+  --muted:      #7a6e5e;
+  --accent:     #8b4513;
+  --serif:      'Spectral', Georgia, 'Times New Roman', serif;
+  --mono:       'Share Tech Mono', 'Courier New', monospace;
+  --card-w:     210px;
+  --card-gap:   32px;
+}
 
-/* ─── CRT ─── */
-#crt{position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.09) 0,rgba(0,0,0,.09) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:9980}
+/* ── Base ── */
+body {
+  background: var(--wall);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  font-family: var(--serif);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
 
-/* ─── DESKTOP ─── */
-#desktop{position:fixed;inset:0;display:none;flex-direction:column}
-#desktop.on{display:flex}
-#bg{position:absolute;inset:0;z-index:0;transition:background .5s}
-#bg-canvas{position:absolute;inset:0;width:100%;height:100%;display:none;z-index:1}
+/* ── Nav ── */
+#nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(to bottom, rgba(240,235,224,0.95), rgba(240,235,224,0));
+  pointer-events: none;
+}
+#nav-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+  pointer-events: all;
+}
+#nav-links {
+  display: flex;
+  gap: 20px;
+  pointer-events: all;
+}
+#nav-links a {
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  transition: color 0.2s;
+}
+#nav-links a:hover { color: var(--text); }
 
-/* ─── MENUBAR ─── */
-#menubar{position:relative;z-index:500;height:22px;background:#C0C0C0;border-bottom:2px solid #808080;display:flex;align-items:stretch;font-family:'Courier New',monospace;font-size:12px;font-weight:bold;flex-shrink:0}
-.mbar-title{padding:0 12px;display:flex;align-items:center;font-weight:bold;color:#000080;font-size:13px;font-family:'VT323',monospace;letter-spacing:1px}
-.mitem{padding:0 10px;display:flex;align-items:center;cursor:pointer;position:relative;color:#000}
-.mitem:hover,.mitem.open{background:#000080;color:#fff}
-.mdrop{display:none;position:absolute;top:100%;left:0;background:#C0C0C0;border:2px solid;border-color:#fff #808080 #808080 #fff;min-width:160px;z-index:600;font-family:'Courier New',monospace;font-size:12px;box-shadow:2px 2px 0 #000}
-.mitem.open .mdrop{display:block}
-.mentry{padding:5px 16px;cursor:pointer;white-space:nowrap;color:#000}
-.mentry:hover{background:#000080;color:#fff}
-.msep{height:1px;background:#808080;margin:3px 4px}
+/* ── Intro ── */
+#intro {
+  padding: 80px 32px 0;
+  max-width: 560px;
+  margin: 0 auto;
+  text-align: center;
+}
+#intro p {
+  font-size: 1.1rem;
+  font-style: italic;
+  color: var(--muted);
+  line-height: 1.7;
+  font-weight: 300;
+}
 
-/* ─── WORKAREA ─── */
-#workarea{position:relative;flex:1;overflow:hidden;z-index:1}
+/* ── Story Section ── */
+#story {
+  padding: 40px 0 60px;
+  position: relative;
+  overflow: hidden;
+}
 
-/* ─── ICONS ─── */
-#izone{position:absolute;inset:0;padding:14px 10px;display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-start;gap:14px}
-.dico{width:70px;text-align:center;cursor:pointer;padding:4px;border:1px solid transparent}
-.dico:hover{border:1px dotted rgba(255,255,255,.6);background:rgba(0,0,128,.4)}
-.dico.sel{border:1px dotted #fff;background:rgba(0,0,128,.6)}
-.dico svg{display:block;margin:0 auto 4px;image-rendering:pixelated}
-.dico span{color:#fff;font-family:'VT323',monospace;font-size:14px;text-shadow:1px 1px 2px #000,0 0 4px #000;display:block;line-height:1.2}
+/* Rope */
+#rope-line {
+  position: relative;
+  height: 24px;
+  margin: 0 40px;
+}
+#rope-line::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -20px;
+  right: -20px;
+  height: 3px;
+  background: linear-gradient(to right, transparent, var(--rope) 8%, var(--rope) 92%, transparent);
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 -0.5px 0 rgba(255,255,255,0.3);
+}
+/* Rope texture lines */
+#rope-line::after {
+  content: '';
+  position: absolute;
+  top: calc(50% - 1px);
+  left: -20px;
+  right: -20px;
+  height: 1px;
+  background: repeating-linear-gradient(to right, transparent, transparent 6px, rgba(255,255,255,0.25) 6px, rgba(255,255,255,0.25) 8px);
+}
 
-/* ─── WINDOWS ─── */
-.win{position:absolute;background:#C0C0C0;border:2px solid;border-color:#fff #808080 #808080 #fff;display:flex;flex-direction:column;box-shadow:3px 3px 8px rgba(0,0,0,.6);min-width:280px;min-height:160px}
-.win.gone{display:none}
-.wbar{background:linear-gradient(to right,#000080 0%,#1084d0 100%);color:#fff;padding:3px 4px;display:flex;align-items:center;justify-content:space-between;cursor:move;height:22px;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;flex-shrink:0}
-.win.inactive .wbar{background:#808080}
-.wico{margin-right:5px;font-size:13px;pointer-events:none}
-.wtxt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none}
-.wbtns{display:flex;gap:2px;flex-shrink:0}
-.wbtn{width:16px;height:14px;background:#C0C0C0;color:#000;border:1px solid;border-color:#fff #808080 #808080 #fff;font-size:8px;font-family:'Courier New',monospace;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:bold;flex-shrink:0}
-.wbtn:hover{background:#e0e0e0}
-.wbtn:active{border-color:#808080 #fff #fff #808080}
-.wbody{flex:1;overflow:auto;font-family:'VT323',monospace;font-size:16px}
+/* Rail */
+#rail-outer {
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  position: relative;
+}
+#rail-outer:active { cursor: grabbing; }
+#rail-track {
+  display: flex;
+  gap: var(--card-gap);
+  padding: 16px 50vw 32px;
+  will-change: transform;
+  transition: none;
+}
+#rail-track.smooth {
+  transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
 
-/* ─── TASKBAR ─── */
-#taskbar{position:relative;z-index:500;height:30px;background:#C0C0C0;border-top:2px solid #fff;display:flex;align-items:center;padding:0 4px;gap:3px;font-family:'Courier New',monospace;font-size:11px;flex-shrink:0}
-#startbtn{height:22px;padding:0 8px;background:#C0C0C0;border:2px solid;border-color:#fff #808080 #808080 #fff;font-weight:bold;font-size:12px;font-family:'Courier New',monospace;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap}
-#startbtn:active{border-color:#808080 #fff #fff #808080}
-.tsep{width:2px;height:20px;background:#808080;margin:0 3px;border-left:1px solid #fff}
-#tbapps{flex:1;display:flex;gap:2px;align-items:center;overflow:hidden}
-.tbtn{height:22px;padding:0 8px;background:#C0C0C0;color:#000;border:2px solid;border-color:#fff #808080 #808080 #fff;font-size:11px;font-family:'Courier New',monospace;cursor:pointer;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tbtn:hover{background:#d4d4d4}
-.tbtn.active{border-color:#808080 #fff #fff #808080;background:#b8b8b8}
-#clockbox{border:2px solid;border-color:#808080 #fff #fff #808080;padding:0 8px;height:22px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:bold;background:#C0C0C0;flex-shrink:0}
+/* ── Card wrapper (includes string+peg) ── */
+.card-wrap {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: var(--card-w);
+  transition: transform 0.4s ease, opacity 0.4s ease;
+  transform-origin: top center;
+}
+.card-wrap.active { transform: scale(1.04); }
+.card-wrap.distant { opacity: 0.55; }
 
-/* ─── START MENU ─── */
-#smenu{position:fixed;bottom:30px;left:0;background:#C0C0C0;border:2px solid;border-color:#fff #808080 #808080 #fff;width:210px;z-index:700;display:none;flex-direction:row;box-shadow:2px 2px 0 #000}
-#smenu.on{display:flex}
-.smenu-strip{background:#000080;color:#fff;writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);padding:8px 4px;font-family:'VT323',monospace;font-size:22px;letter-spacing:3px;flex-shrink:0}
-.smenu-items{flex:1;display:flex;flex-direction:column}
-.sentry{padding:6px 14px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;font-family:'Courier New',monospace;color:#000}
-.sentry:hover{background:#000080;color:#fff}
-.ssep{height:1px;background:#808080;margin:2px 6px;border-top:1px solid #fff}
+.card-peg {
+  width: 10px;
+  height: 10px;
+  background: radial-gradient(circle at 40% 35%, #a07840, var(--peg));
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+  z-index: 1;
+  margin-bottom: -2px;
+}
+.card-string {
+  width: 2px;
+  height: 20px;
+  background: linear-gradient(to bottom, var(--rope), rgba(122,92,46,0.5));
+  flex-shrink: 0;
+}
 
-/* ─── APP STYLES ─── */
-/* Tools */
-.toollist{display:flex;flex-direction:column;gap:5px;padding:8px}
-.titem{display:flex;align-items:center;gap:10px;padding:7px 10px;background:#fff;border:2px solid;border-color:#808080 #fff #fff #808080;cursor:pointer;text-decoration:none;color:#000}
-.titem:hover{background:#000080;color:#fff}
-.titem:hover .tdesc{color:#aaa}
-.tname{font-size:20px;font-family:'VT323',monospace;white-space:nowrap}
-.tdesc{font-size:11px;font-family:'Courier New',monospace;color:#555;flex:1}
+/* ── Polaroid card ── */
+.polaroid {
+  background: var(--card);
+  padding: 10px 10px 24px;
+  box-shadow:
+    2px 4px 12px var(--shadow),
+    0 1px 3px var(--shadow2);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  border: 1px solid var(--card-edge);
+}
 
-/* CV */
-#cvcontent{padding:14px;background:#fff;font-family:'Courier New',monospace;font-size:12px;line-height:1.7}
-.cvh1{font-size:20px;font-weight:bold;color:#000080;border-bottom:2px solid #000080;padding-bottom:4px;margin-bottom:10px;font-family:'VT323',monospace}
-.cvh2{font-size:15px;font-weight:bold;color:#000080;margin:14px 0 4px;text-transform:uppercase;border-bottom:1px dotted #808080;font-family:'VT323',monospace}
-.cvrole{font-weight:bold}
-.cvco{color:#000080}
-.cvdate{color:#808080;font-style:italic;font-size:11px}
-.cvul{list-style:none;padding-left:16px;margin:4px 0}
-.cvul li::before{content:'▸ ';color:#000080}
-.cvbadge{display:inline-block;background:#000080;color:#fff;padding:1px 6px;font-size:11px;margin:2px 2px 2px 0}
-.cvstar{color:#FFD700}
+.polaroid-photo {
+  width: 190px;
+  height: 160px;
+  overflow: hidden;
+  background: #c8bfac;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.polaroid-photo svg { display: block; width: 100%; height: 100%; }
 
-/* Games */
-.gamegrid{display:flex;flex-wrap:wrap;gap:8px;padding:10px}
-.gtile{width:140px;background:#000080;color:#fff;padding:10px 8px;cursor:pointer;text-align:center;border:2px solid;border-color:#4040c0 #000040 #000040 #4040c0}
-.gtile:hover{background:#0000CC;border-color:#8080ff #000080 #000080 #8080ff}
-.gtile .gico{font-size:32px;line-height:1}
-.gtile .gtit{font-size:17px;font-family:'VT323',monospace;margin-top:4px;line-height:1.2}
-.gtile .gyr{font-size:10px;color:#8888ff;font-family:'Courier New',monospace;margin-top:2px}
-#gplayer{display:none;padding:8px}
-.gplaybar{display:flex;align-items:center;justify-content:space-between;padding:4px 8px;background:#000080;color:#fff;font-family:'Courier New',monospace;font-size:12px;margin-bottom:6px}
-#gback{cursor:pointer;background:#C0C0C0;color:#000;border:2px solid;border-color:#fff #808080 #808080 #fff;padding:2px 10px;font-family:'Courier New',monospace;font-size:11px}
-#gback:hover{background:#d4d4d4}
-#gameframe{border:4px inset #808080;display:block;background:#000}
+.polaroid-caption {
+  padding: 10px 4px 2px;
+  min-height: 90px;
+}
+.polaroid-year {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+  letter-spacing: 0.08em;
+}
+.polaroid-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.35;
+  margin-bottom: 6px;
+}
+.polaroid-text {
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--muted);
+  line-height: 1.55;
+  font-weight: 300;
+}
+.card-wrap.active .polaroid-text { color: #5a4e40; }
 
-/* Wallpaper */
-.wpgrid{display:flex;flex-wrap:wrap;gap:10px;padding:12px}
-.wptile{cursor:pointer;text-align:center}
-.wpt{width:110px;height:72px;border:3px solid #808080;overflow:hidden;position:relative}
-.wptile:hover .wpt{border-color:#000080}
-.wptile.sel .wpt{border-color:#FFD700;border-width:3px;box-shadow:0 0 6px #FFD700}
-.wplbl{font-size:13px;font-family:'VT323',monospace;color:#000;margin-top:3px;text-align:center}
-/* wallpaper previews */
-.wp0{background:#0000AA}
-.wp1{background:#000011}
-.wp2{background:linear-gradient(135deg,#FF00FF,#00FFFF,#FF00FF);background-size:400% 400%;animation:pls 3s ease infinite}
-@keyframes pls{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-.wp3{background:#000;background-image:radial-gradient(#00FF00 1px,transparent 1px);background-size:8px 8px}
-.wp4{background:linear-gradient(180deg,#6600CC 0%,#FF0066 40%,#FF6600 70%,#FFCC00 100%)}
+/* ── Special card types ── */
 
-/* Error dialog */
-#errdlg{position:fixed;z-index:8000;background:#C0C0C0;border:2px solid;border-color:#fff #808080 #808080 #fff;min-width:300px;box-shadow:3px 3px 0 #000;display:none;top:50%;left:50%;transform:translate(-50%,-50%)}
-#errdlg.on{display:block}
-.etitle{background:#000080;color:#fff;padding:4px 8px;font-family:'Courier New',monospace;font-size:12px;font-weight:bold;display:flex;align-items:center;justify-content:space-between}
-.ebody{padding:14px 16px;font-family:'Courier New',monospace;font-size:13px;display:flex;gap:14px;align-items:flex-start}
-.eico{font-size:34px;line-height:1}
-.ebtns{text-align:center;padding:0 16px 12px}
-.eok{padding:4px 24px;font-family:'Courier New',monospace;font-size:13px;background:#C0C0C0;border:2px solid;border-color:#fff #808080 #808080 #fff;cursor:pointer;font-weight:bold}
-.eok:active{border-color:#808080 #fff #fff #808080}
+/* Note card */
+.card-type-note .polaroid {
+  background: #fefdf5;
+  border: 1px solid #e0d9b8;
+}
+.card-type-note .polaroid-photo {
+  background: #f5f2e4;
+  border-bottom: 1px solid #e0d9b8;
+}
 
-/* scrollbars */
-::-webkit-scrollbar{width:16px}
-::-webkit-scrollbar-track{background:#C0C0C0;border:2px inset #808080}
-::-webkit-scrollbar-thumb{background:#808080;border:2px solid;border-color:#fff #808080 #808080 #fff}
+/* Cassette */
+.card-type-cassette .polaroid {
+  background: #1a1a1a;
+  color: #f0e8d0;
+  border: 1px solid #333;
+}
+.card-type-cassette .polaroid-year,
+.card-type-cassette .polaroid-title,
+.card-type-cassette .polaroid-text { color: #d4c8a8; }
+.card-type-cassette .polaroid-title { color: #f0e8d0; }
+.card-type-cassette .polaroid-photo { background: #0a0a0a; }
 
-/* bg animations handled by canvas */
+/* Terminal / AI */
+.card-type-terminal .polaroid {
+  background: var(--screen-bg);
+  border: 1px solid #1a3a1a;
+}
+.card-type-terminal .polaroid-year { color: var(--phosphor2); }
+.card-type-terminal .polaroid-title { color: var(--phosphor); font-family: var(--mono); font-size: 0.75rem; }
+.card-type-terminal .polaroid-text { color: #2a7a3a; font-family: var(--mono); font-size: 0.65rem; font-style: normal; }
+.card-type-terminal .polaroid-photo { background: var(--screen-bg); }
+
+/* Certificate */
+.card-type-certificate .polaroid {
+  background: #fdf8ed;
+  border: 1px solid #d4b870;
+}
+.card-type-certificate .polaroid-photo { background: #f8f0d8; }
+.card-type-certificate .polaroid-title { color: #7a5010; }
+
+/* ── Navigation arrows ── */
+#story-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  padding: 0 0 8px;
+}
+.story-arrow {
+  background: none;
+  border: 1.5px solid var(--rope);
+  color: var(--rope);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+.story-arrow:hover { background: var(--rope); color: white; }
+.story-arrow:disabled { opacity: 0.25; cursor: default; }
+#story-pos {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  min-width: 60px;
+  text-align: center;
+}
+
+/* Chapter markers */
+#chapter-bar {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px 0;
+  flex-wrap: wrap;
+}
+.chapter-dot {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--muted);
+  padding: 3px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+}
+.chapter-dot:hover { border-color: var(--muted); }
+.chapter-dot.active { background: var(--rope); color: white; border-color: var(--rope); }
+
+/* ── Amstrad Section ── */
+#machine-section {
+  padding: 20px 20px 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#machine-intro {
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 32px;
+  font-weight: 300;
+}
+
+/* The Amstrad CPC 464 */
+#amstrad {
+  width: 100%;
+  max-width: 620px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter: drop-shadow(0 8px 24px rgba(40,28,12,0.18));
+}
+
+/* Monitor */
+#monitor {
+  background: linear-gradient(160deg, #d8d4c4 0%, #c4c0b0 60%, #b0ac9c 100%);
+  border-radius: 10px 10px 4px 4px;
+  padding: 14px 14px 8px;
+  width: 100%;
+  max-width: 460px;
+  box-shadow:
+    inset -2px -2px 6px rgba(0,0,0,0.15),
+    inset 1px 1px 4px rgba(255,255,255,0.35);
+  position: relative;
+}
+#monitor::after {
+  content: 'CTM644';
+  position: absolute;
+  bottom: 10px;
+  right: 18px;
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  color: rgba(0,0,0,0.3);
+  letter-spacing: 0.1em;
+}
+
+#screen {
+  background: var(--screen-bg);
+  border-radius: 4px;
+  padding: 20px 24px;
+  min-height: 200px;
+  box-shadow:
+    inset 0 0 20px rgba(0,0,0,0.8),
+    inset 0 0 60px rgba(0,0,0,0.4);
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+}
+/* Scanline overlay */
+#screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.08) 2px,
+    rgba(0,0,0,0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+/* Phosphor glow overlay */
+#screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(77,255,110,0.04) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+#screen-content {
+  position: relative;
+  z-index: 2;
+  font-family: var(--mono);
+  color: var(--phosphor);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.screen-header {
+  color: var(--phosphor);
+  margin-bottom: 4px;
+  font-size: 0.72rem;
+  opacity: 0.7;
+}
+.screen-hr {
+  border: none;
+  border-top: 1px solid var(--phosphor2);
+  margin: 8px 0;
+  opacity: 0.4;
+}
+.screen-mode-tabs {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+.screen-tab {
+  font-size: 0.72rem;
+  color: var(--phosphor2);
+  cursor: pointer;
+  padding-bottom: 2px;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0.05em;
+}
+.screen-tab.active { color: var(--phosphor); border-bottom-color: var(--phosphor); }
+.screen-tab:hover { color: var(--phosphor); }
+
+.project-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.1s;
+  outline: none;
+}
+.project-item:focus,
+.project-item.selected {
+  background: var(--phosphor);
+  color: var(--screen-bg);
+}
+.project-item.selected .proj-num,
+.project-item.selected .proj-name,
+.project-item.selected .proj-desc { color: var(--screen-bg); }
+.proj-num {
+  font-size: 0.65rem;
+  color: var(--phosphor2);
+  min-width: 16px;
+  flex-shrink: 0;
+}
+.proj-name {
+  font-size: 0.78rem;
+  color: var(--phosphor);
+}
+.proj-desc {
+  font-size: 0.62rem;
+  color: var(--phosphor2);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.screen-footer {
+  margin-top: 10px;
+  font-size: 0.6rem;
+  color: var(--phosphor2);
+  opacity: 0.6;
+}
+
+/* Cursor blink */
+.cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1em;
+  background: var(--phosphor);
+  vertical-align: text-bottom;
+  animation: blink 1s step-start infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* Tape load overlay */
+#tape-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--screen-bg);
+  z-index: 10;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+}
+#tape-overlay.on { display: flex; }
+#tape-text {
+  font-family: var(--mono);
+  color: var(--phosphor);
+  font-size: 0.78rem;
+  text-align: center;
+  white-space: pre-line;
+}
+#tape-bar-wrap {
+  width: 100%;
+  height: 6px;
+  background: var(--phosphor2);
+  border-radius: 1px;
+  overflow: hidden;
+  margin-top: 6px;
+  opacity: 0.4;
+}
+#tape-bar {
+  height: 100%;
+  width: 0;
+  background: var(--phosphor);
+  transition: width 0.8s ease;
+}
+
+/* Monitor base/neck */
+#monitor-base {
+  width: 80px;
+  height: 10px;
+  background: linear-gradient(to bottom, #b8b4a4, #a8a498);
+  clip-path: polygon(15% 0, 85% 0, 100% 100%, 0% 100%);
+}
+
+/* Keyboard unit */
+#keyboard-unit {
+  background: linear-gradient(160deg, #d4d0c0 0%, #c0bca8 100%);
+  border-radius: 4px 4px 8px 8px;
+  padding: 12px 16px 14px;
+  width: 100%;
+  box-shadow:
+    inset -2px -3px 6px rgba(0,0,0,0.12),
+    inset 1px 1px 4px rgba(255,255,255,0.3),
+    0 4px 8px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+#keyboard-unit::before {
+  content: 'AMSTRAD CPC 464';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 0.5rem;
+  color: rgba(0,0,0,0.25);
+  letter-spacing: 0.18em;
+  white-space: nowrap;
+}
+
+.key-row {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  margin-top: 4px;
+}
+.key-row:first-of-type { margin-top: 18px; }
+
+.key {
+  height: 16px;
+  background: linear-gradient(to bottom, #2e2a20, #1e1a14);
+  border-radius: 2px;
+  box-shadow:
+    0 2px 0 rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  flex: 1;
+  max-width: 22px;
+  min-width: 14px;
+  position: relative;
+  cursor: default;
+}
+.key.wide { max-width: 36px; min-width: 28px; }
+.key.wider { max-width: 50px; min-width: 40px; }
+.key.space { max-width: 140px; min-width: 100px; }
+
+/* Tape drive slot */
+#tape-drive {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 30px;
+  background: #1a1614;
+  border-radius: 2px;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+#tape-drive::before {
+  content: '';
+  width: 36px;
+  height: 2px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 1px;
+}
+#tape-drive::after {
+  content: '';
+  width: 24px;
+  height: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 2px;
+  background: rgba(255,255,255,0.03);
+}
+
+/* ── Footer ── */
+#footer {
+  padding: 40px 24px 48px;
+  text-align: center;
+  border-top: 1px solid var(--card-edge);
+  margin-top: 20px;
+}
+#footer p {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 16px;
+  line-height: 1.7;
+}
+#contact-links {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+#contact-links a {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 1px;
+  transition: color 0.2s, border-color 0.2s;
+}
+#contact-links a:hover { color: var(--text); border-bottom-color: var(--accent); }
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .card-wrap, #rail-track.smooth, .cursor, #tape-bar { transition: none !important; animation: none !important; }
+}
+
+/* ── Mobile ── */
+@media (max-width: 600px) {
+  :root { --card-w: 180px; --card-gap: 20px; }
+  #nav-links { display: none; }
+  #intro { padding: 70px 20px 0; }
+  #intro p { font-size: 0.95rem; }
+  #story { padding: 32px 0 48px; }
+  #rope-line { margin: 0 20px; }
+  #monitor { max-width: 100%; }
+  #screen { padding: 14px 16px; min-height: 180px; }
+  #screen-content { font-size: 0.72rem; }
+  .proj-desc { display: none; }
+  #keyboard-unit { padding: 10px 10px 12px; }
+  .key { height: 12px; max-width: 18px; min-width: 10px; }
+  .key.wide { max-width: 28px; min-width: 20px; }
+  .key.wider { max-width: 38px; min-width: 28px; }
+  .key.space { max-width: 100px; min-width: 70px; }
+  #tape-drive { right: 10px; }
+}
 </style>
 </head>
 <body>
 
-<!-- BOOT -->
-<div id="boot"><span id="boottext"></span><span id="bcursor"> </span></div>
+<!-- ── Nav ── -->
+<nav id="nav" aria-label="Site navigation">
+  <span id="nav-name">Matt Visser</span>
+  <div id="nav-links">
+    <a href="#story">Story</a>
+    <a href="#machine-section">Projects</a>
+    <a href="https://www.linkedin.com/in/matt-visser" target="_blank" rel="noopener">LinkedIn</a>
+  </div>
+</nav>
 
-<!-- CRT overlay -->
-<div id="crt"></div>
+<!-- ── Intro ── -->
+<header id="intro">
+  <p>This is less a portfolio and more the route by which things got out of hand.</p>
+</header>
 
-<!-- DESKTOP -->
-<div id="desktop">
-  <!-- Background -->
-  <div id="bg" class="bg-classic"></div>
-  <canvas id="bg-canvas"></canvas>
+<!-- ── Story Rail ── -->
+<section id="story" aria-label="Life story">
+  <div id="rope-line" aria-hidden="true"></div>
+  <div id="rail-outer" role="region" aria-label="Story timeline" tabindex="0">
+    <div id="rail-track" aria-live="polite"></div>
+  </div>
+  <div id="story-controls">
+    <button class="story-arrow" id="btn-prev" aria-label="Previous story" disabled>&#8592;</button>
+    <span id="story-pos"></span>
+    <button class="story-arrow" id="btn-next" aria-label="Next story">&#8594;</button>
+  </div>
+  <div id="chapter-bar" aria-label="Story chapters"></div>
+</section>
 
-  <!-- Menu bar -->
-  <div id="menubar">
-    <span class="mbar-title">💾 MATT-OS</span>
-    <div class="mitem" id="m-file">FILE
-      <div class="mdrop">
-        <div class="mentry" onclick="openWin('about')">About MATT-OS...</div>
-        <div class="msep"></div>
-        <div class="mentry" onclick="location.reload()">Restart...</div>
+<!-- ── Amstrad / Projects ── -->
+<section id="machine-section" aria-label="Projects">
+  <p id="machine-intro">The machine that explains the continuity.</p>
+  <div id="amstrad" role="region" aria-label="Project launcher">
+    <!-- Monitor -->
+    <div id="monitor">
+      <div id="screen" role="application" aria-label="Project menu">
+        <div id="screen-content">
+          <div class="screen-header">Amstrad CPC 464&nbsp;&nbsp;64K&nbsp;&nbsp;BASIC 1.1</div>
+          <hr class="screen-hr">
+          <div class="screen-mode-tabs">
+            <span class="screen-tab active" data-mode="projects" tabindex="0" role="button">PROJECTS</span>
+            <span class="screen-tab" data-mode="games" tabindex="0" role="button">GAMES</span>
+          </div>
+          <div id="project-list" role="listbox" aria-label="Projects"></div>
+          <div class="screen-footer" id="screen-hint">&#8593;&#8595; navigate &nbsp; ENTER launch &nbsp; click also works</div>
+        </div>
+        <div id="tape-overlay" aria-live="assertive">
+          <div id="tape-text"></div>
+          <div id="tape-bar-wrap"><div id="tape-bar"></div></div>
+        </div>
       </div>
     </div>
-    <div class="mitem" id="m-tools">TOOLS
-      <div class="mdrop">
-        <div class="mentry" onclick="openWin('tools')">Tool Launcher</div>
-        <div class="mentry" onclick="openWin('wallpaper')">Change Wallpaper</div>
+    <div id="monitor-base" aria-hidden="true"></div>
+
+    <!-- Keyboard unit -->
+    <div id="keyboard-unit" aria-hidden="true">
+      <div id="tape-drive"></div>
+      <div class="key-row">
+        <div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div>
+        <div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div>
+        <div class="key"></div><div class="key"></div><div class="key"></div><div class="key wider"></div>
       </div>
-    </div>
-    <div class="mitem" id="m-games">GAMES
-      <div class="mdrop">
-        <div class="mentry" onclick="openWin('games')">Game Zone</div>
-        <div class="msep"></div>
-        <div class="mentry" onclick="launchGame('wolf')">Wolfenstein 3D</div>
-        <div class="mentry" onclick="launchGame('doom')">DOOM</div>
-        <div class="mentry" onclick="launchGame('duke')">Duke Nukem 3D</div>
-        <div class="mentry" onclick="launchGame('simcity')">SimCity (1989)</div>
+      <div class="key-row">
+        <div class="key wide"></div><div class="key"></div><div class="key"></div><div class="key"></div>
+        <div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div>
+        <div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div>
       </div>
-    </div>
-    <div class="mitem" id="m-help">HELP
-      <div class="mdrop">
-        <div class="mentry" onclick="openWin('cv')">Resume / CV</div>
-        <div class="msep"></div>
-        <div class="mentry" onclick="showError()">Report a Bug</div>
+      <div class="key-row">
+        <div class="key wider"></div><div class="key"></div><div class="key"></div><div class="key"></div>
+        <div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div>
+        <div class="key"></div><div class="key wider"></div>
+      </div>
+      <div class="key-row">
+        <div class="key wide"></div><div class="key space"></div><div class="key wide"></div>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- Work area with icons and windows -->
-  <div id="workarea">
-    <!-- Desktop icons -->
-    <div id="izone">
-
-      <div class="dico" ondblclick="openWin('tools')" onclick="selectIcon(this)">
-        <svg width="32" height="32" viewBox="0 0 32 32">
-          <!-- wrench / toolbox icon -->
-          <rect width="32" height="32" fill="#0000AA"/>
-          <rect x="4" y="4" width="24" height="20" rx="1" fill="#C0C0C0"/>
-          <rect x="5" y="5" width="22" height="18" rx="1" fill="#808080"/>
-          <rect x="8" y="8" width="16" height="3" fill="#FFFF00"/>
-          <rect x="8" y="13" width="16" height="3" fill="#FFFF00"/>
-          <rect x="8" y="18" width="10" height="3" fill="#FFFF00"/>
-          <rect x="4" y="24" width="24" height="4" rx="1" fill="#C0C0C0"/>
-          <rect x="6" y="25" width="4" height="2" fill="#808080"/>
-          <rect x="14" y="25" width="4" height="2" fill="#808080"/>
-          <rect x="22" y="25" width="4" height="2" fill="#808080"/>
-        </svg>
-        <span>TOOLS.EXE</span>
-      </div>
-
-      <div class="dico" ondblclick="openWin('cv')" onclick="selectIcon(this)">
-        <svg width="32" height="32" viewBox="0 0 32 32">
-          <!-- document / resume icon -->
-          <rect width="32" height="32" fill="#0000AA"/>
-          <rect x="6" y="2" width="17" height="28" fill="#fff"/>
-          <rect x="23" y="2" width="3" height="3" fill="#C0C0C0"/>
-          <rect x="20" y="5" width="3" height="3" fill="#C0C0C0"/>
-          <rect x="23" y="5" width="3" height="23" fill="#fff"/>
-          <rect x="9" y="8" width="12" height="2" fill="#000080"/>
-          <rect x="9" y="12" width="12" height="1" fill="#808080"/>
-          <rect x="9" y="15" width="12" height="1" fill="#808080"/>
-          <rect x="9" y="18" width="12" height="1" fill="#808080"/>
-          <rect x="9" y="21" width="8" height="1" fill="#808080"/>
-          <rect x="8" y="6" width="4" height="4" rx="2" fill="#C0C0C0"/>
-          <rect x="9" y="7" width="2" height="2" fill="#000080"/>
-        </svg>
-        <span>RESUME.EXE</span>
-      </div>
-
-      <div class="dico" ondblclick="openWin('games')" onclick="selectIcon(this)">
-        <svg width="32" height="32" viewBox="0 0 32 32">
-          <!-- joystick icon -->
-          <rect width="32" height="32" fill="#0000AA"/>
-          <!-- base -->
-          <rect x="6" y="20" width="20" height="10" rx="2" fill="#808080"/>
-          <rect x="7" y="21" width="18" height="8" rx="1" fill="#C0C0C0"/>
-          <!-- dpad -->
-          <rect x="9" y="23" width="3" height="5" fill="#808080"/>
-          <rect x="8" y="24" width="5" height="3" fill="#808080"/>
-          <!-- fire buttons -->
-          <rect x="20" y="23" width="3" height="3" rx="1" fill="#FF0000"/>
-          <rect x="17" y="25" width="3" height="3" rx="1" fill="#0000FF"/>
-          <!-- stick -->
-          <rect x="15" y="10" width="3" height="12" fill="#808080"/>
-          <rect x="14" y="11" width="5" height="10" fill="#C0C0C0"/>
-          <rect x="12" y="8" width="8" height="5" rx="4" fill="#808080"/>
-          <rect x="13" y="9" width="6" height="3" rx="3" fill="#FF6600"/>
-        </svg>
-        <span>GAMES.EXE</span>
-      </div>
-
-      <div class="dico" ondblclick="openWin('wallpaper')" onclick="selectIcon(this)">
-        <svg width="32" height="32" viewBox="0 0 32 32">
-          <!-- monitor / wallpaper icon -->
-          <rect width="32" height="32" fill="#0000AA"/>
-          <rect x="3" y="4" width="26" height="19" rx="1" fill="#808080"/>
-          <rect x="4" y="5" width="24" height="17" fill="#000080"/>
-          <!-- colorful screen content -->
-          <rect x="4" y="5" width="6" height="8" fill="#FF00FF"/>
-          <rect x="10" y="5" width="6" height="8" fill="#00FFFF"/>
-          <rect x="16" y="5" width="6" height="8" fill="#FFFF00"/>
-          <rect x="22" y="5" width="6" height="8" fill="#FF6600"/>
-          <rect x="4" y="13" width="24" height="9" fill="url(#grd)"/>
-          <defs><linearGradient id="grd" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#000080"/><stop offset="100%" stop-color="#4040CC"/></linearGradient></defs>
-          <rect x="13" y="24" width="6" height="3" fill="#808080"/>
-          <rect x="10" y="27" width="12" height="2" fill="#808080"/>
-        </svg>
-        <span>WALLPAPER</span>
-      </div>
-
-      <div class="dico" ondblclick="window.open('https://www.oyo-app.com','_blank')" onclick="selectIcon(this)">
-        <svg width="32" height="32" viewBox="0 0 32 32">
-          <!-- microphone / OYO icon -->
-          <rect width="32" height="32" fill="#0000AA"/>
-          <rect x="13" y="3" width="6" height="14" rx="3" fill="#00FFFF"/>
-          <rect x="14" y="4" width="4" height="12" rx="2" fill="#00CCCC"/>
-          <rect x="8" y="11" width="16" height="1" fill="none"/>
-          <path d="M8 14 Q8 22 16 22 Q24 22 24 14" stroke="#fff" stroke-width="2" fill="none"/>
-          <rect x="15" y="22" width="2" height="5" fill="#fff"/>
-          <rect x="11" y="27" width="10" height="2" fill="#fff"/>
-        </svg>
-        <span>OYO.EXE</span>
-      </div>
-
-      <div class="dico" ondblclick="window.open('/simple-iptv/','_blank')" onclick="selectIcon(this)">
-        <svg width="32" height="32" viewBox="0 0 32 32">
-          <!-- TV icon -->
-          <rect width="32" height="32" fill="#0000AA"/>
-          <rect x="3" y="6" width="26" height="18" rx="1" fill="#808080"/>
-          <rect x="4" y="7" width="24" height="16" fill="#001133"/>
-          <rect x="5" y="8" width="22" height="14" fill="#000066"/>
-          <!-- TV signal bars -->
-          <rect x="8" y="14" width="3" height="5" fill="#00FF00"/>
-          <rect x="13" y="11" width="3" height="8" fill="#00FF00"/>
-          <rect x="18" y="9" width="3" height="10" fill="#00FF00"/>
-          <rect x="23" y="12" width="3" height="7" fill="#FFFF00" opacity=".7"/>
-          <!-- stand -->
-          <rect x="14" y="24" width="4" height="4" fill="#808080"/>
-          <rect x="10" y="28" width="12" height="2" fill="#808080"/>
-          <!-- antenna -->
-          <rect x="12" y="3" width="2" height="5" fill="#C0C0C0" transform="rotate(-20 13 6)"/>
-          <rect x="18" y="3" width="2" height="5" fill="#C0C0C0" transform="rotate(20 19 6)"/>
-        </svg>
-        <span>IPTV.EXE</span>
-      </div>
-
-    </div><!-- /izone -->
-
-    <!-- ═══ WINDOWS ═══ -->
-
-    <!-- TOOLS window -->
-    <div class="win gone" id="win-tools" style="width:440px;height:380px">
-      <div class="wbar" onmousedown="startDrag(event,'win-tools')">
-        <span class="wico">🧰</span><span class="wtxt">Tool Launcher — MATT-OS</span>
-        <div class="wbtns">
-          <div class="wbtn" onclick="minWin('win-tools')">_</div>
-          <div class="wbtn" onclick="closeWin('win-tools')">✕</div>
-        </div>
-      </div>
-      <div class="wbody">
-        <div class="toollist">
-          <a class="titem" href="https://www.oyo-app.com" target="_blank">
-            <svg width="24" height="24" viewBox="0 0 32 32"><rect width="32" height="32" fill="#0000AA"/><rect x="13" y="3" width="6" height="14" rx="3" fill="#00FFFF"/><path d="M8 14 Q8 22 16 22 Q24 22 24 14" stroke="#fff" stroke-width="2" fill="none"/><rect x="15" y="22" width="2" height="5" fill="#fff"/><rect x="11" y="27" width="10" height="2" fill="#fff"/></svg>
-            <span class="tname">OYO</span>
-            <span class="tdesc">Privacy-first AI assistant — email, meetings, Slack</span>
-          </a>
-          <a class="titem" href="/simple-iptv/" target="_blank">
-            <svg width="24" height="24" viewBox="0 0 32 32"><rect width="32" height="32" fill="#0000AA"/><rect x="3" y="6" width="26" height="18" rx="1" fill="#808080"/><rect x="4" y="7" width="24" height="16" fill="#001133"/><rect x="8" y="14" width="3" height="5" fill="#00FF00"/><rect x="13" y="11" width="3" height="8" fill="#00FF00"/><rect x="18" y="9" width="3" height="10" fill="#00FF00"/></svg>
-            <span class="tname">Simple IPTV</span>
-            <span class="tdesc">Watch streams like a wizard</span>
-          </a>
-          <a class="titem" href="/work-holiday-planner/" target="_blank">
-            <svg width="24" height="24" viewBox="0 0 32 32"><rect width="32" height="32" fill="#0000AA"/><rect x="4" y="6" width="24" height="22" rx="1" fill="#fff"/><rect x="4" y="6" width="24" height="7" fill="#FF0066"/><rect x="8" y="4" width="4" height="5" rx="1" fill="#C0C0C0"/><rect x="20" y="4" width="4" height="5" rx="1" fill="#C0C0C0"/><rect x="7" y="16" width="4" height="4" fill="#000080"/><rect x="14" y="16" width="4" height="4" fill="#000080"/><rect x="21" y="16" width="4" height="4" fill="#808080"/><rect x="7" y="22" width="4" height="4" fill="#808080"/><rect x="14" y="22" width="4" height="4" fill="#00CCFF"/></svg>
-            <span class="tname">Holiday Planner</span>
-            <span class="tdesc">Plan days off like a genius</span>
-          </a>
-          <a class="titem" href="/chatgpt-paster.html" target="_blank">
-            <svg width="24" height="24" viewBox="0 0 32 32"><rect width="32" height="32" fill="#0000AA"/><rect x="10" y="2" width="12" height="6" rx="2" fill="#808080"/><rect x="8" y="6" width="16" height="24" rx="1" fill="#fff"/><rect x="11" y="10" width="10" height="2" fill="#808080"/><rect x="11" y="14" width="10" height="2" fill="#808080"/><rect x="11" y="18" width="7" height="2" fill="#808080"/></svg>
-            <span class="tname">Paste Fixer</span>
-            <span class="tdesc">ChatGPT paste without chaos</span>
-          </a>
-          <a class="titem" href="https://github.com/visser23/semantic-browser" target="_blank">
-            <svg width="24" height="24" viewBox="0 0 32 32"><rect width="32" height="32" fill="#0000AA"/><circle cx="16" cy="16" r="12" fill="#333"/><circle cx="16" cy="16" r="12" fill="none" stroke="#fff" stroke-width="2"/><rect x="15" y="4" width="2" height="24" fill="#fff" opacity=".3"/><path d="M8 10 Q16 14 24 10" stroke="#fff" stroke-width="1" fill="none" opacity=".5"/><path d="M8 22 Q16 18 24 22" stroke="#fff" stroke-width="1" fill="none" opacity=".5"/></svg>
-            <span class="tname">Semantic Browser</span>
-            <span class="tdesc">Token-efficient browser for LLMs</span>
-          </a>
-          <a class="titem" href="https://ssign.app/" target="_blank">
-            <svg width="24" height="24" viewBox="0 0 32 32"><rect width="32" height="32" fill="#0000AA"/><rect x="4" y="4" width="24" height="30" rx="1" fill="#fff" y="2"/><rect x="4" y="2" width="24" height="28" rx="1" fill="#fff"/><rect x="8" y="8" width="16" height="2" fill="#000080"/><rect x="8" y="12" width="16" height="1" fill="#808080"/><rect x="8" y="15" width="16" height="1" fill="#808080"/><rect x="8" y="18" width="10" height="1" fill="#808080"/><path d="M8 24 Q12 20 16 24 Q18 26 22 22" stroke="#000080" stroke-width="2" fill="none"/></svg>
-            <span class="tname">SmartSign</span>
-            <span class="tdesc">Modern document signing platform</span>
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- CV window -->
-    <div class="win gone" id="win-cv" style="width:520px;height:520px">
-      <div class="wbar" onmousedown="startDrag(event,'win-cv')">
-        <span class="wico">📄</span><span class="wtxt">RESUME.EXE — Matt Visser</span>
-        <div class="wbtns">
-          <div class="wbtn" onclick="minWin('win-cv')">_</div>
-          <div class="wbtn" onclick="closeWin('win-cv')">✕</div>
-        </div>
-      </div>
-      <div class="wbody">
-        <div id="cvcontent">
-          <div class="cvh1">MATT VISSER</div>
-          <div style="font-size:11px;color:#555;margin-bottom:4px">📍 Greater Manchester, England, UK &nbsp;|&nbsp; 🔗 linkedin.com/in/matt-visser</div>
-          <div style="font-size:11px;color:#808080;margin-bottom:12px;font-style:italic">Skills: AI/LLM · Digital Transformation · Agile/Scrum · Healthcare Tech · Software Dev</div>
-
-          <div class="cvh2">⚡ Current Role</div>
-          <div class="cvrole">NHS England</div>
-          <div class="cvdate">Remote / London, UK</div>
-          <div style="clear:both"></div>
-
-          <div class="cvh2">🚀 Key Projects</div>
-          <div class="cventry">
-            <div class="cvrole">OYO <span style="font-weight:normal">— Voice-first, privacy-focused AI assistant</span></div>
-            <ul class="cvul">
-              <li>Proactively monitors inbox, transcribes meetings</li>
-              <li>Integrates Slack & Microsoft Teams</li>
-              <li>Runs locally on PC/Mac — no cloud required</li>
-              <li style="font-size:11px;color:#808080">→ oyo-app.com</li>
-            </ul>
-          </div>
-          <div class="cventry" style="margin-top:8px">
-            <div class="cvrole">SmartSign <span style="font-weight:normal">— Document signing platform</span></div>
-            <ul class="cvul"><li>Modern e-signature solution — ssign.app</li></ul>
-          </div>
-          <div class="cventry" style="margin-top:8px">
-            <div class="cvrole">Semantic Browser <span style="font-weight:normal">— Token-efficient web browser for LLMs</span></div>
-            <ul class="cvul"><li>Open source on GitHub: visser23/semantic-browser</li></ul>
-          </div>
-
-          <div class="cvh2">🏆 Awards</div>
-          <ul class="cvul">
-            <li><span class="cvstar">★</span> <strong>TV App of the Year</strong> — Content Innovation Awards, Cannes 2018</li>
-            <li><span class="cvstar">★</span> <strong>BBC North Star Award</strong> — BBC Sport Connected TV App, 2012</li>
-          </ul>
-
-          <div class="cvh2">📜 Certifications</div>
-          <ul class="cvul">
-            <li>International Diploma in Business Analysis — BCS, Sep 2018</li>
-            <li>Modelling Business Processes — BCS, Jul 2018</li>
-            <li>Requirements Engineering — BCS, Jun 2018</li>
-            <li>Business Analysis Practice — BCS, May 2018</li>
-            <li>Business Change — BCS, Sep 2016</li>
-            <li>Certified ScrumMaster — Scrum Alliance, Aug 2015</li>
-          </ul>
-
-          <div class="cvh2">🎓 Education</div>
-          <ul class="cvul">
-            <li>Habergham High School, Burnley</li>
-          </ul>
-
-          <div class="cvh2">🛠 Skills</div>
-          <div style="margin-top:4px">
-            <span class="cvbadge">AI / LLM</span>
-            <span class="cvbadge">Digital Transformation</span>
-            <span class="cvbadge">Agile / Scrum</span>
-            <span class="cvbadge">Healthcare Tech</span>
-            <span class="cvbadge">Software Development</span>
-            <span class="cvbadge">Automation</span>
-            <span class="cvbadge">Business Analysis</span>
-            <span class="cvbadge">Product Management</span>
-          </div>
-
-          <div style="margin-top:20px;padding-top:10px;border-top:1px dotted #808080;font-size:10px;color:#808080;text-align:center">
-            ── MATT-OS RESUME VIEWER v1.0 ── PRESS F5 TO REFRESH ── NOT ACTUALLY PRESS F5 ──
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- GAMES window -->
-    <div class="win gone" id="win-games" style="width:680px;height:560px">
-      <div class="wbar" onmousedown="startDrag(event,'win-games')">
-        <span class="wico">🕹</span><span class="wtxt">GAME ZONE — MATT-OS Entertainment Suite</span>
-        <div class="wbtns">
-          <div class="wbtn" onclick="minWin('win-games')">_</div>
-          <div class="wbtn" onclick="closeWin('win-games')">✕</div>
-        </div>
-      </div>
-      <div class="wbody" id="gamebody">
-        <!-- Game grid (shown by default) -->
-        <div id="gamegrid" class="gamegrid">
-          <div class="gtile" onclick="launchGame('wolf')">
-            <div class="gico">🐺</div>
-            <div class="gtit">Wolfenstein 3D</div>
-            <div class="gyr">id Software · 1992</div>
-          </div>
-          <div class="gtile" onclick="launchGame('doom')">
-            <div class="gico">👹</div>
-            <div class="gtit">DOOM</div>
-            <div class="gyr">id Software · 1993</div>
-          </div>
-          <div class="gtile" onclick="launchGame('duke')">
-            <div class="gico">💥</div>
-            <div class="gtit">Duke Nukem 3D</div>
-            <div class="gyr">3D Realms · 1996</div>
-          </div>
-          <div class="gtile" onclick="launchGame('simcity')">
-            <div class="gico">🏙</div>
-            <div class="gtit">SimCity</div>
-            <div class="gyr">Maxis · 1989</div>
-          </div>
-          <div style="width:100%;padding:8px 10px;font-family:'Courier New',monospace;font-size:11px;color:#808080;border-top:1px solid #808080;margin-top:4px">
-            ⚠ Games provided via Internet Archive (archive.org). Shareware / abandonware editions.<br>
-            Double-click a tile to launch in-browser via DOSBox emulation.
-          </div>
-        </div>
-        <!-- Game player (hidden until game selected) -->
-        <div id="gplayer">
-          <div class="gplaybar">
-            <button id="gback" onclick="backToGrid()">◀ BACK</button>
-            <span id="gnow">Loading...</span>
-            <span style="font-size:10px;opacity:.7">Powered by archive.org DOSBox</span>
-          </div>
-          <iframe id="gameframe" width="640" height="440" allowfullscreen></iframe>
-        </div>
-      </div>
-    </div>
-
-    <!-- WALLPAPER window -->
-    <div class="win gone" id="win-wallpaper" style="width:400px;height:300px">
-      <div class="wbar" onmousedown="startDrag(event,'win-wallpaper')">
-        <span class="wico">🎨</span><span class="wtxt">Display Properties — Wallpaper</span>
-        <div class="wbtns">
-          <div class="wbtn" onclick="minWin('win-wallpaper')">_</div>
-          <div class="wbtn" onclick="closeWin('win-wallpaper')">✕</div>
-        </div>
-      </div>
-      <div class="wbody">
-        <div style="padding:8px;font-family:'Courier New',monospace;font-size:11px;color:#000;border-bottom:1px solid #808080;margin-bottom:4px">
-          Select desktop background:
-        </div>
-        <div class="wpgrid" id="wpgrid">
-          <div class="wptile sel" data-wp="0" onclick="setWallpaper(0,this)">
-            <div class="wpt wp0"></div>
-            <div class="wplbl">Classic Blue</div>
-          </div>
-          <div class="wptile" data-wp="1" onclick="setWallpaper(1,this)">
-            <div class="wpt wp1" id="wpt-stars"></div>
-            <div class="wplbl">Starfield</div>
-          </div>
-          <div class="wptile" data-wp="2" onclick="setWallpaper(2,this)">
-            <div class="wpt wp2"></div>
-            <div class="wplbl">Plasma Wave</div>
-          </div>
-          <div class="wptile" data-wp="3" onclick="setWallpaper(3,this)">
-            <div class="wpt wp3"></div>
-            <div class="wplbl">Matrix Rain</div>
-          </div>
-          <div class="wptile" data-wp="4" onclick="setWallpaper(4,this)">
-            <div class="wpt wp4"></div>
-            <div class="wplbl">Synthwave</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ABOUT window -->
-    <div class="win gone" id="win-about" style="width:340px;height:260px">
-      <div class="wbar" onmousedown="startDrag(event,'win-about')">
-        <span class="wico">ℹ</span><span class="wtxt">About MATT-OS</span>
-        <div class="wbtns">
-          <div class="wbtn" onclick="closeWin('win-about')">✕</div>
-        </div>
-      </div>
-      <div class="wbody">
-        <div style="padding:16px;font-family:'Courier New',monospace;font-size:12px;text-align:center">
-          <div style="font-family:'VT323',monospace;font-size:52px;color:#000080;line-height:1">MATT-OS</div>
-          <div style="font-size:11px;color:#808080;margin-bottom:12px">Version 1.0.0 &nbsp;|&nbsp; Build 19921994</div>
-          <div style="text-align:left;font-size:12px;line-height:1.7">
-            This operating system is dedicated to tools<br>
-            built by Matt Visser.<br><br>
-            © 1992-∞ Matt Visser Industries Ltd.<br>
-            All rights reserved. Some rights wrong.<br><br>
-            <span style="color:#808080;font-size:10px">Memory: 640K (should be enough for anyone)<br>
-            Not affiliated with MS-DOS, Windows,<br>
-            or any respectable software company.</span>
-          </div>
-          <div style="margin-top:12px">
-            <button class="eok" onclick="closeWin('win-about')">OK</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /workarea -->
-
-  <!-- Taskbar -->
-  <div id="taskbar">
-    <button id="startbtn" onclick="toggleStart()">⊞ START</button>
-    <div class="tsep"></div>
-    <div id="tbapps"></div>
-    <div class="tsep"></div>
-    <div id="clockbox">
-      <span>💾</span>
-      <span id="clk">00:00</span>
-    </div>
+<!-- ── Footer ── -->
+<footer id="footer">
+  <p>Greater Manchester, England. Building things since before it was a career.</p>
+  <div id="contact-links">
+    <a href="https://www.linkedin.com/in/matt-visser" target="_blank" rel="noopener">linkedin</a>
+    <a href="https://github.com/visser23" target="_blank" rel="noopener">github</a>
+    <a href="https://www.oyo-app.com" target="_blank" rel="noopener">oyo-app.com</a>
+    <a href="mailto:matt.visser@servita.com">email</a>
   </div>
-</div><!-- /desktop -->
-
-<!-- Start menu -->
-<div id="smenu">
-  <div class="smenu-strip">MATT-OS v1.0</div>
-  <div class="smenu-items">
-    <div class="sentry" onclick="openWin('tools');closeStart()">🧰 Tools</div>
-    <div class="sentry" onclick="openWin('cv');closeStart()">📄 Resume / CV</div>
-    <div class="sentry" onclick="openWin('games');closeStart()">🕹 Games</div>
-    <div class="sentry" onclick="openWin('wallpaper');closeStart()">🎨 Wallpaper</div>
-    <div class="ssep"></div>
-    <div class="sentry" onclick="openWin('about');closeStart()">ℹ About MATT-OS</div>
-    <div class="ssep"></div>
-    <div class="sentry" onclick="location.reload()">⏻ Restart</div>
-  </div>
-</div>
-
-<!-- Error dialog -->
-<div id="errdlg">
-  <div class="etitle">
-    <span>⚠ MATT-OS Error</span>
-    <div class="wbtn" onclick="closeErr()">✕</div>
-  </div>
-  <div class="ebody">
-    <div class="eico">🛑</div>
-    <div id="errmsg">An unexpected error has occurred.<br>Your computer may be haunted.<br><br>Press OK to ignore and pretend<br>everything is fine.</div>
-  </div>
-  <div class="ebtns">
-    <button class="eok" onclick="closeErr()">OK</button>
-  </div>
-</div>
+</footer>
 
 <script>
-// ════════════════════════════════════════════════
-// BOOT SEQUENCE
-// ════════════════════════════════════════════════
-const BOOT_LINES = [
-  "MATT-BIOS v4.2 (C) 1994 Matt Visser Industries",
-  "CPU: Matt Processor 486DX2/66MHz",
-  "Memory Test: 0K ... 640K ... OK",
-  "Extended Memory: 4096K OK",
-  "",
-  "Detecting IDE drives...",
-  "  Primary Master: MATT-HD 420MB [OK]",
-  "  Primary Slave : Not detected",
-  "",
-  "Initializing PCI bus...",
-  "Loading CONFIG.SYS...",
-  "  DEVICE=C:\\DOS\\HIMEM.SYS ... OK",
-  "  DEVICE=C:\\DOS\\EMM386.EXE NOEMS ... OK",
-  "",
-  "Loading AUTOEXEC.BAT...",
-  "  PATH=C:\\DOS;C:\\WINDOWS;C:\\TOOLS",
-  "  SET PROMPT=$P$G",
-  "  SMARTDRV.EXE /X",
-  "",
-  "ERROR: COFFEE.EXE not found — please insert coffee and retry",
-  "WARNING: Ignoring error. Booting anyway.",
-  "",
-  "Loading MATT-OS v1.0...",
-  "  [████████████████████] 100%",
-  "",
-  "Starting graphical interface...",
+// ── Placeholder image generators ──
+const PLACEHOLDERS = {
+  amstrad(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#c8b89a"/>
+      <rect x="${w*.15}" y="${h*.08}" width="${w*.7}" height="${h*.52}" rx="4" fill="#b0a888"/>
+      <rect x="${w*.18}" y="${h*.11}" width="${w*.64}" height="${h*.44}" fill="#0a180a"/>
+      <rect x="${w*.2}" y="${h*.14}" width="${w*.6}" height="${h*.38}" fill="#050d05"/>
+      <text x="${w*.25}" y="${h*.3}" font-family="monospace" font-size="${h*.08}" fill="#33dd55">10 PRINT "HELLO"</text>
+      <text x="${w*.25}" y="${h*.4}" font-family="monospace" font-size="${h*.08}" fill="#33dd55">20 GOTO 10</text>
+      <text x="${w*.25}" y="${h*.5}" font-family="monospace" font-size="${h*.08}" fill="#1a8c32">RUN</text>
+      <rect x="${w*.3}" y="${h*.64}" width="${w*.4}" height="${h*.06}" rx="2" fill="#9a9280"/>
+      <rect x="${w*.1}" y="${h*.72}" width="${w*.8}" height="${h*.22}" rx="3" fill="#b8b0a0"/>
+      <rect x="${w*.14}" y="${h*.78}" width="${w*.5}" height="${h*.08}" rx="1" fill="#2a261e" opacity=".6"/>
+    </svg>`;
+  },
+  basic(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#f0e8d0"/>
+      <rect x="${w*.1}" y="${h*.08}" width="${w*.8}" height="${h*.85}" fill="#faf6ea" stroke="#d4c89a" stroke-width="1"/>
+      <text x="${w*.15}" y="${h*.2}" font-family="monospace" font-size="${h*.07}" fill="#3a3020">10 REM MATT'S FIRST</text>
+      <text x="${w*.15}" y="${h*.3}" font-family="monospace" font-size="${h*.07}" fill="#3a3020">20 FOR I=1 TO 10</text>
+      <text x="${w*.15}" y="${h*.4}" font-family="monospace" font-size="${h*.07}" fill="#3a3020">30 PRINT I</text>
+      <text x="${w*.15}" y="${h*.5}" font-family="monospace" font-size="${h*.07}" fill="#3a3020">40 NEXT I</text>
+      <text x="${w*.15}" y="${h*.6}" font-family="monospace" font-size="${h*.07}" fill="#3a3020">50 END</text>
+      <line x1="${w*.1}" y1="${h*.7}" x2="${w*.9}" y2="${h*.7}" stroke="#d4c89a" stroke-width="1"/>
+      <text x="${w*.15}" y="${h*.82}" font-family="monospace" font-size="${h*.065}" fill="#9a8e70">age 4-5, amstrad</text>
+    </svg>`;
+  },
+  ibm486(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#b8b0a0"/>
+      <rect x="${w*.08}" y="${h*.05}" width="${w*.84}" height="${h*.6}" rx="3" fill="#c0b8a8"/>
+      <rect x="${w*.11}" y="${h*.08}" width="${w*.78}" height="${h*.52}" fill="#181410"/>
+      <rect x="${w*.14}" y="${h*.1}" width="${w*.72}" height="${h*.46}" fill="#101008"/>
+      <rect x="${w*.2}" y="${h*.2}" width="${w*.6}" height="${h*.3}" fill="#181410" rx="2"/>
+      <text x="${w*.5}" y="${h*.38}" font-family="monospace" font-size="${h*.1}" fill="#aaaaaa" text-anchor="middle">IBM</text>
+      <text x="${w*.5}" y="${h*.48}" font-family="monospace" font-size="${h*.07}" fill="#666666" text-anchor="middle">486SX</text>
+      <rect x="${w*.3}" y="${h*.68}" width="${w*.4}" height="${h*.06}" rx="2" fill="#aaa8a0"/>
+      <rect x="${w*.05}" y="${h*.76}" width="${w*.9}" height="${h*.2}" rx="2" fill="#c4bfb0"/>
+    </svg>`;
+  },
+  cdrom(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#1a1810"/>
+      <circle cx="${w*.5}" cy="${h*.45}" r="${w*.35}" fill="none" stroke="#888" stroke-width="1"/>
+      <circle cx="${w*.5}" cy="${h*.45}" r="${w*.3}" fill="#c0b8c0" stroke="#aaa" stroke-width=".5"/>
+      <circle cx="${w*.5}" cy="${h*.45}" r="${w*.25}" fill="#d4ccd8"/>
+      <circle cx="${w*.5}" cy="${h*.45}" r="${w*.08}" fill="#2a2830"/>
+      <text x="${w*.5}" y="${h*.8}" font-family="monospace" font-size="${h*.08}" fill="#888" text-anchor="middle">DOOM II</text>
+      <text x="${w*.5}" y="${h*.88}" font-family="monospace" font-size="${h*.07}" fill="#555" text-anchor="middle">id Software 1994</text>
+    </svg>`;
+  },
+  modem(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#2a2018"/>
+      <rect x="${w*.1}" y="${h*.2}" width="${w*.8}" height="${h*.4}" rx="4" fill="#3a3020"/>
+      <circle cx="${w*.2}" cy="${h*.4}" r="${w*.04}" fill="#00aa00"/>
+      <circle cx="${w*.3}" cy="${h*.4}" r="${w*.04}" fill="#006600"/>
+      <circle cx="${w*.4}" cy="${h*.4}" r="${w*.04}" fill="#00aa00"/>
+      <circle cx="${w*.5}" cy="${h*.4}" r="${w*.04}" fill="#006600"/>
+      <circle cx="${w*.6}" cy="${h*.4}" r="${w*.04}" fill="#00aa00"/>
+      <text x="${w*.5}" y="${h*.72}" font-family="monospace" font-size="${h*.07}" fill="#8a7a60" text-anchor="middle">28.8k baud</text>
+      <text x="${w*.5}" y="${h*.82}" font-family="monospace" font-size="${h*.065}" fill="#5a4a38" text-anchor="middle">paid by the minute</text>
+    </svg>`;
+  },
+  wad(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#1a1008"/>
+      <rect x="${w*.08}" y="${h*.08}" width="${w*.5}" height="${h*.65}" rx="2" fill="#2a1808"/>
+      <rect x="${w*.1}" y="${h*.1}" width="${w*.46}" height="${h*.61}" fill="#0a0804"/>
+      <text x="${w*.33}" y="${h*.32}" font-family="monospace" font-size="${h*.09}" fill="#cc4400" text-anchor="middle">E1M1</text>
+      <text x="${w*.33}" y="${h*.43}" font-family="monospace" font-size="${h*.07}" fill="#884400" text-anchor="middle">MODIFIED</text>
+      <text x="${w*.33}" y="${h*.54}" font-family="monospace" font-size="${h*.065}" fill="#553300" text-anchor="middle">.WAD</text>
+      <rect x="${w*.62}" y="${h*.15}" width="${w*.3}" height="${h*.5}" rx="2" fill="#1a1408" stroke="#3a2808" stroke-width="1"/>
+      <text x="${w*.77}" y="${h*.35}" font-family="monospace" font-size="${h*.065}" fill="#664400" text-anchor="middle">MAP</text>
+      <text x="${w*.77}" y="${h*.46}" font-family="monospace" font-size="${h*.065}" fill="#664400" text-anchor="middle">EDIT</text>
+    </svg>`;
+  },
+  website96(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#c0c0c0"/>
+      <rect x="${w*.04}" y="${h*.04}" width="${w*.92}" height="${h*.92}" fill="#c8c8c8" stroke="#888" stroke-width="1"/>
+      <rect x="${w*.04}" y="${h*.04}" width="${w*.92}" height="${h*.12}" fill="#000080"/>
+      <text x="${w*.08}" y="${h*.13}" font-family="sans-serif" font-size="${h*.07}" fill="white">Matt's Homepage !!</text>
+      <rect x="${w*.06}" y="${h*.18}" width="${w*.88}" height="${h*.04}" fill="#999"/>
+      <text x="${w*.08}" y="${h*.3}" font-family="sans-serif" font-size="${h*.08}" fill="#000080">WELCOME 2 MY PAGE</text>
+      <text x="${w*.08}" y="${h*.42}" font-family="sans-serif" font-size="${h*.06}" fill="#000">Under construction...</text>
+      <rect x="${w*.08}" y="${h*.5}" width="${w*.2}" height="${h*.12}" fill="#ffff00" stroke="#000" stroke-width="1"/>
+      <text x="${w*.18}" y="${h*.59}" font-family="sans-serif" font-size="${h*.065}" fill="#000" text-anchor="middle">NEW!</text>
+    </svg>`;
+  },
+  mirc(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#1a1818"/>
+      <rect x="${w*.04}" y="${h*.04}" width="${w*.92}" height="${h*.92}" fill="#000000"/>
+      <text x="${w*.06}" y="${h*.18}" font-family="monospace" font-size="${h*.075}" fill="#aaaaaa">[#chat]</text>
+      <text x="${w*.06}" y="${h*.3}" font-family="monospace" font-size="${h*.065}" fill="#00aaaa">&lt;m4tt&gt; anyone know</text>
+      <text x="${w*.06}" y="${h*.4}" font-family="monospace" font-size="${h*.065}" fill="#00aaaa">how to compile</text>
+      <text x="${w*.06}" y="${h*.5}" font-family="monospace" font-size="${h*.065}" fill="#aa0000">&lt;root&gt; yes</text>
+      <text x="${w*.06}" y="${h*.6}" font-family="monospace" font-size="${h*.065}" fill="#aaaaaa">*** joins: n00b</text>
+      <text x="${w*.06}" y="${h*.78}" font-family="monospace" font-size="${h*.065}" fill="#ffffff">mIRC 5.91</text>
+    </svg>`;
+  },
+  code(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#1e1e1e"/>
+      <text x="${w*.05}" y="${h*.18}" font-family="monospace" font-size="${h*.075}" fill="#569cd6">def </text>
+      <text x="${w*.22}" y="${h*.18}" font-family="monospace" font-size="${h*.075}" fill="#dcdcaa">hello</text>
+      <text x="${w*.05}" y="${h*.3}" font-family="monospace" font-size="${h*.075}" fill="#ce9178">  "world"</text>
+      <text x="${w*.05}" y="${h*.45}" font-family="monospace" font-size="${h*.075}" fill="#6a9955"># build break</text>
+      <text x="${w*.05}" y="${h*.57}" font-family="monospace" font-size="${h*.075}" fill="#6a9955"># inspect</text>
+      <text x="${w*.05}" y="${h*.69}" font-family="monospace" font-size="${h*.075}" fill="#6a9955"># rebuild</text>
+      <rect x="${w*.05}" y="${h*.8}" width="${w*.4}" height="${h*.08}" fill="#264f78" rx="1"/>
+      <text x="${w*.08}" y="${h*.87}" font-family="monospace" font-size="${h*.065}" fill="#9cdcfe">python 1999</text>
+    </svg>`;
+  },
+  freelance(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#e8e0d0"/>
+      <rect x="${w*.1}" y="${h*.08}" width="${w*.8}" height="${h*.55}" rx="2" fill="white" stroke="#c8c0b0" stroke-width="1"/>
+      <text x="${w*.5}" y="${h*.22}" font-family="sans-serif" font-size="${h*.085}" fill="#2a2010" text-anchor="middle" font-weight="bold">Invoice</text>
+      <line x1="${w*.12}" y1="${h*.27}" x2="${w*.88}" y2="${h*.27}" stroke="#c8c0b0" stroke-width=".5"/>
+      <text x="${w*.14}" y="${h*.37}" font-family="sans-serif" font-size="${h*.07}" fill="#5a5040">Website build</text>
+      <text x="${w*.86}" y="${h*.37}" font-family="sans-serif" font-size="${h*.07}" fill="#5a5040" text-anchor="end">£350</text>
+      <text x="${w*.14}" y="${h*.47}" font-family="sans-serif" font-size="${h*.07}" fill="#5a5040">Hosting setup</text>
+      <text x="${w*.86}" y="${h*.47}" font-family="sans-serif" font-size="${h*.07}" fill="#5a5040" text-anchor="end">£80</text>
+      <text x="${w*.5}" y="${h*.82}" font-family="sans-serif" font-size="${h*.075}" fill="#8a7a60" text-anchor="middle" font-style="italic">2007—2011</text>
+    </svg>`;
+  },
+  media(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#1a1a1a"/>
+      <rect x="${w*.08}" y="${h*.1}" width="${w*.84}" height="${h*.5}" rx="2" fill="#2a2a2a"/>
+      <rect x="${w*.1}" y="${h*.12}" width="${w*.8}" height="${h*.46}" fill="#333"/>
+      <polygon points="${w*.42},${h*.25} ${w*.58},${h*.35} ${w*.42},${h*.45}" fill="white"/>
+      <circle cx="${w*.5}" cy="${h*.35}" r="${w*.12}" fill="none" stroke="white" stroke-width="1.5"/>
+      <text x="${w*.5}" y="${h*.75}" font-family="sans-serif" font-size="${h*.075}" fill="#888" text-anchor="middle">VIDEO · SEO · CODE</text>
+      <text x="${w*.5}" y="${h*.86}" font-family="sans-serif" font-size="${h*.065}" fill="#555" text-anchor="middle">all at once</text>
+    </svg>`;
+  },
+  bbc(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#e8e0d0"/>
+      <rect x="${w*.15}" y="${h*.15}" width="${w*.7}" height="${h*.5}" rx="4" fill="#1a1a1a"/>
+      <text x="${w*.5}" y="${h*.5}" font-family="sans-serif" font-size="${h*.22}" fill="white" text-anchor="middle" font-weight="bold">BBC</text>
+      <rect x="${w*.35}" y="${h*.66}" width="${w*.1}" height="${h*.08}" fill="#888"/>
+      <rect x="${w*.2}" y="${h*.74}" width="${w*.6}" height="${h*.06}" rx="2" fill="#aaa"/>
+      <text x="${w*.5}" y="${h*.88}" font-family="sans-serif" font-size="${h*.07}" fill="#6a5a40" text-anchor="middle">2010 — 2019</text>
+    </svg>`;
+  },
+  award(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#f8f0d8"/>
+      <rect x="${w*.08}" y="${h*.06}" width="${w*.84}" height="${h*.88}" rx="3" fill="none" stroke="#c8a840" stroke-width="1.5"/>
+      <rect x="${w*.12}" y="${h*.1}" width="${w*.76}" height="${h*.8}" rx="2" fill="none" stroke="#e0c060" stroke-width=".5"/>
+      <text x="${w*.5}" y="${h*.28}" font-family="serif" font-size="${h*.085}" fill="#8a6010" text-anchor="middle">AWARD</text>
+      <line x1="${w*.2}" y1="${h*.33}" x2="${w*.8}" y2="${h*.33}" stroke="#c8a840" stroke-width=".5"/>
+      <text x="${w*.5}" y="${h*.48}" font-family="serif" font-size="${h*.11}" fill="#5a3a08" text-anchor="middle" font-weight="bold">★</text>
+      <text x="${w*.5}" y="${h*.63}" font-family="sans-serif" font-size="${h*.07}" fill="#7a5a18" text-anchor="middle">BBC Sport</text>
+      <text x="${w*.5}" y="${h*.73}" font-family="sans-serif" font-size="${h*.065}" fill="#8a6a28" text-anchor="middle">Connected TV App</text>
+    </svg>`;
+  },
+  redbutton(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#1a1818"/>
+      <rect x="${w*.1}" y="${h*.08}" width="${w*.8}" height="${h*.55}" rx="3" fill="#0a0808"/>
+      <circle cx="${w*.5}" cy="${h*.36}" r="${w*.2}" fill="#cc0000"/>
+      <circle cx="${w*.5}" cy="${h*.36}" r="${w*.15}" fill="#dd1111"/>
+      <text x="${w*.5}" y="${h*.4}" font-family="sans-serif" font-size="${h*.1}" fill="white" text-anchor="middle" font-weight="bold">●</text>
+      <text x="${w*.5}" y="${h*.74}" font-family="sans-serif" font-size="${h*.07}" fill="#888" text-anchor="middle">Red Button</text>
+      <text x="${w*.5}" y="${h*.84}" font-family="sans-serif" font-size="${h*.065}" fill="#555" text-anchor="middle">TPM 2014</text>
+    </svg>`;
+  },
+  broadcast(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#0a0a18"/>
+      <rect x="${w*.08}" y="${h*.06}" width="${w*.84}" height="${h*.55}" rx="3" fill="#0a0810"/>
+      <rect x="${w*.1}" y="${h*.08}" width="${w*.8}" height="${h*.51}" fill="#080812"/>
+      <text x="${w*.5}" y="${h*.2}" font-family="monospace" font-size="${h*.065}" fill="#4444aa" text-anchor="middle">LIVE ● BROADCAST</text>
+      <rect x="${w*.1}" y="${h*.24}" width="${w*.8}" height="${h*.3}" fill="#0c0c20" rx="1"/>
+      <text x="${w*.5}" y="${h*.32}" font-family="monospace" font-size="${h*.055}" fill="#6666cc" text-anchor="middle">Olympics · World Cup</text>
+      <text x="${w*.5}" y="${h*.41}" font-family="monospace" font-size="${h*.055}" fill="#6666cc" text-anchor="middle">Wimbledon · Glastonbury</text>
+      <text x="${w*.5}" y="${h*.78}" font-family="sans-serif" font-size="${h*.07}" fill="#666" text-anchor="middle">iPlayer · Sport TV</text>
+    </svg>`;
+  },
+  banking(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#0a1a0a"/>
+      <rect x="${w*.08}" y="${h*.1}" width="${w*.84}" height="${h*.3}" rx="5" fill="#0f2a1f"/>
+      <text x="${w*.5}" y="${h*.28}" font-family="monospace" font-size="${h*.1}" fill="#00ff88" text-anchor="middle">£ STARLING</text>
+      <text x="${w*.5}" y="${h*.52}" font-family="monospace" font-size="${h*.065}" fill="#009944" text-anchor="middle">SEPA INSTANT</text>
+      <text x="${w*.5}" y="${h*.62}" font-family="monospace" font-size="${h*.065}" fill="#007733" text-anchor="middle">DIRECT DEBIT</text>
+      <text x="${w*.5}" y="${h*.72}" font-family="monospace" font-size="${h*.065}" fill="#005522" text-anchor="middle">ORIGINATION</text>
+      <text x="${w*.5}" y="${h*.86}" font-family="sans-serif" font-size="${h*.065}" fill="#335533" text-anchor="middle">2019—2021</text>
+    </svg>`;
+  },
+  covid(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#f0f0f0"/>
+      <text x="${w*.5}" y="${h*.25}" font-family="sans-serif" font-size="${h*.085}" fill="#333" text-anchor="middle">UK GOV</text>
+      <text x="${w*.5}" y="${h*.38}" font-family="sans-serif" font-size="${h*.075}" fill="#555" text-anchor="middle">COVID-19</text>
+      <text x="${w*.5}" y="${h*.5}" font-family="sans-serif" font-size="${h*.075}" fill="#555" text-anchor="middle">RESPONSE</text>
+      <rect x="${w*.2}" y="${h*.58}" width="${w*.6}" height="${h*.04}" fill="#888" rx="1"/>
+      <text x="${w*.5}" y="${h*.73}" font-family="sans-serif" font-size="${h*.065}" fill="#777" text-anchor="middle">national infrastructure</text>
+      <text x="${w*.5}" y="${h*.83}" font-family="sans-serif" font-size="${h*.065}" fill="#888" text-anchor="middle">2020—2021</text>
+    </svg>`;
+  },
+  nhs(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#003087"/>
+      <rect x="${w*.2}" y="${h*.3}" width="${w*.6}" height="${h*.4}" fill="white"/>
+      <rect x="${w*.1}" y="${h*.4}" width="${w*.8}" height="${h*.2}" fill="white"/>
+      <text x="${w*.5}" y="${h*.55}" font-family="sans-serif" font-size="${h*.2}" fill="#003087" text-anchor="middle" font-weight="bold">NHS</text>
+      <text x="${w*.5}" y="${h*.84}" font-family="sans-serif" font-size="${h*.07}" fill="#80a0c8" text-anchor="middle">England</text>
+    </svg>`;
+  },
+  healthtech(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#0a1a2a"/>
+      <circle cx="${w*.5}" cy="${h*.38}" r="${w*.25}" fill="none" stroke="#1a6aaa" stroke-width="1.5"/>
+      <rect x="${w*.46}" y="${h*.2}" width="${w*.08}" height="${w*.36}" rx="2" fill="#2a9aee"/>
+      <rect x="${w*.32}" y="${h*.34}" width="${w*.36}" height="${w*.08}" rx="2" fill="#2a9aee"/>
+      <text x="${w*.5}" y="${h*.76}" font-family="monospace" font-size="${h*.07}" fill="#4a8aaa" text-anchor="middle">HEALTH CALL</text>
+      <text x="${w*.5}" y="${h*.86}" font-family="monospace" font-size="${h*.065}" fill="#2a5a7a" text-anchor="middle">CPTO 2022—2024</text>
+    </svg>`;
+  },
+  ai(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="${this.screen_bg || '#040d04'}"/>
+      <text x="${w*.08}" y="${h*.18}" font-family="monospace" font-size="${h*.075}" fill="#1a8c32">$ python ai_test.py</text>
+      <text x="${w*.08}" y="${h*.3}" font-family="monospace" font-size="${h*.065}" fill="#33ff66">Loading model...</text>
+      <text x="${w*.08}" y="${h*.41}" font-family="monospace" font-size="${h*.065}" fill="#1a8c32">tokens: 117M</text>
+      <text x="${w*.08}" y="${h*.53}" font-family="monospace" font-size="${h*.065}" fill="#33ff66">&gt; "write a poem"</text>
+      <text x="${w*.08}" y="${h*.64}" font-family="monospace" font-size="${h*.065}" fill="#1a8c32">In silicon dreams...</text>
+      <text x="${w*.08}" y="${h*.78}" font-family="monospace" font-size="${h*.07}" fill="#0a5a18">GPT-2 · 2023</text>
+    </svg>`;
+  },
+  default(w, h) {
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${w}" height="${h}" fill="#c8bfac"/>
+    </svg>`;
+  }
+};
+
+function getPlaceholder(key, w, h) {
+  const fn = PLACEHOLDERS[key] || PLACEHOLDERS.default;
+  return fn.call(PLACEHOLDERS, w, h);
+}
+
+// ── Story Rail ──
+const CHAPTERS = [
+  { id: 1, label: "Computers at home", range: [1, 5] },
+  { id: 2, label: "Internet era",       range: [2, 3] },
+  { id: 3, label: "First career",       range: [3, 3] },
+  { id: 4, label: "BBC",                range: [4, 4] },
+  { id: 5, label: "Consulting",         range: [5, 5] },
+  { id: 6, label: "NHS & AI",           range: [6, 6] }
 ];
 
-const bt = document.getElementById('boottext');
-let li = 0, ci = 0, booting = true;
-function typeBoot() {
-  if (li >= BOOT_LINES.length) {
-    setTimeout(startDesktop, 600);
-    return;
+let storyData = [];
+let currentCard = 0;
+let isDragging = false;
+let dragStart = 0;
+let dragOffset = 0;
+let currentOffset = 0;
+
+function cardWidth() {
+  return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-w')) || 210;
+}
+function cardGap() {
+  return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-gap')) || 32;
+}
+function cardStep() { return cardWidth() + cardGap(); }
+
+function renderStory(data) {
+  storyData = data;
+  const track = document.getElementById('rail-track');
+  track.innerHTML = '';
+
+  data.forEach((card, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'card-wrap';
+    wrap.dataset.index = i;
+    wrap.setAttribute('tabindex', '0');
+    wrap.setAttribute('role', 'option');
+    wrap.setAttribute('aria-label', `${card.year}: ${card.title}`);
+    wrap.style.setProperty('--rot', (card.rotation || 0) + 'deg');
+
+    const rotStyle = `rotate(${card.rotation || 0}deg)`;
+
+    const photo = getPlaceholder(card.placeholder || 'default', 190, 160);
+    const typeClass = `card-type-${card.type || 'photo'}`;
+
+    wrap.innerHTML = `
+      <div class="card-peg" aria-hidden="true"></div>
+      <div class="card-string" aria-hidden="true"></div>
+      <div class="polaroid ${typeClass}" style="transform: ${rotStyle}">
+        <div class="polaroid-photo" aria-hidden="true">${photo}</div>
+        <div class="polaroid-caption">
+          <div class="polaroid-year">${card.year}</div>
+          <div class="polaroid-title">${card.title}</div>
+          <div class="polaroid-text">${card.caption}</div>
+        </div>
+      </div>
+    `;
+
+    wrap.addEventListener('click', () => goToCard(i));
+    wrap.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToCard(i); }
+    });
+
+    track.appendChild(wrap);
+  });
+
+  renderChapters(data);
+  goToCard(0, false);
+}
+
+function goToCard(idx, animate = true) {
+  if (idx < 0 || idx >= storyData.length) return;
+  currentCard = idx;
+
+  const track = document.getElementById('rail-track');
+  const step = cardStep();
+  // padding-left on #rail-track is 50vw, so card[0] starts at viewport center.
+  // To center card[idx]: offset = -idx * step - cardWidth/2
+  const offset = -(idx * step) - (cardWidth() / 2);
+
+  currentOffset = offset;
+
+  if (animate) {
+    track.classList.add('smooth');
+    setTimeout(() => track.classList.remove('smooth'), 500);
   }
-  const line = BOOT_LINES[li];
-  if (ci < line.length) {
-    bt.textContent += line[ci];
-    ci++;
-    setTimeout(typeBoot, li === 19 ? 25 : (li === 20 ? 18 : 4));
-  } else {
-    bt.textContent += '\n';
-    li++; ci = 0;
-    setTimeout(typeBoot, li === 19 ? 400 : 30);
+  track.style.transform = `translateX(${offset}px)`;
+
+  // Update active/distant classes
+  document.querySelectorAll('.card-wrap').forEach((el, i) => {
+    el.classList.remove('active', 'distant');
+    const dist = Math.abs(i - idx);
+    if (dist === 0) el.classList.add('active');
+    else if (dist > 2) el.classList.add('distant');
+  });
+
+  // Update controls
+  document.getElementById('btn-prev').disabled = idx === 0;
+  document.getElementById('btn-next').disabled = idx === storyData.length - 1;
+  document.getElementById('story-pos').textContent = `${idx + 1} / ${storyData.length}`;
+
+  // Update chapter dots
+  const chapter = storyData[idx]?.chapter;
+  document.querySelectorAll('.chapter-dot').forEach(dot => {
+    dot.classList.toggle('active', parseInt(dot.dataset.chapter) === chapter);
+  });
+}
+
+function renderChapters(data) {
+  const bar = document.getElementById('chapter-bar');
+  bar.innerHTML = '';
+  CHAPTERS.forEach(ch => {
+    const firstCard = data.findIndex(c => c.chapter === ch.id);
+    if (firstCard === -1) return;
+    const dot = document.createElement('button');
+    dot.className = 'chapter-dot';
+    dot.dataset.chapter = ch.id;
+    dot.textContent = ch.label;
+    dot.setAttribute('aria-label', `Jump to chapter: ${ch.label}`);
+    dot.addEventListener('click', () => goToCard(firstCard));
+    bar.appendChild(dot);
+  });
+}
+
+// Drag / swipe
+function initRailDrag() {
+  const outer = document.getElementById('rail-outer');
+  const track = document.getElementById('rail-track');
+
+  let startX = 0, startOffset = 0, moved = false;
+
+  function onStart(x) {
+    isDragging = true;
+    moved = false;
+    startX = x;
+    startOffset = currentOffset;
+    track.classList.remove('smooth');
+    outer.style.cursor = 'grabbing';
   }
-}
-setTimeout(typeBoot, 300);
-
-function startDesktop() {
-  document.getElementById('boot').classList.add('gone');
-  document.getElementById('desktop').classList.add('on');
-  startClock();
-  startBgCanvas();
-}
-
-// ════════════════════════════════════════════════
-// CLOCK
-// ════════════════════════════════════════════════
-function startClock() {
-  function tick() {
-    const d = new Date();
-    const h = String(d.getHours()).padStart(2,'0');
-    const m = String(d.getMinutes()).padStart(2,'0');
-    document.getElementById('clk').textContent = h+':'+m;
+  function onMove(x) {
+    if (!isDragging) return;
+    const dx = x - startX;
+    if (Math.abs(dx) > 5) moved = true;
+    currentOffset = startOffset + dx;
+    track.style.transform = `translateX(${currentOffset}px)`;
   }
-  tick();
-  setInterval(tick, 10000);
-}
-
-// ════════════════════════════════════════════════
-// WINDOW MANAGEMENT
-// ════════════════════════════════════════════════
-let zTop = 100;
-const winMap = {
-  tools: 'win-tools',
-  cv: 'win-cv',
-  games: 'win-games',
-  wallpaper: 'win-wallpaper',
-  about: 'win-about'
-};
-const winTitles = {
-  tools: '🧰 Tools',
-  cv: '📄 Resume',
-  games: '🕹 Games',
-  wallpaper: '🎨 Wallpaper',
-  about: 'ℹ About'
-};
-const winDefaults = {
-  tools:     {w:440,h:380},
-  cv:        {w:520,h:520},
-  games:     {w:680,h:560},
-  wallpaper: {w:400,h:300},
-  about:     {w:340,h:260}
-};
-let openWins = {};
-
-function openWin(id) {
-  const el = document.getElementById(winMap[id]);
-  if (!el) return;
-  closeStart();
-  if (el.classList.contains('gone')) {
-    el.classList.remove('gone');
-    // Center it
-    const wa = document.getElementById('workarea');
-    const d = winDefaults[id];
-    const left = Math.max(10, (wa.offsetWidth - d.w) / 2 + Math.random()*60-30);
-    const top  = Math.max(10, (wa.offsetHeight - d.h) / 2 + Math.random()*40-20);
-    el.style.left = left+'px';
-    el.style.top  = top+'px';
-    el.style.width  = d.w+'px';
-    el.style.height = d.h+'px';
-    openWins[id] = true;
-    addTaskbarBtn(id);
+  function onEnd(x) {
+    if (!isDragging) return;
+    isDragging = false;
+    outer.style.cursor = 'grab';
+    if (!moved) return;
+    // Snap to nearest card
+    const step = cardStep();
+    const rawIdx = -(currentOffset + cardWidth() / 2) / step;
+    const snapped = Math.round(rawIdx);
+    const idx = Math.max(0, Math.min(storyData.length - 1, snapped));
+    goToCard(idx, true);
   }
-  focusWin(el);
-  closeMenus();
+
+  // Mouse
+  outer.addEventListener('mousedown', e => { onStart(e.clientX); });
+  window.addEventListener('mousemove', e => { if (isDragging) onMove(e.clientX); });
+  window.addEventListener('mouseup', e => { onEnd(e.clientX); });
+
+  // Touch
+  outer.addEventListener('touchstart', e => { onStart(e.touches[0].clientX); }, { passive: true });
+  outer.addEventListener('touchmove', e => { onMove(e.touches[0].clientX); }, { passive: true });
+  outer.addEventListener('touchend', e => { onEnd(e.changedTouches[0].clientX); });
+
+  // Keyboard on rail-outer
+  outer.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); goToCard(currentCard - 1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); goToCard(currentCard + 1); }
+  });
 }
 
-function focusWin(el) {
-  // deactivate all
-  document.querySelectorAll('.win').forEach(w => w.classList.add('inactive'));
-  el.classList.remove('inactive');
-  el.style.zIndex = ++zTop;
-  // highlight taskbar btn
-  const id = Object.keys(winMap).find(k => winMap[k] === el.id);
-  document.querySelectorAll('.tbtn').forEach(b => b.classList.remove('active'));
-  const tb = document.getElementById('tb-'+id);
-  if (tb) tb.classList.add('active');
-}
+document.getElementById('btn-prev').addEventListener('click', () => goToCard(currentCard - 1));
+document.getElementById('btn-next').addEventListener('click', () => goToCard(currentCard + 1));
 
-function closeWin(eid) {
-  const el = document.getElementById(eid);
-  el.classList.add('gone');
-  const id = Object.keys(winMap).find(k => winMap[k] === eid);
-  delete openWins[id];
-  removeTaskbarBtn(id);
-  document.querySelectorAll('.win:not(.gone)')[0] && focusWin(document.querySelectorAll('.win:not(.gone)').item(document.querySelectorAll('.win:not(.gone)').length-1));
-}
-
-function minWin(eid) {
-  const el = document.getElementById(eid);
-  el.classList.add('gone');
-  const id = Object.keys(winMap).find(k => winMap[k] === eid);
-  const tb = document.getElementById('tb-'+id);
-  if (tb) tb.classList.remove('active');
-}
-
-function addTaskbarBtn(id) {
-  if (document.getElementById('tb-'+id)) return;
-  const b = document.createElement('div');
-  b.className = 'tbtn active';
-  b.id = 'tb-'+id;
-  b.textContent = winTitles[id];
-  b.onclick = () => {
-    const el = document.getElementById(winMap[id]);
-    if (el.classList.contains('gone')) {
-      el.classList.remove('gone');
-      focusWin(el);
-    } else {
-      minWin(winMap[id]);
-    }
-  };
-  document.getElementById('tbapps').appendChild(b);
-}
-
-function removeTaskbarBtn(id) {
-  const b = document.getElementById('tb-'+id);
-  if (b) b.remove();
-}
-
-// ════════════════════════════════════════════════
-// DRAG
-// ════════════════════════════════════════════════
-let dragging = null, dox=0, doy=0;
-function startDrag(e, eid) {
-  if (e.target.classList.contains('wbtn')) return;
-  const el = document.getElementById(eid);
-  focusWin(el);
-  dragging = el;
-  dox = e.clientX - el.offsetLeft;
-  doy = e.clientY - el.offsetTop;
-  e.preventDefault();
-}
-document.addEventListener('mousemove', e => {
-  if (!dragging) return;
-  const wa = document.getElementById('workarea');
-  let nx = e.clientX - dox;
-  let ny = e.clientY - doy;
-  nx = Math.max(-dragging.offsetWidth+60, Math.min(wa.offsetWidth-60, nx));
-  ny = Math.max(0, Math.min(wa.offsetHeight-30, ny));
-  dragging.style.left = nx+'px';
-  dragging.style.top  = ny+'px';
+// Keyboard global arrows (only when not focused on other elements)
+document.addEventListener('keydown', e => {
+  if (document.activeElement.closest('#screen')) return;
+  if (e.key === 'ArrowLeft') goToCard(currentCard - 1);
+  if (e.key === 'ArrowRight') goToCard(currentCard + 1);
 });
-document.addEventListener('mouseup', () => { dragging = null; });
 
-// Click on workarea deselects / closes menus
-document.getElementById('workarea').addEventListener('click', e => {
-  if (!e.target.closest('.win') && !e.target.closest('.dico')) {
-    document.querySelectorAll('.dico').forEach(d => d.classList.remove('sel'));
-  }
-  if (!e.target.closest('.mitem')) closeMenus();
-  if (!e.target.closest('#smenu') && !e.target.closest('#startbtn')) closeStart();
-});
+// ── Amstrad Project Launcher ──
+let projectData = [];
+let selectedProject = 0;
+let currentMode = 'projects';
+let launching = false;
 
-// ════════════════════════════════════════════════
-// MENU
-// ════════════════════════════════════════════════
-document.querySelectorAll('.mitem').forEach(m => {
-  m.addEventListener('click', e => {
-    e.stopPropagation();
-    const isOpen = m.classList.contains('open');
-    closeMenus();
-    if (!isOpen) m.classList.add('open');
+const GAMES_PLACEHOLDER = [
+  { title: "Manic Miner (Browser)", slug: "manic-miner", summary: "Classic ZX Spectrum platformer", link: "https://www.classicgamesarcade.com/game/21662/manic-miner.html", external: true },
+  { title: "Jet Set Willy", slug: "jet-set-willy", summary: "Semaphore Signal House awaits", link: "https://www.classicgamesarcade.com/game/21661/jet-set-willy.html", external: true }
+];
+
+function renderProjectList(data, mode) {
+  const list = document.getElementById('project-list');
+  list.innerHTML = '';
+  const items = mode === 'games' ? GAMES_PLACEHOLDER : data;
+
+  items.forEach((proj, i) => {
+    const el = document.createElement('div');
+    el.className = 'project-item' + (i === selectedProject ? ' selected' : '');
+    el.setAttribute('role', 'option');
+    el.setAttribute('aria-selected', i === selectedProject ? 'true' : 'false');
+    el.setAttribute('tabindex', i === selectedProject ? '0' : '-1');
+    el.dataset.index = i;
+    el.innerHTML = `
+      <span class="proj-num">${i + 1}.</span>
+      <span class="proj-name">${proj.title}</span>
+      <span class="proj-desc">${proj.summary || ''}</span>
+    `;
+    el.addEventListener('click', () => {
+      if (i === selectedProject) launchProject(i);
+      else selectProject(i);
+    });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); launchProject(i); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); selectProject(Math.min(items.length - 1, i + 1)); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); selectProject(Math.max(0, i - 1)); }
+    });
+    list.appendChild(el);
+  });
+}
+
+function selectProject(i) {
+  const items = currentMode === 'games' ? GAMES_PLACEHOLDER : projectData;
+  selectedProject = Math.max(0, Math.min(items.length - 1, i));
+  renderProjectList(projectData, currentMode);
+  const el = document.querySelector('.project-item.selected');
+  if (el) el.focus();
+}
+
+const LOADING_MESSAGES = [
+  'READ"$PROJECT"',
+  'Motor on.',
+  'Loading tape...',
+  'This used to take longer.',
+];
+
+function launchProject(i) {
+  if (launching) return;
+  const items = currentMode === 'games' ? GAMES_PLACEHOLDER : projectData;
+  const proj = items[i];
+  if (!proj) return;
+
+  launching = true;
+  const overlay = document.getElementById('tape-overlay');
+  const tapeText = document.getElementById('tape-text');
+  const bar = document.getElementById('tape-bar');
+
+  overlay.classList.add('on');
+  bar.style.width = '0';
+
+  const name = proj.title.toUpperCase().replace(/\s/g, '_');
+  tapeText.textContent = `READ"${name}"\nMotor on.\nThis used to take longer.`;
+
+  setTimeout(() => { bar.style.width = '60%'; }, 100);
+  setTimeout(() => { bar.style.width = '100%'; }, 700);
+  setTimeout(() => {
+    overlay.classList.remove('on');
+    bar.style.width = '0';
+    launching = false;
+    window.open(proj.link, '_blank', 'noopener,noreferrer');
+  }, 1100);
+}
+
+// Mode tabs
+document.querySelectorAll('.screen-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    currentMode = tab.dataset.mode;
+    selectedProject = 0;
+    document.querySelectorAll('.screen-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderProjectList(projectData, currentMode);
+  });
+  tab.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tab.click(); }
   });
 });
-function closeMenus() {
-  document.querySelectorAll('.mitem.open').forEach(m => m.classList.remove('open'));
-}
-document.addEventListener('click', e => {
-  if (!e.target.closest('#menubar')) closeMenus();
-  if (!e.target.closest('#smenu') && !e.target.closest('#startbtn')) closeStart();
+
+// Screen keyboard navigation
+document.getElementById('screen').addEventListener('keydown', e => {
+  const items = currentMode === 'games' ? GAMES_PLACEHOLDER : projectData;
+  if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); selectProject(selectedProject + 1); }
+  if (e.key === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); selectProject(selectedProject - 1); }
+  if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); launchProject(selectedProject); }
 });
 
-// ════════════════════════════════════════════════
-// START MENU
-// ════════════════════════════════════════════════
-function toggleStart() {
-  const m = document.getElementById('smenu');
-  m.classList.toggle('on');
-  closeMenus();
-}
-function closeStart() {
-  document.getElementById('smenu').classList.remove('on');
-}
-
-// ════════════════════════════════════════════════
-// ICON SELECT
-// ════════════════════════════════════════════════
-function selectIcon(el) {
-  document.querySelectorAll('.dico').forEach(d => d.classList.remove('sel'));
-  el.classList.add('sel');
-}
-
-// ════════════════════════════════════════════════
-// GAMES
-// ════════════════════════════════════════════════
-const GAMES = {
-  wolf:    { title:'Wolfenstein 3D (1992)', url:'https://archive.org/embed/msdos_Wolfenstein_3D_1992' },
-  doom:    { title:'DOOM (1993)',           url:'https://archive.org/embed/doom_20230531' },
-  duke:    { title:'Duke Nukem 3D (1996)', url:'https://archive.org/embed/DUKE3D_DOS' },
-  simcity: { title:'SimCity (1989)',        url:'https://archive.org/embed/msdos_SimCity_1989' }
-};
-
-function launchGame(id) {
-  openWin('games');
-  const g = GAMES[id];
-  document.getElementById('gamegrid').style.display = 'none';
-  document.getElementById('gplayer').style.display = 'block';
-  document.getElementById('gnow').textContent = g.title;
-  const f = document.getElementById('gameframe');
-  f.src = g.url;
-  const wb = document.getElementById('win-games');
-  wb.style.width = '720px';
-  wb.style.height = '580px';
-  const wa = document.getElementById('workarea');
-  wb.style.left = Math.max(10,(wa.offsetWidth-720)/2)+'px';
-  wb.style.top  = Math.max(10,(wa.offsetHeight-580)/2)+'px';
-}
-
-function backToGrid() {
-  document.getElementById('gameframe').src = 'about:blank';
-  document.getElementById('gplayer').style.display = 'none';
-  document.getElementById('gamegrid').style.display = 'flex';
-}
-
-// ════════════════════════════════════════════════
-// WALLPAPER / BACKGROUNDS
-// ════════════════════════════════════════════════
-let currentWp = 0;
-let canvasAnim = null;
-
-function setWallpaper(idx, tile) {
-  document.querySelectorAll('.wptile').forEach(t => t.classList.remove('sel'));
-  tile.classList.add('sel');
-  currentWp = idx;
-  applyWallpaper(idx);
-}
-
-function applyWallpaper(idx) {
-  const bg = document.getElementById('bg');
-  const canvas = document.getElementById('bg-canvas');
-  if (canvasAnim) { cancelAnimationFrame(canvasAnim); canvasAnim=null; }
-  canvas.style.display = 'none';
-  bg.style.background = '';
-  bg.style.animation = '';
-  bg.className = '';
-
-  switch(idx) {
-    case 0:
-      bg.style.background = '#0000AA';
-      break;
-    case 1:
-      bg.style.background = '#000011';
-      canvas.style.display = 'block';
-      startStarfield(canvas);
-      break;
-    case 2:
-      canvas.style.display = 'block';
-      startPlasma(canvas);
-      break;
-    case 3:
-      bg.style.background = '#000';
-      canvas.style.display = 'block';
-      startMatrix(canvas);
-      break;
-    case 4:
-      canvas.style.display = 'block';
-      startSynthwave(canvas);
-      break;
+// ── Load Data ──
+async function loadData() {
+  try {
+    const [storyRes, projectsRes] = await Promise.all([
+      fetch('data/story.json'),
+      fetch('data/projects.json')
+    ]);
+    const story = await storyRes.json();
+    const projects = await projectsRes.json();
+    return { story, projects };
+  } catch (e) {
+    console.warn('Could not load data files, using inline fallback');
+    return null;
   }
 }
 
-function startStarfield(c) {
-  const ctx = c.getContext('2d');
-  const stars = Array.from({length:200},()=>({
-    x:Math.random()*c.offsetWidth, y:Math.random()*c.offsetHeight,
-    s:Math.random()*2+0.5, v:Math.random()*0.6+0.1
-  }));
-  function draw() {
-    c.width=c.offsetWidth; c.height=c.offsetHeight;
-    ctx.fillStyle='#000011'; ctx.fillRect(0,0,c.width,c.height);
-    stars.forEach(s=>{
-      s.y+=s.v; if(s.y>c.height){s.y=0;s.x=Math.random()*c.width;}
-      const b=0.5+s.v/0.7;
-      ctx.fillStyle=`rgba(255,255,255,${b})`;
-      ctx.fillRect(s.x,s.y,s.s,s.s);
-    });
-    canvasAnim=requestAnimationFrame(draw);
+async function init() {
+  const data = await loadData();
+  if (data) {
+    projectData = data.projects;
+    initRailDrag();
+    renderStory(data.story);
+    renderProjectList(data.projects, 'projects');
   }
-  draw();
 }
 
-function startPlasma(c) {
-  const ctx = c.getContext('2d');
-  let t=0;
-  function draw() {
-    c.width=c.offsetWidth; c.height=c.offsetHeight;
-    const id=ctx.createImageData(c.width,c.height);
-    const d=id.data;
-    for(let y=0;y<c.height;y+=3) for(let x=0;x<c.width;x+=3) {
-      const v = Math.sin(x/40+t)+Math.sin(y/30+t*0.7)+Math.sin((x+y)/50+t*1.3)+Math.sin(Math.sqrt(x*x+y*y)/40);
-      const r=Math.floor((Math.sin(v*Math.PI)*0.5+0.5)*255);
-      const g=Math.floor((Math.sin(v*Math.PI+2.09)*0.5+0.5)*255);
-      const b=Math.floor((Math.sin(v*Math.PI+4.19)*0.5+0.5)*255);
-      for(let dy=0;dy<3&&y+dy<c.height;dy++) for(let dx=0;dx<3&&x+dx<c.width;dx++){
-        const i=(y+dy)*c.width*4+(x+dx)*4;
-        d[i]=r;d[i+1]=g;d[i+2]=b;d[i+3]=255;
-      }
-    }
-    ctx.putImageData(id,0,0);
-    t+=0.04;
-    canvasAnim=requestAnimationFrame(draw);
-  }
-  draw();
-}
-
-function startMatrix(c) {
-  const ctx = c.getContext('2d');
-  c.width=c.offsetWidth; c.height=c.offsetHeight;
-  const cols=Math.floor(c.width/16);
-  const drops=Array(cols).fill(1);
-  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&*MATTVISSER01';
-  function draw() {
-    ctx.fillStyle='rgba(0,0,0,0.06)'; ctx.fillRect(0,0,c.width,c.height);
-    ctx.fillStyle='#00FF41'; ctx.font='14px monospace';
-    drops.forEach((y,i)=>{
-      ctx.fillText(chars[Math.floor(Math.random()*chars.length)], i*16, y*16);
-      if(y*16>c.height && Math.random()>0.975) drops[i]=0;
-      drops[i]++;
-    });
-    canvasAnim=requestAnimationFrame(draw);
-  }
-  draw();
-}
-
-function startSynthwave(c) {
-  const ctx = c.getContext('2d');
-  let t=0;
-  function draw() {
-    c.width=c.offsetWidth; c.height=c.offsetHeight;
-    const h=c.height, w=c.width;
-    // sky gradient
-    const sky=ctx.createLinearGradient(0,0,0,h*0.6);
-    sky.addColorStop(0,'#1a0033');
-    sky.addColorStop(1,'#ff0066');
-    ctx.fillStyle=sky; ctx.fillRect(0,0,w,h*0.6);
-    // sun
-    const sunY=h*0.42;
-    const sunGrad=ctx.createRadialGradient(w/2,sunY,0,w/2,sunY,80);
-    sunGrad.addColorStop(0,'#FFE066');
-    sunGrad.addColorStop(0.4,'#FF6600');
-    sunGrad.addColorStop(1,'transparent');
-    ctx.fillStyle=sunGrad; ctx.beginPath(); ctx.arc(w/2,sunY,80,0,Math.PI*2); ctx.fill();
-    // sun stripes
-    ctx.fillStyle='#1a0033';
-    for(let i=0;i<5;i++){ctx.fillRect(w/2-80, sunY-10+i*14, 160, 6);}
-    // grid floor
-    const floor=ctx.createLinearGradient(0,h*0.58,0,h);
-    floor.addColorStop(0,'#220044'); floor.addColorStop(1,'#000011');
-    ctx.fillStyle=floor; ctx.fillRect(0,h*0.58,w,h*0.42);
-    // grid lines horizontal
-    ctx.strokeStyle='#ff00ff'; ctx.lineWidth=1;
-    for(let i=0;i<12;i++){
-      const y=h*0.6+((i+t%1)*h*0.4/12);
-      const persp=(y-h*0.6)/(h*0.4);
-      ctx.globalAlpha=persp*0.8+0.1;
-      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
-    }
-    // grid lines vertical
-    for(let i=-8;i<=8;i++){
-      const x=w/2+i*(w*0.12);
-      ctx.beginPath(); ctx.moveTo(w/2+i*10,h*0.6); ctx.lineTo(x,h); ctx.stroke();
-    }
-    ctx.globalAlpha=1;
-    t+=0.02;
-    canvasAnim=requestAnimationFrame(draw);
-  }
-  draw();
-}
-
-// ════════════════════════════════════════════════
-// ERROR DIALOG
-// ════════════════════════════════════════════════
-const ERRORS = [
-  "FATAL: coffee.exe has stopped responding.\nPlease insert coffee and press any key.",
-  "ERROR 404: Motivation not found.\nSystem will attempt to continue anyway.",
-  "WARNING: Your code has achieved sentience.\nIt is now judging you.",
-  "GENERAL PROTECTION FAULT in module BRAIN.EXE\nSuggestion: Have you tried turning it off and on again?",
-  "VIRUS DETECTED: happiness.com\nQuarantining... just kidding, you're fine.",
-  "STACK OVERFLOW at 0x00DEADBEEF\nToo much recursion. Or too much coffee. Same thing.",
-];
-function showError(msg) {
-  const dlg = document.getElementById('errdlg');
-  document.getElementById('errmsg').innerHTML = (msg || ERRORS[Math.floor(Math.random()*ERRORS.length)]).replace(/\n/g,'<br>');
-  dlg.classList.add('on');
-}
-function closeErr() { document.getElementById('errdlg').classList.remove('on'); }
-
-// Random error easter egg — fires occasionally
-setTimeout(()=>{ if(Math.random()<0.4) showError(); }, 12000+Math.random()*20000);
-
-// ════════════════════════════════════════════════
-// BG CANVAS INIT
-// ════════════════════════════════════════════════
-function startBgCanvas() {
-  applyWallpaper(0);
-}
-
-// Focus window on click
-document.addEventListener('mousedown', e => {
-  const win = e.target.closest('.win');
-  if (win) focusWin(win);
-  if (!e.target.closest('#smenu') && !e.target.closest('#startbtn')) closeStart();
-  if (!e.target.closest('#menubar')) closeMenus();
-});
+init();
 </script>
 </body>
 </html>

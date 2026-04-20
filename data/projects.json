@@ -1,0 +1,86 @@
+[
+  {
+    "title": "OYO",
+    "slug": "oyo",
+    "category": "product",
+    "status": "live",
+    "year": "2023",
+    "summary": "Privacy-first, local-first AI assistant for handling email, meetings, briefings and delegated work.",
+    "link": "https://www.oyo-app.com",
+    "external": true,
+    "icon": "mic",
+    "featured": true
+  },
+  {
+    "title": "Simple IPTV",
+    "slug": "simple-iptv",
+    "category": "tool",
+    "status": "live",
+    "year": "2024",
+    "summary": "Lightweight, privacy-respecting IPTV player with local-first settings and browser playback.",
+    "link": "/simple-iptv/",
+    "external": false,
+    "icon": "tv",
+    "featured": true
+  },
+  {
+    "title": "Work Leave Planner",
+    "slug": "work-holiday-planner",
+    "category": "tool",
+    "status": "live",
+    "year": "2024",
+    "summary": "Calendar-style leave planner with local storage and export/share features.",
+    "link": "/work-holiday-planner/",
+    "external": false,
+    "icon": "calendar",
+    "featured": false
+  },
+  {
+    "title": "Paste Fixer",
+    "slug": "chatgpt-paster",
+    "category": "tool",
+    "status": "live",
+    "year": "2024",
+    "summary": "Cleans formatting artefacts and flags AI writing tells in pasted text.",
+    "link": "/chatgpt-paster.html",
+    "external": false,
+    "icon": "clipboard",
+    "featured": false
+  },
+  {
+    "title": "Semantic Browser",
+    "slug": "semantic-browser",
+    "category": "open-source",
+    "status": "live",
+    "year": "2024",
+    "summary": "Token-efficient browser abstraction for LLMs using semantic rooms and deterministic action flow.",
+    "link": "https://github.com/visser23/semantic-browser",
+    "external": true,
+    "icon": "globe",
+    "featured": true
+  },
+  {
+    "title": "SmartSign",
+    "slug": "smartsign",
+    "category": "product",
+    "status": "live",
+    "year": "2022",
+    "summary": "Modern document signing platform.",
+    "link": "https://ssign.app/",
+    "external": true,
+    "icon": "pen",
+    "featured": false
+  },
+  {
+    "title": "CV / Profile",
+    "slug": "cv",
+    "category": "reference",
+    "status": "live",
+    "year": null,
+    "summary": "Straightforward route to CV, LinkedIn and contact details.",
+    "link": "https://www.linkedin.com/in/matt-visser",
+    "external": true,
+    "icon": "person",
+    "featured": false
+  }
+]
