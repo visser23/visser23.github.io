@@ -19,173 +19,94 @@ body {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
-#hint {
+#mobile-input {
+  display: none;
   position: fixed;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: monospace;
-  font-size: clamp(11px, 2.6vw, 13px);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0,0,0,0.95);
+  padding: 8px;
+  z-index: 100;
+  border-top: 2px solid #4dff6e;
+}
+#mobile-input.on { display: flex; gap: 8px; }
+#mobile-input input {
+  flex: 1;
+  background: #001a00;
+  border: 1px solid #4dff6e;
   color: #4dff6e;
-  background: rgba(0,0,0,0.9);
-  padding: 8px 12px;
+  font-family: monospace;
+  font-size: 16px;
+  padding: 10px 12px;
   border-radius: 4px;
-  border: 1px solid #1a8c32;
-  width: max-content;
-  max-width: min(96vw, 740px);
-  white-space: normal;
-  overflow-wrap: anywhere;
-  text-align: center;
-  line-height: 1.35;
-  z-index: 10;
-  opacity: 1;
-  transition: opacity 2s ease 8s;
-  pointer-events: none;
+  outline: none;
+  text-transform: uppercase;
 }
-#hint.fade { opacity: 0; }
-#hint.dsk-hint {
-  font-size: clamp(12px, 2.8vw, 15px);
-  padding: 9px 14px;
-  border: 2px solid #4dff6e;
-  box-shadow: 0 0 20px rgba(77,255,110,0.3);
+#mobile-input input::placeholder { color: #1a6630; }
+#mobile-input button {
+  background: #4dff6e;
+  color: #001a00;
+  border: none;
+  padding: 10px 16px;
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 4px;
+  cursor: pointer;
 }
-#mobile-kbd {
+#mobile-input button:active { background: #3acc5a; }
+#tap-hint {
+  display: none;
   position: fixed;
-  left: -9999px;
-  top: 0;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.85);
+  color: #4dff6e;
+  font-family: monospace;
+  font-size: 18px;
+  padding: 20px 30px;
+  border: 2px solid #4dff6e;
+  border-radius: 8px;
+  z-index: 50;
+  text-align: center;
   pointer-events: none;
+  animation: pulse 2s ease-in-out infinite;
+}
+#tap-hint.on { display: block; }
+@keyframes pulse {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 0.5; }
 }
 </style>
 </head>
 <body>
   <canvas class="game" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
-  <div id="hint"></div>
-  <input id="mobile-kbd" type="text" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" />
+  
+  <div id="tap-hint">Tap here to type</div>
+  
+  <div id="mobile-input">
+    <input type="text" id="cmd-input" placeholder="Type command..." autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" />
+    <button id="send-btn">ENTER</button>
+  </div>
+
   <script>
-    var params = new URLSearchParams(location.search);
-    var gameFile = params.get('file') || '';
-    var isDsk = gameFile.toLowerCase().endsWith('.dsk');
-    var joystick = params.get('joystick') === 'true';
-    var runCommand = params.get('run');
-    var isTouchDevice = ('ontouchstart' in window) || ((navigator.maxTouchPoints || 0) > 0);
+    // Detect touch device
+    var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     
-
-    var hint = document.getElementById('hint');
-    if (isDsk) {
-      hint.textContent = runCommand
-        ? 'Type ' + runCommand + ' then press ENTER'
-        : 'Type CAT to list files, then RUN"filename';
-      hint.classList.add('dsk-hint');
-    } else {
-      hint.textContent = joystick ? 'Joystick: Ctrl/Alt + Arrow Keys' : 'Click to start \u2014 use keyboard to play';
-      setTimeout(function() { hint.classList.add('fade'); }, 100);
-    }
-
-    if (isTouchDevice) {
-      hint.textContent += ' • Tap screen to open keyboard';
-    }
-
-    var mobileKbd = document.getElementById('mobile-kbd');
-    var virtualValue = '';
-    var canvas = document.getElementById('canvas');
-
-    function keyCodeForKey(key) {
-      if (!key) return 0;
-      if (key.length === 1) return key.toUpperCase().charCodeAt(0);
-      if (key === 'Enter') return 13;
-      if (key === 'Backspace') return 8;
-      if (key === 'Tab') return 9;
-      if (key === 'Escape') return 27;
-      if (key === ' ') return 32;
-      if (key === 'ArrowLeft') return 37;
-      if (key === 'ArrowUp') return 38;
-      if (key === 'ArrowRight') return 39;
-      if (key === 'ArrowDown') return 40;
-      return 0;
-    }
-
-    function codeForKey(key) {
-      if (!key) return '';
-      if (key.length === 1) {
-        var upper = key.toUpperCase();
-        if (upper >= 'A' && upper <= 'Z') return 'Key' + upper;
-        if (upper >= '0' && upper <= '9') return 'Digit' + upper;
+    // HACK 1: Override isTrusted on KeyboardEvent prototype
+    // This tricks code that checks event.isTrusted into accepting synthetic events
+    (function() {
+      var origDesc = Object.getOwnPropertyDescriptor(Event.prototype, 'isTrusted');
+      if (origDesc && origDesc.get) {
+        Object.defineProperty(KeyboardEvent.prototype, 'isTrusted', {
+          get: function() { return true; },
+          configurable: true
+        });
       }
-      if (key === 'Enter') return 'Enter';
-      if (key === 'Backspace') return 'Backspace';
-      if (key === 'Tab') return 'Tab';
-      if (key === 'Escape') return 'Escape';
-      if (key === ' ') return 'Space';
-      if (key.indexOf('Arrow') === 0) return key;
-      return '';
-    }
-
-    function dispatchVirtualKey(type, key) {
-      var keyCode = keyCodeForKey(key);
-      var code = codeForKey(key);
-      var evt = new KeyboardEvent(type, {
-        key: key,
-        code: code,
-        keyCode: keyCode,
-        which: keyCode,
-        charCode: type === 'keypress' ? keyCode : 0,
-        bubbles: true,
-        cancelable: true
-      });
-      (canvas || document.body).dispatchEvent(evt);
-      document.dispatchEvent(evt);
-      window.dispatchEvent(evt);
-    }
-
-    function sendKeyToEmulator(key) {
-      if (!key) return;
-      dispatchVirtualKey('keydown', key);
-      if (key.length === 1 || key === 'Enter' || key === ' ') {
-        dispatchVirtualKey('keypress', key);
-      }
-      dispatchVirtualKey('keyup', key);
-    }
-
-    function focusMobileKeyboard() {
-      if (!isTouchDevice || !mobileKbd) return;
-      mobileKbd.focus({ preventScroll: true });
-    }
-
-    document.addEventListener('pointerdown', function() {
-      focusMobileKeyboard();
-    });
-
-    window.addEventListener('message', function(event) {
-      if (event && event.data && event.data.type === 'cpc-focus-keyboard') {
-        focusMobileKeyboard();
-      }
-    });
-
-    mobileKbd.addEventListener('keydown', function(event) {
-      sendKeyToEmulator(event.key);
-      if (event.key === 'Backspace') {
-        virtualValue = virtualValue.slice(0, -1);
-      }
-      event.preventDefault();
-    });
-
-    mobileKbd.addEventListener('input', function() {
-      var nextValue = mobileKbd.value || '';
-      if (nextValue.length > virtualValue.length) {
-        var typed = nextValue.slice(virtualValue.length);
-        for (var i = 0; i < typed.length; i++) {
-          sendKeyToEmulator(typed.charAt(i));
-        }
-      } else if (nextValue.length < virtualValue.length) {
-        sendKeyToEmulator('Backspace');
-      }
-      virtualValue = '';
-      mobileKbd.value = '';
-    });
-
+    })();
+    
     var Module = {
       preRun: [],
       print: function(text) {
@@ -200,6 +121,173 @@ body {
     window.onerror = function(event) {
       console.log("onerror: " + event);
     };
+    
+    // Mobile input handling
+    var canvas = document.getElementById('canvas');
+    var mobileInput = document.getElementById('mobile-input');
+    var cmdInput = document.getElementById('cmd-input');
+    var sendBtn = document.getElementById('send-btn');
+    var tapHint = document.getElementById('tap-hint');
+    var inputActive = false;
+    
+    // Key code mappings
+    function getKeyCode(key) {
+      if (key.length === 1) {
+        var code = key.toUpperCase().charCodeAt(0);
+        if (code >= 65 && code <= 90) return code; // A-Z
+        if (code >= 48 && code <= 57) return code; // 0-9
+        // Special chars
+        var specials = {' ':32, '"':222, "'":222, '.':190, ',':188, '/':191, '\\':220, '-':189, '=':187, '[':219, ']':221, ';':186, ':':186};
+        return specials[key] || code;
+      }
+      var codes = {'Enter':13, 'Backspace':8, 'Tab':9, 'Escape':27, 'ArrowLeft':37, 'ArrowUp':38, 'ArrowRight':39, 'ArrowDown':40};
+      return codes[key] || 0;
+    }
+    
+    function getKeyName(key) {
+      if (key.length === 1) {
+        var upper = key.toUpperCase();
+        if (upper >= 'A' && upper <= 'Z') return 'Key' + upper;
+        if (upper >= '0' && upper <= '9') return 'Digit' + upper;
+        return 'Key' + key;
+      }
+      return key;
+    }
+    
+    // Dispatch synthetic keyboard event
+    function sendKey(key, shiftKey) {
+      var keyCode = getKeyCode(key);
+      var code = getKeyName(key);
+      var eventKey = key.length === 1 ? key.toUpperCase() : key;
+      
+      var opts = {
+        key: eventKey,
+        code: code,
+        keyCode: keyCode,
+        which: keyCode,
+        charCode: 0,
+        shiftKey: !!shiftKey,
+        bubbles: true,
+        cancelable: true,
+        view: window
+      };
+      
+      // Try dispatching to multiple targets
+      var targets = [canvas, document, window];
+      
+      ['keydown', 'keypress', 'keyup'].forEach(function(type) {
+        if (type === 'keypress') {
+          opts.charCode = keyCode;
+        }
+        var evt = new KeyboardEvent(type, opts);
+        targets.forEach(function(t) {
+          try { t.dispatchEvent(evt); } catch(e) {}
+        });
+      });
+    }
+    
+    // Send a string character by character
+    function sendString(str) {
+      var i = 0;
+      function next() {
+        if (i >= str.length) {
+          // Send Enter at the end
+          setTimeout(function() { sendKey('Enter'); }, 50);
+          return;
+        }
+        var char = str.charAt(i);
+        var needsShift = char === '"' || (char >= 'A' && char <= 'Z');
+        sendKey(char, needsShift);
+        i++;
+        setTimeout(next, 30); // Small delay between keys
+      }
+      next();
+    }
+    
+    // HACK 2: Try using the emulator's paste function directly
+    function tryPasteHack(text) {
+      // The emulator exposes __sapp_emsc_onpaste which handles pasted text
+      // We need to allocate the string in WASM memory and call it
+      if (typeof Module._malloc === 'function' && typeof Module.__sapp_emsc_onpaste === 'function') {
+        try {
+          var len = Module.lengthBytesUTF8 ? Module.lengthBytesUTF8(text) : text.length * 3;
+          var ptr = Module._malloc(len + 1);
+          if (Module.stringToUTF8) {
+            Module.stringToUTF8(text, ptr, len + 1);
+          } else {
+            // Manual UTF8 encode
+            for (var i = 0; i < text.length; i++) {
+              Module.HEAPU8[ptr + i] = text.charCodeAt(i);
+            }
+            Module.HEAPU8[ptr + text.length] = 0;
+          }
+          Module.__sapp_emsc_onpaste(ptr);
+          Module._free(ptr);
+          return true;
+        } catch(e) {
+          console.log('Paste hack failed:', e);
+        }
+      }
+      return false;
+    }
+    
+    // Handle send button
+    function handleSend() {
+      var text = cmdInput.value.toUpperCase();
+      if (!text) return;
+      
+      // Try paste hack first (most reliable)
+      var pasted = tryPasteHack(text + '\n');
+      
+      if (!pasted) {
+        // Fall back to synthetic key events
+        sendString(text);
+      }
+      
+      cmdInput.value = '';
+      cmdInput.blur();
+      hideMobileInput();
+      canvas.focus();
+    }
+    
+    sendBtn.addEventListener('click', handleSend);
+    cmdInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+    
+    function showMobileInput() {
+      inputActive = true;
+      mobileInput.classList.add('on');
+      tapHint.classList.remove('on');
+      setTimeout(function() { cmdInput.focus(); }, 100);
+    }
+    
+    function hideMobileInput() {
+      inputActive = false;
+      mobileInput.classList.remove('on');
+    }
+    
+    // On touch devices, show tap hint and handle tap to open input
+    if (isTouchDevice) {
+      // Show hint after a short delay (let emulator load first)
+      setTimeout(function() {
+        tapHint.classList.add('on');
+      }, 1500);
+      
+      canvas.addEventListener('click', function() {
+        if (!inputActive) {
+          showMobileInput();
+        }
+      });
+      
+      // Hide hint when canvas gets real interaction
+      canvas.addEventListener('touchstart', function() {
+        tapHint.classList.remove('on');
+      }, { once: true });
+    }
   </script>
   <script async src="cpc.js"></script>
 </body>

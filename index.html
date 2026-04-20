@@ -768,11 +768,27 @@ body {
 
 #game-hint {
   font-family: var(--mono);
-  font-size: 0.6rem;
-  color: var(--phosphor2);
+  font-size: 0.72rem;
+  color: var(--phosphor);
   text-align: center;
-  padding: 6px 0 0;
-  opacity: 0.7;
+  padding: 10px 16px 0;
+  max-width: 90vw;
+  line-height: 1.5;
+}
+#game-hint .cmd {
+  display: inline-block;
+  background: rgba(77,255,110,0.15);
+  border: 1px solid var(--phosphor);
+  border-radius: 3px;
+  padding: 2px 8px;
+  margin: 0 2px;
+  font-weight: bold;
+}
+#game-hint .note {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.6rem;
+  opacity: 0.6;
 }
 
 @media (max-width: 600px) {
@@ -1508,19 +1524,17 @@ function openGameEmulator(game) {
   const nowPlaying = document.getElementById('game-now-playing');
   const hint = document.getElementById('game-hint');
 
-  const params = new URLSearchParams();
-  params.set('file', game.file);
-  if (game.joystick) params.set('joystick', 'true');
-  if (game.run) params.set('run', game.run);
-
-  iframe.src = `games/cpc.html?${params.toString()}`;
+  iframe.src = `games/cpc.html?file=${encodeURIComponent(game.file)}`;
   nowPlaying.textContent = `${game.title} (${game.year})`;
 
+  const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const mobileNote = isMobile ? '<span class="note">Tap the screen to open keyboard</span>' : '';
+  
   if (game.format === 'dsk') {
-    const runCmd = game.run || 'CAT (to list files)';
-    hint.textContent = `Type: ${runCmd} then ENTER \u2022 Joystick: Ctrl/Alt + Arrows \u2022 ESC to close`;
+    const runCmd = game.run || 'CAT';
+    hint.innerHTML = `Type <span class="cmd">${runCmd}</span> then press <span class="cmd">ENTER</span>${mobileNote}`;
   } else {
-    hint.textContent = 'Joystick: Ctrl/Alt + Arrow Keys \u2022 ESC to close';
+    hint.innerHTML = `Joystick: <span class="cmd">Ctrl/Alt</span> + <span class="cmd">Arrow Keys</span>${mobileNote}`;
   }
 
   gameOverlay.classList.add('on');
@@ -1545,7 +1559,6 @@ document.getElementById('game-screen').addEventListener('pointerdown', () => {
   const iframe = document.getElementById('game-iframe');
   iframe.focus();
   iframe.contentWindow?.focus();
-  iframe.contentWindow?.postMessage({ type: 'cpc-focus-keyboard' }, '*');
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.getElementById('game-overlay').classList.contains('on')) {
