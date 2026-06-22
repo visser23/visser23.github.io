@@ -1,0 +1,2228 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HealthStore reporting service</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nhsuk-frontend/dist/nhsuk.min.css">
+<style>
+  @font-face{
+    font-family:"Frutiger NHS";
+    src:url("https://raw.githubusercontent.com/xedulich/xedulich_codeigniter/master/html/fonts/frutiger/frutiger-roman-webfont.woff") format("woff");
+    font-weight:400;
+    font-style:normal;
+    font-display:swap;
+  }
+  @font-face{
+    font-family:"Frutiger NHS";
+    src:url("https://raw.githubusercontent.com/xedulich/xedulich_codeigniter/master/html/fonts/frutiger/frutiger-bold-webfont.woff") format("woff");
+    font-weight:700;
+    font-style:normal;
+    font-display:swap;
+  }
+  @font-face{
+    font-family:"Frutiger NHS";
+    src:url("https://raw.githubusercontent.com/xedulich/xedulich_codeigniter/master/html/fonts/frutiger/frutiger-light-webfont.woff") format("woff");
+    font-weight:300;
+    font-style:normal;
+    font-display:swap;
+  }
+
+  :root{
+    --nhs-blue:#005eb8;
+    --nhs-dark-blue:#003087;
+    --nhs-bright-blue:#0072ce;
+    --nhs-light-blue:#41b6e6;
+    --nhs-aqua:#00a9ce;
+    --nhs-aqua-green:#00a499;
+    --nhs-green:#007f3b;
+    --nhs-green-dark:#00401e;
+    --nhs-light-green:#78be20;
+    --nhs-warm-yellow:#ffb81c;
+    --nhs-yellow:#ffeb3b;            /* focus highlight */
+    --nhs-red:#d5281b;
+    --nhs-dark-red:#8a1538;
+    --nhs-purple:#330072;
+    --nhs-pink:#ae2573;
+    --nhs-link-hover:#7c2855;        /* nhsuk link hover */
+    --ink:#212b32;                   /* nhsuk black */
+    --grey-1:#4c6272;
+    --grey-2:#768692;
+    --grey-3:#aeb7bd;
+    --grey-4:#d8dde0;
+    --grey-5:#f0f4f5;
+    --white:#ffffff;
+    --maxw:1100px;
+    --font:"Frutiger NHS","Frutiger W01","Frutiger LT W01",Arial,"Helvetica Neue",Helvetica,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{font-size:100%;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font);
+    color:var(--ink);
+    background:var(--white);
+    font-size:16px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  /* hide decorative icons left in markup, to match nhs.uk's icon-free chrome */
+  nav.views button svg,.section-title svg,.vx .card h3 svg{display:none !important;}
+
+  /* NHS signature focus state */
+  a:focus,button:focus{
+    outline:4px solid transparent;
+    color:var(--ink);
+    background-color:var(--nhs-yellow);
+    box-shadow:0 -2px var(--nhs-yellow),0 4px var(--ink);
+    text-decoration:none;
+  }
+  a{color:var(--nhs-blue);text-decoration:underline;text-decoration-thickness:max(1px,.0625rem);text-underline-offset:.1em;}
+  a:hover{color:var(--nhs-link-hover);text-decoration-thickness:max(3px,.1875rem,.12em);}
+  a:visited{color:var(--nhs-purple);}
+
+  /* ---------- nhs.uk header (white, blue logo) ---------- */
+  header.app{background:var(--white);border-bottom:1px solid var(--grey-4);}
+  .app-inner{
+    max-width:var(--maxw);margin:0 auto;padding:18px 24px;
+    display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+  }
+  .nhs-logo{width:88px;height:35px;flex:none;display:block;}
+  .app-title{display:flex;flex-direction:column;border-left:1px solid var(--grey-4);padding-left:18px;}
+  .app-title .svc{font-size:20px;font-weight:600;color:var(--ink);}
+  .app-title .sub{font-size:14px;color:var(--grey-1);font-weight:400;}
+  .app-meta{margin-left:auto;text-align:right;font-size:14px;color:var(--grey-1);}
+  .app-meta strong{display:block;font-size:15px;color:var(--ink);font-weight:600;}
+
+  /* ---------- demo banner ---------- */
+  .demo-banner{
+    background:var(--grey-5);color:var(--ink);border-bottom:1px solid var(--grey-4);
+    font-size:14px;text-align:left;padding:12px 24px;
+  }
+  .demo-banner .inner{max-width:var(--maxw);margin:0 auto;}
+  .demo-banner strong{font-weight:600;}
+
+  /* ---------- nhs.uk-style navigation ---------- */
+  nav.views{background:var(--white);border-bottom:1px solid var(--grey-4);position:sticky;top:0;z-index:20;}
+  .views-inner{max-width:var(--maxw);margin:0 auto;display:flex;flex-wrap:wrap;padding:0 12px;}
+  nav.views button{
+    background:none;border:0;color:var(--ink);
+    font-family:var(--font);font-size:16px;font-weight:400;
+    padding:14px 16px;cursor:pointer;border-bottom:4px solid transparent;
+    margin-bottom:-1px;
+  }
+  nav.views button:hover{color:var(--nhs-link-hover);text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:.2em;}
+  nav.views button.active{color:var(--nhs-blue);font-weight:600;border-bottom-color:var(--nhs-blue);}
+  nav.views button.active:hover{color:var(--nhs-blue);}
+
+  /* ---------- layout ---------- */
+  main{max-width:var(--maxw);margin:0 auto;padding:32px 24px 64px;}
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .page-head{margin:0 0 8px;}
+  .page-head h1{font-size:40px;line-height:1.12;margin:6px 0 16px;color:var(--ink);font-weight:600;letter-spacing:-.01em;}
+  .page-head p.lede{font-size:20px;line-height:1.45;color:var(--grey-1);max-width:760px;margin:0 0 28px;}
+
+  .section-title{
+    font-size:28px;color:var(--ink);margin:48px 0 6px;font-weight:600;letter-spacing:-.01em;
+    padding-bottom:0;
+  }
+  .section-note{font-size:16px;color:var(--grey-1);margin:8px 0 20px;max-width:760px;}
+
+  /* cards + grid */
+  .grid{display:grid;gap:20px;}
+  .g2{grid-template-columns:repeat(2,1fr);}
+  .g3{grid-template-columns:repeat(3,1fr);}
+  .g4{grid-template-columns:repeat(4,1fr);}
+  @media(max-width:880px){.g2,.g3,.g4{grid-template-columns:1fr;}.app-meta{margin-left:0;text-align:left;}}
+
+  .card{background:var(--white);border:1px solid var(--grey-4);padding:22px 24px;}
+  .card.nhsuk-card{margin-bottom:0;box-shadow:none;}
+  .card h3{margin:0 0 4px;font-size:20px;color:var(--ink);font-weight:600;}
+  .card .cap{font-size:15px;color:var(--grey-1);margin:0 0 16px;}
+
+  /* KPI cards (flat, bordered, square) */
+  .kpi{background:var(--white);border:1px solid var(--grey-4);padding:20px;}
+  .kpi.nhsuk-card{margin-bottom:0;box-shadow:none;}
+  .kpi .label{font-size:15px;color:var(--grey-1);font-weight:400;}
+  .kpi .value{font-size:42px;font-weight:600;color:var(--ink);line-height:1.05;margin:8px 0 4px;letter-spacing:-.02em;}
+  .kpi .delta{font-size:14px;font-weight:600;}
+  .kpi .delta.up{color:var(--nhs-green);}
+  .kpi .delta.down{color:var(--nhs-red);}
+  .kpi .delta.flat{color:var(--grey-1);font-weight:400;}
+
+  /* inset-text style callouts (nhsuk inset text) */
+  .insight{background:var(--white);border-left:8px solid var(--nhs-blue);padding:14px 0 14px 22px;font-size:16px;line-height:1.5;color:var(--ink);}
+  .insight strong{font-weight:600;}
+  .insight.warn{border-left-color:var(--nhs-warm-yellow);background:#fff9ee;padding:14px 20px;}
+  .insight.good{border-left-color:var(--nhs-green);background:#f0f7f2;padding:14px 20px;}
+
+  /* nhsuk-style tables */
+  table.tbl{width:100%;border-collapse:collapse;font-size:16px;}
+  table.tbl.nhsuk-table{margin-bottom:0;}
+  table.tbl th,table.tbl td{text-align:left;padding:12px 16px 12px 0;border-bottom:1px solid var(--grey-4);}
+  table.tbl thead th{color:var(--ink);font-size:16px;font-weight:600;border-bottom:2px solid var(--grey-1);}
+  table.tbl tr:last-child td{border-bottom:0;}
+  table.tbl td.num,table.tbl th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:16px;}
+  .card[style*="padding:0"] table.tbl th,.card[style*="padding:0"] table.tbl td{padding-left:24px;}
+
+  /* nhsuk-style tags (square) */
+  .tag{display:inline-block;font-size:14px;font-weight:600;padding:0 8px;line-height:1.6;border-radius:0;}
+  .tag.ok{background:#cce3d4;color:#005a30;}
+  .tag.warn{background:#fff2c2;color:#594d00;}
+  .tag.bad{background:#f4cdc6;color:#8a1c12;}
+  .tag.neutral{background:var(--grey-5);color:var(--grey-1);}
+
+  /* mini bar inside table cells */
+  .mbar{display:inline-block;height:10px;background:var(--nhs-blue);vertical-align:middle;}
+  .mbar-track{display:inline-block;width:80px;height:10px;background:var(--grey-4);vertical-align:middle;margin-right:8px;}
+
+  /* legend */
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-size:14px;color:var(--grey-1);margin-top:12px;}
+  .legend span{display:inline-flex;align-items:center;gap:7px;}
+  .legend i{width:13px;height:13px;display:inline-block;}
+
+  .chart-wrap{width:100%;overflow:hidden;margin-top:4px;}
+  svg.chart{width:100%;height:auto;display:block;font-family:var(--font);}
+  .ax{stroke:var(--grey-4);stroke-width:1;}
+  .axlbl{fill:var(--grey-1);font-size:11px;}
+  .vlbl{fill:var(--ink);font-size:12px;font-weight:600;}
+  .barlbl{fill:#fff;font-size:12px;font-weight:600;}
+
+  .footnote{font-size:14px;color:var(--grey-1);margin-top:10px;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 0;}
+  .pill{font-size:14px;background:var(--grey-5);border:1px solid var(--grey-4);padding:4px 11px;color:var(--grey-1);}
+
+  footer.app{max-width:var(--maxw);margin:0 auto;padding:32px 24px;color:var(--grey-1);font-size:14px;border-top:4px solid var(--nhs-blue);line-height:1.6;}
+
+  /* value-exchange columns */
+  .vx{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  @media(max-width:880px){.vx{grid-template-columns:1fr;}}
+  .vx .card h3{font-size:18px;}
+  .vx .give,.vx .get{font-size:16px;}
+  .vx .lab{font-size:14px;font-weight:600;color:var(--grey-1);margin:14px 0 4px;}
+  .vx ul{margin:4px 0 0;padding-left:20px;}
+  .vx li{margin-bottom:7px;}
+
+  /* ---------- interactive: drill, tabs, map, calculator ---------- */
+  /* breadcrumb */
+  .drill-crumb{font-size:15px;color:var(--grey-1);margin:0 0 14px;}
+  .drill-crumb button{
+    background:none;border:0;color:var(--nhs-blue);font-family:var(--font);font-size:15px;
+    cursor:pointer;padding:0;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.1em;
+  }
+  .drill-crumb button:hover{color:var(--nhs-link-hover);text-decoration-thickness:3px;}
+  .drill-crumb .sep{color:var(--grey-3);padding:0 8px;}
+  .drill-crumb .cur{color:var(--ink);font-weight:600;}
+
+  /* clickable table rows */
+  table.tbl tr.rowlink{cursor:pointer;}
+  table.tbl tr.rowlink:hover td{background:#f0f6fc;}
+  table.tbl tr.rowlink td:first-child{color:var(--nhs-blue);font-weight:600;}
+  .row-more{font-size:13px;color:var(--grey-2);font-weight:400;}
+
+  /* condition / sub tabs (nhsuk secondary nav style) */
+  .subtabs{display:flex;flex-wrap:wrap;gap:0;border-bottom:1px solid var(--grey-4);margin:8px 0 22px;}
+  .subtabs button{
+    background:none;border:0;border-bottom:4px solid transparent;margin-bottom:-1px;
+    font-family:var(--font);font-size:16px;font-weight:400;color:var(--ink);
+    padding:10px 18px;cursor:pointer;
+  }
+  .subtabs button:hover{color:var(--nhs-link-hover);}
+  .subtabs button.active{color:var(--nhs-blue);font-weight:600;border-bottom-color:var(--nhs-blue);}
+
+  /* England tile map */
+  .map-wrap{display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:24px;align-items:start;}
+  @media(max-width:880px){.map-wrap{grid-template-columns:1fr;}}
+  svg.tilemap{width:100%;height:auto;display:block;}
+  svg.tilemap .tile{cursor:pointer;stroke:#fff;stroke-width:3;transition:opacity .15s;}
+  svg.tilemap .tile:hover{opacity:.82;}
+  svg.tilemap .tile.sel{stroke:var(--ink);stroke-width:3.5;}
+  svg.tilemap text{pointer-events:none;font-family:var(--font);}
+  .map-scale{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--grey-1);margin-top:10px;}
+  .map-scale span{display:inline-flex;align-items:center;gap:6px;}
+  .map-scale i{width:14px;height:14px;display:inline-block;}
+
+  /* calculator */
+  .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;}
+  @media(max-width:880px){.calc-grid{grid-template-columns:1fr;}}
+  .calc-field{margin-bottom:16px;}
+  .calc-field label{display:block;font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px;}
+  .calc-field .calc-sub{font-size:13px;color:var(--grey-1);font-weight:400;}
+  .calc-field input[type=range]{width:100%;accent-color:var(--nhs-blue);}
+  .calc-field .rangeval{font-variant-numeric:tabular-nums;font-weight:600;color:var(--nhs-blue);}
+  .calc-out{background:var(--grey-5);border:1px solid var(--grey-4);padding:18px 20px;}
+  .calc-out .big{font-size:38px;font-weight:600;color:var(--nhs-green);letter-spacing:-.02em;line-height:1.1;}
+  .calc-out table{width:100%;border-collapse:collapse;font-size:15px;margin-top:8px;}
+  .calc-out td{padding:7px 0;border-bottom:1px solid var(--grey-4);}
+  .calc-out tr:last-child td{border-bottom:0;}
+  .calc-out td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
+
+  /* evidence tracker status dots */
+  .evstatus{display:inline-flex;align-items:center;gap:7px;font-size:14px;}
+  .evstatus i{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none;}
+  .ev-have i{background:var(--nhs-green);}
+  .ev-prog i{background:var(--nhs-warm-yellow);}
+  .ev-gap  i{background:var(--grey-3);}
+
+  /* small horizontal bar for outcome rows */
+  .ob-track{display:inline-block;width:120px;height:12px;background:var(--grey-4);vertical-align:middle;position:relative;margin-right:8px;}
+  .ob-fill{position:absolute;top:0;height:12px;}
+
+  /* outcome condition tab panels */
+  .ev-panel{display:none;}
+  .ev-panel.active{display:block;}
+
+  /* expandable detail rows */
+  tr.expandable{cursor:pointer;}
+  tr.expandable:hover td{background:#f0f6fc;}
+  tr.expandable td:first-child::before{content:'\25B6 ';font-size:10px;color:var(--nhs-blue);margin-right:4px;}
+  tr.expandable.open td:first-child::before{content:'\25BC ';}
+  tr.detail-row{display:none;background:var(--grey-5);}
+  tr.detail-row.open{display:table-row;}
+  tr.detail-row td{padding:16px 20px;border-top:none;}
+  .detail-inner{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .detail-inner .mini-kpi{font-size:13px;color:var(--grey-1);line-height:1.6;}
+  .detail-inner .mini-kpi strong{display:block;font-size:20px;color:var(--ink);font-variant-numeric:tabular-nums;}
+
+  /* donut chart labels */
+  .donut-label{font-size:15px;font-weight:700;fill:var(--ink);}
+  .donut-sub{font-size:11px;fill:var(--grey-1);}
+  /* password gate */
+  #pw-gate{position:fixed;inset:0;z-index:9999;background:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font);}
+  #pw-gate.hidden{display:none;}
+  .pw-box{text-align:center;max-width:380px;padding:40px;}
+  .pw-box svg{width:80px;height:32px;display:block;margin:0 auto 24px;}
+  .pw-box h2{font-size:24px;font-weight:600;color:var(--ink);margin:0 0 8px;}
+  .pw-box p{font-size:15px;color:var(--grey-1);margin:0 0 20px;}
+  .pw-box input{width:100%;box-sizing:border-box;padding:10px 14px;font-size:16px;font-family:var(--font);border:2px solid var(--grey-3);margin-bottom:12px;}
+  .pw-box input:focus{outline:4px solid var(--nhs-yellow);border-color:var(--ink);}
+  .pw-box button{background:var(--nhs-green);color:#fff;border:0;padding:12px 32px;font-size:16px;font-weight:600;font-family:var(--font);cursor:pointer;width:100%;}
+  .pw-box button:hover{background:#005a30;}
+  .pw-box .pw-err{color:var(--nhs-red);font-size:14px;font-weight:600;margin-top:8px;display:none;}
+</style>
+</head>
+<body>
+
+<div id="pw-gate">
+  <div class="pw-box">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 16" role="img" aria-label="NHS">
+      <path fill="#005eb8" d="M0 0h40v16H0z"></path>
+      <path fill="#ffffff" d="M3.9 1.5h4.4l2.6 9h.1l1.8-9h3.3l-2.7 13H9l-2.7-9h-.1l-1.8 9H1.1M17.3 1.5h3.6l-1 4.9h4L25 1.5h3.5l-2.7 13h-3.5l1.1-5.6h-4.1l-1.2 5.6h-3.5M37.7 4.4c-.7-.3-1.6-.6-2.9-.6-1.4 0-2.5.2-2.5 1.3 0 1.8 5.1 1.2 5.1 5.1 0 3.6-3.3 4.5-6.4 4.5-1.3 0-2.9-.3-4-.7l.8-2.7c.7.4 2 .7 3.1.7s2.8-.2 2.8-1.5c0-2.1-5.1-1.3-5.1-5 0-3.4 3-4.4 5.9-4.4 1.6 0 3.1.2 4 .6"></path>
+    </svg>
+    <h2>HealthStore Reporting</h2>
+    <p>This document is restricted. Enter the access code to continue.</p>
+    <form id="pw-form" onsubmit="return false;">
+      <input type="password" id="pw-input" placeholder="Access code" autocomplete="off" autofocus>
+      <button type="submit" id="pw-btn">Continue</button>
+      <div class="pw-err" id="pw-err">Incorrect code. Try again.</div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  var h='-800hhb',k=function(s){for(var r=0,i=0;i<s.length;i++){r=((r<<5)-r)+s.charCodeAt(i);r|=0;}return r.toString(36);};
+  var gate=document.getElementById('pw-gate');
+  if(sessionStorage.getItem('hs-auth')==='1'){gate.classList.add('hidden');}
+  document.getElementById('pw-btn').addEventListener('click',function(){
+    var v=document.getElementById('pw-input').value;
+    if(k(v)===h){
+      gate.classList.add('hidden');
+      sessionStorage.setItem('hs-auth','1');
+    } else {
+      document.getElementById('pw-err').style.display='block';
+      document.getElementById('pw-input').value='';
+      document.getElementById('pw-input').focus();
+    }
+  });
+  document.getElementById('pw-input').addEventListener('keydown',function(e){
+    if(e.key==='Enter') document.getElementById('pw-btn').click();
+  });
+})();
+</script>
+
+<div class="demo-banner">
+  <div class="inner"><strong>Prototype service page.</strong> Figures are synthetic to demonstrate the final reporting layout and content model. Suppliers, products and ICBs are fictional.</div>
+</div>
+
+<header class="app">
+  <div class="app-inner">
+    <svg class="nhs-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 16" role="img" aria-label="NHS">
+      <path fill="#005eb8" d="M0 0h40v16H0z"></path>
+      <path fill="#ffffff" d="M3.9 1.5h4.4l2.6 9h.1l1.8-9h3.3l-2.7 13H9l-2.7-9h-.1l-1.8 9H1.1M17.3 1.5h3.6l-1 4.9h4L25 1.5h3.5l-2.7 13h-3.5l1.1-5.6h-4.1l-1.2 5.6h-3.5M37.7 4.4c-.7-.3-1.6-.6-2.9-.6-1.4 0-2.5.2-2.5 1.3 0 1.8 5.1 1.2 5.1 5.1 0 3.6-3.3 4.5-6.4 4.5-1.3 0-2.9-.3-4-.7l.8-2.7c.7.4 2 .7 3.1.7s2.8-.2 2.8-1.5c0-2.1-5.1-1.3-5.1-5 0-3.4 3-4.4 5.9-4.4 1.6 0 3.1.2 4 .6"></path>
+    </svg>
+    <div class="app-title">
+      <span class="svc">HealthStore</span>
+      <span class="sub">Reporting service &middot; Digital therapeutics in the NHS App</span>
+    </div>
+    <div class="app-meta">
+      <strong>Reporting period: May 2026</strong>
+      Aggregate reporting release &middot; Generated 22 Jun 2026
+    </div>
+  </div>
+</header>
+
+<nav class="views" id="nav">
+  <div class="views-inner">
+    <button data-view="overview" class="active">Overview &amp; value exchange</button>
+    <button data-view="supplier">Supplier view</button>
+    <button data-view="buyer">Buyer / ICB view</button>
+    <button data-view="internal">HealthStore internal</button>
+    <button data-view="outcomes">Outcome evidence</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ===================== OVERVIEW ===================== -->
+<section class="view active" id="view-overview">
+  <div class="page-head">
+    <h1>One dataset, three service views</h1>
+    <p class="lede">Each organisation submits a standard monthly return and receives reporting it cannot generate on its own. This page shows the same aggregate dataset presented for suppliers, ICBs and HealthStore operations, with outcome evidence published separately from the secure data environment.</p>
+  </div>
+
+  <div class="grid g4">
+    <div class="kpi">
+      <div class="label">Live deployments</div>
+      <div class="value">142</div>
+      <div class="delta up">&#9650; 11 new this period</div>
+    </div>
+    <div class="kpi k-aqua">
+      <div class="label">ICBs with a live DTx</div>
+      <div class="value">28<span style="font-size:16px;color:var(--grey-2)"> / 42</span></div>
+      <div class="delta up">&#9650; 2 since April</div>
+    </div>
+    <div class="kpi k-green">
+      <div class="label">Active users (90-day)</div>
+      <div class="value">38.7k</div>
+      <div class="delta up">&#9650; 6% vs April</div>
+    </div>
+    <div class="kpi k-purple">
+      <div class="label">Participating suppliers</div>
+      <div class="value">17</div>
+      <div class="delta flat">&#9679; 16 compliant feeds</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 8l-4 4 4 4M17 8l4 4-4 4M3 12h18"/></svg>
+    What each organisation submits and receives
+  </h2>
+  <p class="section-note">The exchange only works when every contributor gets practical outputs. No patient-level record is needed in this reporting service.</p>
+
+  <div class="vx">
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--nhs-blue)" stroke-width="2"><path d="M3 21V8l9-5 9 5v13M9 21v-6h6v6"/></svg> Digital&#8209;therapeutic supplier</h3>
+      <div class="lab">Gives</div>
+      <div class="give">Monthly aggregate funnel and use by product, pathway and deployment; deployment details. No patient rows.</div>
+      <div class="lab">Gets</div>
+      <ul class="get">
+        <li>Its own end&#8209;to&#8209;end NHS funnel, including conversion it cannot see from its own systems</li>
+        <li><strong>Cross&#8209;estate configuration intelligence</strong>: which referral routes and service models convert best, anonymised</li>
+        <li>A national <strong>unmet&#8209;need map</strong> showing where eligible patients sit with no live product</li>
+        <li>Safe pooled benchmarks, data&#8209;quality feedback, and approved outcome evidence for its own product</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--nhs-blue)" stroke-width="2"><path d="M12 21s-7-4.4-7-10a7 7 0 0 1 14 0c0 5.6-7 10-7 10z"/><circle cx="12" cy="11" r="2.5"/></svg> ICB / provider (buyer)</h3>
+      <div class="lab">Gives</div>
+      <div class="give">What is deployed, where, under which pathway, contract model and local objectives. Keeps the deployment register current.</div>
+      <div class="lab">Gets</div>
+      <ul class="get">
+        <li><strong>Population coverage</strong>: of the eligible cohort, how many are reached and active</li>
+        <li>Local performance against objectives, with a <strong>peer&#8209;ICB percentile</strong></li>
+        <li>Equity and uptake by population group, and a modelled local business case</li>
+        <li>Safe comparator ranges and approved outcome evidence</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--nhs-blue)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/></svg> NHS England / HealthStore</h3>
+      <div class="lab">Gives</div>
+      <div class="give">Stable definitions, reference data, the national deployment register and one approved route to national outcomes.</div>
+      <div class="lab">Gets</div>
+      <ul class="get">
+        <li>The national deployment, adoption and pathway&#8209;variation picture that does not exist today</li>
+        <li>A <strong>commissioning&#8209;opportunity heatmap</strong> of coverage gaps by pathway and region</li>
+        <li>Market concentration, supplier compliance and estate&#8209;wide data quality</li>
+        <li>A reproducible base for NICE&#8209;aligned evidence</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M4 19h16M8 16l4-5 3 3 5-7"/></svg>
+    Does the HealthStore route improve conversion?
+  </h2>
+  <p class="section-note">Comparison of services launched through HealthStore (NHS App launch and standard returns) against services launched through other routes.</p>
+
+  <div class="grid g2">
+    <div class="card">
+      <h3>Conversion through the NHS funnel</h3>
+      <p class="cap">Share of invited people reaching each stage &middot; pooled across all pathways, May 2026</p>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 600 300" role="img" aria-label="Conversion comparison">
+          <g stroke="var(--grey-4)">
+            <line x1="150" y1="20"  x2="150" y2="250"/>
+            <line x1="262" y1="20"  x2="262" y2="250"/>
+            <line x1="374" y1="20"  x2="374" y2="250"/>
+            <line x1="486" y1="20"  x2="486" y2="250"/>
+            <line x1="560" y1="20"  x2="560" y2="250"/>
+          </g>
+          <line class="ax" x1="150" y1="250" x2="560" y2="250"/>
+          <text class="axlbl" x="144" y="44" text-anchor="end">Launch</text>
+          <rect x="150" y="30" width="299" height="14" rx="2" fill="var(--nhs-blue)"/>
+          <text class="vlbl" x="455" y="42">73%</text>
+          <rect x="150" y="48" width="234" height="14" rx="2" fill="var(--nhs-light-blue)"/>
+          <text class="vlbl" x="390" y="60">57%</text>
+          <text class="axlbl" x="144" y="92" text-anchor="end">Registration</text>
+          <rect x="150" y="78" width="201" height="14" rx="2" fill="var(--nhs-blue)"/>
+          <text class="vlbl" x="357" y="90">49%</text>
+          <rect x="150" y="96" width="127" height="14" rx="2" fill="var(--nhs-light-blue)"/>
+          <text class="vlbl" x="283" y="108">31%</text>
+          <text class="axlbl" x="144" y="140" text-anchor="end">Activated</text>
+          <rect x="150" y="126" width="180" height="14" rx="2" fill="var(--nhs-blue)"/>
+          <text class="vlbl" x="336" y="138">44%</text>
+          <rect x="150" y="144" width="111" height="14" rx="2" fill="var(--nhs-light-blue)"/>
+          <text class="vlbl" x="267" y="156">27%</text>
+          <text class="axlbl" x="144" y="188" text-anchor="end">Active user</text>
+          <rect x="150" y="174" width="123" height="14" rx="2" fill="var(--nhs-blue)"/>
+          <text class="vlbl" x="279" y="186">30%</text>
+          <rect x="150" y="192" width="78" height="14" rx="2" fill="var(--nhs-light-blue)"/>
+          <text class="vlbl" x="234" y="204">19%</text>
+          <text class="axlbl" x="144" y="236" text-anchor="end">Completed</text>
+          <rect x="150" y="222" width="74" height="14" rx="2" fill="var(--nhs-blue)"/>
+          <text class="vlbl" x="230" y="234">18%</text>
+          <rect x="150" y="240" width="41" height="14" rx="2" fill="var(--nhs-light-blue)"/>
+          <text class="vlbl" x="197" y="252">10%</text>
+          <text class="axlbl" x="150" y="268" text-anchor="middle">0%</text>
+          <text class="axlbl" x="355" y="268" text-anchor="middle">50%</text>
+          <text class="axlbl" x="560" y="268" text-anchor="middle">100%</text>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--nhs-blue)"></i> HealthStore route</span>
+        <span><i style="background:var(--nhs-light-blue)"></i> Non&#8209;HealthStore route</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>What this means for commissioning</h3>
+      <p class="cap">The same products convert better when launched through NHS App pathways with standard returns.</p>
+      <table class="tbl">
+        <thead><tr><th>Measure</th><th class="num">HealthStore</th><th class="num">Other route</th></tr></thead>
+        <tbody>
+          <tr><td>Median time to activation</td><td class="num">2 days</td><td class="num">9 days</td></tr>
+          <tr><td>Data completeness</td><td class="num">96%</td><td class="num">72%</td></tr>
+          <tr><td>Technical failure rate</td><td class="num">0.4%</td><td class="num">2.1%</td></tr>
+          <tr><td>Deployments with comparable benchmark</td><td class="num">Yes</td><td class="num">Often no</td></tr>
+        </tbody>
+      </table>
+      <div class="insight good" style="margin-top:16px">
+        <strong>Key point.</strong> NHS App launch removes onboarding friction: around half of invited people complete registration through HealthStore, compared with under a third via other routes. Standard returns also allow reliable benchmarking.
+      </div>
+    </div>
+  </div>
+
+  <div class="insight warn" style="margin-top:18px">
+    <strong>Information governance.</strong> Figures are aggregate counts and rates only. No NHS number, app record or clinical measurement is shown. Comparisons are displayed only where at least three comparable deployments contribute with sufficient data quality; pricing is excluded.
+  </div>
+</section>
+
+<!-- ===================== SUPPLIER ===================== -->
+<section class="view" id="view-supplier">
+  <div class="page-head">
+    <h1>Supplier view &mdash; Respira COPD</h1>
+    <p class="lede">Your own data returned in a consistent shape, plus the parts of the journey you cannot see from your own systems: where you leak against comparable products, which deployment configurations convert best across the whole NHS estate, and where eligible patients sit with no live product. You never see a named competitor, another buyer&rsquo;s price, or any patient&#8209;level NHS record.</p>
+  </div>
+
+  <div class="grid g4">
+    <div class="kpi">
+      <div class="label">Invitations delivered</div>
+      <div class="value">31.9k</div>
+      <div class="delta up">&#9650; 4% vs April</div>
+    </div>
+    <div class="kpi k-aqua">
+      <div class="label">Registrations completed</div>
+      <div class="value">15.5k</div>
+      <div class="delta up">&#9650; 49% of delivered</div>
+    </div>
+    <div class="kpi k-green">
+      <div class="label">Active users (90-day)</div>
+      <div class="value">9.4k</div>
+      <div class="delta up">&#9650; 6% vs April</div>
+    </div>
+    <div class="kpi k-purple">
+      <div class="label">Completion rate</div>
+      <div class="value">36%</div>
+      <div class="delta flat">&#9679; of activated users</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>
+    Your end-to-end funnel, with leak diagnostics
+  </h2>
+  <p class="section-note">From NHS App invitation to clinically meaningful use &middot; national, all COPD deployments &middot; May 2026. The red marker flags the stage where you lose most ground against the pooled benchmark.</p>
+
+  <div class="card">
+    <div class="chart-wrap">
+      <svg class="chart" viewBox="0 0 760 360" role="img" aria-label="Supplier funnel with leak diagnostics">
+        <g font-family="var(--font)">
+          <rect x="80"  y="20"  width="600" height="34" rx="3" fill="#003087"/>
+          <text class="barlbl" x="90" y="42">Invitations delivered</text>
+          <text class="barlbl" x="670" y="42" text-anchor="end">31,900</text>
+
+          <rect x="176" y="62" width="408" height="34" rx="3" fill="#005eb8"/>
+          <text class="barlbl" x="186" y="84">Launches</text>
+          <text class="barlbl" x="574" y="84" text-anchor="end">21,700 &middot; 68%</text>
+
+          <rect x="234" y="104" width="292" height="34" rx="3" fill="#0072ce"/>
+          <text class="barlbl" x="244" y="126">Registrations completed</text>
+          <text class="barlbl" x="516" y="126" text-anchor="end">15,500 &middot; 49%</text>
+
+          <rect x="248" y="146" width="264" height="34" rx="3" fill="#0087c9"/>
+          <text class="barlbl" x="258" y="168">Activated</text>
+          <text class="barlbl" x="502" y="168" text-anchor="end">14,050 &middot; 44%</text>
+
+          <rect x="265" y="188" width="229" height="34" rx="3" fill="#00a9ce"/>
+          <text class="barlbl" x="275" y="210">First qualifying use</text>
+          <text class="barlbl" x="484" y="210" text-anchor="end">12,150 &middot; 38%</text>
+
+          <rect x="291" y="230" width="177" height="34" rx="3" fill="#41b6e6"/>
+          <text x="301" y="252" fill="#093b57" font-size="12" font-weight="700">Active (90-day)</text>
+          <text x="476" y="252" fill="#093b57" font-size="12" font-weight="700">9,400 &middot; 30%</text>
+
+          <rect x="328" y="272" width="104" height="34" rx="3" fill="#78be20"/>
+          <text x="338" y="294" fill="#1b3b00" font-size="12" font-weight="700">Completed</text>
+          <text x="540" y="294" text-anchor="start" fill="#1b3b00" font-size="12" font-weight="700">5,520 &middot; 17%</text>
+
+          <!-- leak marker on launch-to-registration -->
+          <g>
+            <rect x="600" y="70" width="150" height="58" rx="4" fill="#fbe7e6" stroke="#e7a59f"/>
+            <text x="610" y="88" fill="#9b1c14" font-size="11.5" font-weight="700">Biggest leak</text>
+            <text x="610" y="104" fill="#9b1c14" font-size="11">Launch to registration:</text>
+            <text x="610" y="119" fill="#9b1c14" font-size="11">you &minus;28% vs &minus;19% pooled</text>
+          </g>
+
+          <text x="80" y="334" fill="var(--grey-2)" font-size="12">Discontinued before completion: 3,180 &middot; Technical failures: 132 &middot; Safety escalations (count only): 41</text>
+        </g>
+      </svg>
+    </div>
+    <div class="insight" style="margin-top:14px">
+      <strong>Diagnostic.</strong> Your weakest stage is launch&#8209;to&#8209;registration: 28% of people who open the app do not finish sign&#8209;up, against 19% for comparable products. The gap concentrates in over&#8209;65s and in deployments that rely on self&#8209;referral. The configuration analysis below shows what the best&#8209;converting deployments do differently.
+    </div>
+  </div>
+
+  <h2 class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.2 4.2l2.8 2.8M17 17l2.8 2.8M1 12h4M19 12h4M4.2 19.8 7 17M17 7l2.8-2.8"/></svg>
+    What converts best across the estate &mdash; configuration intelligence
+  </h2>
+  <p class="section-note">Activation rate by deployment configuration, pooled and anonymised across every comparable COPD deployment in HealthStore. No supplier or buyer is named. This is the view no single supplier can build alone.</p>
+
+  <div class="grid g2">
+    <div class="card">
+      <h3>Activation rate by configuration</h3>
+      <p class="cap">Share of invited people who reach first qualifying use &middot; pooled across the estate</p>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 600 290" role="img" aria-label="Activation by configuration">
+          <!-- scale 0-60% mapped x 220..560 (340px) ; 5.667px per % -->
+          <line class="ax" x1="220" y1="20" x2="220" y2="250"/>
+          <line class="ax" x1="220" y1="250" x2="560" y2="250"/>
+          <!-- rows -->
+          <text class="axlbl" x="214" y="42" text-anchor="end">Clinician-initiated referral</text>
+          <rect x="220" y="30" width="289" height="22" rx="2" fill="var(--nhs-green)"/><text class="vlbl" x="515" y="47">51%</text>
+          <text class="axlbl" x="214" y="80" text-anchor="end">Embedded in appointment</text>
+          <rect x="220" y="68" width="272" height="22" rx="2" fill="var(--nhs-green)"/><text class="vlbl" x="498" y="85">48%</text>
+          <text class="axlbl" x="214" y="118" text-anchor="end">App + SMS reminder</text>
+          <rect x="220" y="106" width="249" height="22" rx="2" fill="var(--nhs-blue)"/><text class="vlbl" x="475" y="123">44%</text>
+          <text class="axlbl" x="214" y="156" text-anchor="end">App only, no reminder</text>
+          <rect x="220" y="144" width="170" height="22" rx="2" fill="var(--nhs-light-blue)"/><text class="vlbl" x="396" y="161">30%</text>
+          <text class="axlbl" x="214" y="194" text-anchor="end">Self-referral (link / store)</text>
+          <rect x="220" y="182" width="125" height="22" rx="2" fill="var(--nhs-warm-yellow)"/><text class="vlbl" x="351" y="199">22%</text>
+          <!-- your blend marker -->
+          <line x1="390" y1="20" x2="390" y2="250" stroke="var(--nhs-red)" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <text x="394" y="232" fill="var(--nhs-red)" font-size="11.5" font-weight="700">Your current blend: 38%</text>
+          <text class="axlbl" x="220" y="268" text-anchor="middle">0%</text>
+          <text class="axlbl" x="390" y="268" text-anchor="middle">30%</text>
+          <text class="axlbl" x="560" y="268" text-anchor="middle">60%</text>
+        </svg>
+      </div>
+    </div>
+    <div class="card">
+      <h3>The opportunity</h3>
+      <p class="cap">What the highest-converting deployments do differently</p>
+      <div class="insight good">
+        <strong>Clinician&#8209;initiated referral activates 2.3&#215; self&#8209;referral.</strong> Deployments where a clinician starts the referral, or where the app is opened during an appointment, reach 48&ndash;51% activation. Yours run heavily on self&#8209;referral and app&#8209;only invitations, holding your blended rate at 38%.
+      </div>
+      <p style="font-size:13.5px;color:var(--grey-1);margin:14px 0 0">If you shifted a quarter of your self&#8209;referral volume to clinician&#8209;initiated routes and added an SMS reminder where it is missing, the pooled pattern implies roughly <strong>+2,400 activations a year</strong> on current invitation volumes &mdash; without spending a penny more on marketing.</p>
+      <div class="footnote">Pooled association across comparable deployments, not a guarantee for any single service. Suppressed where fewer than three deployments use a configuration.</div>
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-top:18px">
+    <div class="card">
+      <h3>Retention &mdash; are users staying?</h3>
+      <p class="cap">Share of activated users still active over time &middot; you vs pooled comparable products</p>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 560 260" role="img" aria-label="Retention curve">
+          <line class="ax" x1="56" y1="20" x2="56" y2="200"/>
+          <line class="ax" x1="56" y1="200" x2="540" y2="200"/>
+          <line class="ax" x1="56" y1="110" x2="540" y2="110" stroke-dasharray="3 3" opacity=".5"/>
+          <text class="axlbl" x="50" y="204" text-anchor="end">0%</text>
+          <text class="axlbl" x="50" y="114" text-anchor="end">50%</text>
+          <text class="axlbl" x="50" y="24" text-anchor="end">100%</text>
+          <!-- x: day 0,30,60,90,180 mapped 60..520 (460px /180 = 2.556) -> 60,137,213,290,520 -->
+          <!-- you:100,82,68,57,41 ; y=200-val/100*180 -> 20,52.4,77.6,97.4,126.2 -->
+          <polyline fill="none" stroke="var(--nhs-blue)" stroke-width="3" points="60,20 137,52 213,78 290,97 520,126"/>
+          <g fill="var(--nhs-blue)"><circle cx="60" cy="20" r="3.5"/><circle cx="137" cy="52" r="3.5"/><circle cx="213" cy="78" r="3.5"/><circle cx="290" cy="97" r="3.5"/><circle cx="520" cy="126" r="4"/></g>
+          <text class="vlbl" x="520" y="120" text-anchor="end" fill="var(--nhs-blue)">41%</text>
+          <!-- pooled:100,74,58,46,31 -> 20,66.8,95.6,117.2,144.2 -->
+          <polyline fill="none" stroke="var(--grey-2)" stroke-width="2.5" stroke-dasharray="5 4" points="60,20 137,67 213,96 290,117 520,144"/>
+          <g fill="var(--grey-2)"><circle cx="137" cy="67" r="3"/><circle cx="290" cy="117" r="3"/><circle cx="520" cy="144" r="3.5"/></g>
+          <text class="axlbl" x="520" y="158" text-anchor="end" fill="var(--grey-2)">31% pooled</text>
+          <text class="axlbl" x="60" y="216" text-anchor="middle">Day 0</text>
+          <text class="axlbl" x="137" y="216" text-anchor="middle">30</text>
+          <text class="axlbl" x="213" y="216" text-anchor="middle">60</text>
+          <text class="axlbl" x="290" y="216" text-anchor="middle">90</text>
+          <text class="axlbl" x="520" y="216" text-anchor="middle">180 days</text>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--nhs-blue)"></i> Respira COPD</span>
+        <span><i style="background:var(--grey-2)"></i> Pooled comparable</span>
+      </div>
+      <div class="footnote">Your 180&#8209;day retention is 10 points above the pooled curve &mdash; a strength worth citing in tenders. The early drop still mirrors the funnel leak above.</div>
+    </div>
+
+    <div class="card">
+      <h3>Where you sit &mdash; safe benchmark</h3>
+      <p class="cap">Registration completion vs pooled range of comparable COPD products (5 contributing) &middot; competitors never named</p>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 560 230" role="img" aria-label="Benchmark range">
+          <line class="ax" x1="60" y1="120" x2="520" y2="120"/>
+          <rect x="221" y="92" width="207" height="20" rx="4" fill="#cfe0f1"/>
+          <text class="axlbl" x="221" y="84">34% (P10)</text>
+          <text class="axlbl" x="428" y="84" text-anchor="end">52% (P90)</text>
+          <line x1="302" y1="86" x2="302" y2="118" stroke="var(--grey-1)" stroke-width="2" stroke-dasharray="3 2"/>
+          <text class="axlbl" x="302" y="134" text-anchor="middle">median 41%</text>
+          <circle cx="394" cy="102" r="9" fill="var(--nhs-green)"/>
+          <text class="vlbl" x="394" y="68" text-anchor="middle" fill="var(--nhs-green)">You: 49%</text>
+          <line x1="394" y1="78" x2="394" y2="93" stroke="var(--nhs-green)" stroke-width="2"/>
+          <text class="axlbl" x="60" y="160" text-anchor="middle">20%</text>
+          <text class="axlbl" x="290" y="160" text-anchor="middle">40%</text>
+          <text class="axlbl" x="520" y="160" text-anchor="middle">60%</text>
+          <text x="290" y="200" text-anchor="middle" fill="var(--grey-1)" font-size="13" font-weight="700">You are at the 78th percentile of comparable products</text>
+        </svg>
+      </div>
+      <div class="footnote">Benchmark suppressed where fewer than three comparable products contribute or pathways differ materially.</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.4-7-10a7 7 0 0 1 14 0c0 5.6-7 10-7 10z"/><circle cx="12" cy="11" r="2.5"/></svg>
+    Unmet need &mdash; where eligible patients have no live product
+  </h2>
+  <p class="section-note">Eligible COPD population against current reach, by NHS England region. Headroom is the eligible cohort in pathways or areas with no live comparable deployment. Population denominators are public reference data.</p>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="tbl">
+      <thead><tr><th>Region</th><th class="num">Eligible cohort</th><th>Reach</th><th class="num">Coverage</th><th class="num">Headroom</th></tr></thead>
+      <tbody>
+        <tr><td>North West</td><td class="num">31,200</td><td><span class="mbar-track"><span class="mbar" style="width:50px"></span></span></td><td class="num">62%</td><td class="num">11,900</td></tr>
+        <tr><td>Midlands</td><td class="num">38,400</td><td><span class="mbar-track"><span class="mbar" style="width:38px"></span></span></td><td class="num">48%</td><td class="num">20,000</td></tr>
+        <tr><td>London</td><td class="num">22,600</td><td><span class="mbar-track"><span class="mbar" style="width:33px;background:var(--nhs-warm-yellow)"></span></span></td><td class="num">41%</td><td class="num">13,300</td></tr>
+        <tr><td>South East</td><td class="num">27,800</td><td><span class="mbar-track"><span class="mbar" style="width:30px;background:var(--nhs-warm-yellow)"></span></span></td><td class="num">38%</td><td class="num">17,200</td></tr>
+        <tr><td>East of England</td><td class="num">24,100</td><td><span class="mbar-track"><span class="mbar" style="width:24px;background:var(--nhs-warm-yellow)"></span></span></td><td class="num">30%</td><td class="num">16,900</td></tr>
+        <tr><td>South West</td><td class="num">21,500</td><td><span class="mbar-track"><span class="mbar" style="width:18px;background:var(--nhs-red)"></span></span></td><td class="num">22%</td><td class="num">16,800</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="insight" style="margin-top:14px">
+    <strong>Pipeline.</strong> The South West and East of England carry the largest unmet COPD cohorts at the lowest coverage. These are the strongest targets for your next deployments, and the regions where HealthStore can broker introductions to commissioners actively looking for a respiratory DTx.
+  </div>
+
+  <h2 class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Data quality &amp; validation feedback
+  </h2>
+  <div class="grid g3">
+    <div class="kpi k-green"><div class="label">Submission status</div><div class="value" style="font-size:22px;padding-top:6px">Accepted</div><div class="delta flat">schema v3.1 &middot; on time</div></div>
+    <div class="kpi"><div class="label">Completeness</div><div class="value">96%</div><div class="delta up">&#9650; 2 pts vs April</div></div>
+    <div class="kpi k-yellow"><div class="label">Records corrected</div><div class="value">1</div><div class="delta flat">Mar restatement &middot; coding fix</div></div>
+  </div>
+  <div class="insight" style="margin-top:16px">
+    <strong>Feedback.</strong> One validation warning this period: <em>age_band</em> missingness of 6% in two deployments. Within threshold, but completing it would unlock the equity view for those services. All other fields passed schema and metric tests.
+  </div>
+
+  <h2 class="section-title">Your users &mdash; demographic profile</h2>
+  <p class="section-note">Active user profile vs national COPD register. Demographic data comes from NHS App demographics, not from your app. Click a deprivation quintile in the chart to see its detail.</p>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Your equity gap &mdash; uptake vs COPD burden by IMD quintile</h3>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 520 240" role="img" aria-label="Supplier IMD equity gap">
+          <line class="ax" x1="100" y1="210" x2="480" y2="210"/>
+          <text class="axlbl" x="94" y="45" text-anchor="end">Q1 most deprived</text>
+          <rect x="100" y="30" width="128" height="22" rx="2" fill="var(--nhs-purple)"/><text class="vlbl" x="234" y="46" fill="var(--nhs-purple)">32%</text>
+          <rect x="100" y="54" width="68" height="22" rx="2" fill="var(--nhs-aqua)"/><text class="vlbl" x="174" y="70" fill="var(--nhs-aqua)">17%</text>
+          <text class="axlbl" x="94" y="103" text-anchor="end">Q2</text>
+          <rect x="100" y="88" width="96" height="22" rx="2" fill="var(--nhs-purple)"/><text class="vlbl" x="202" y="104" fill="var(--nhs-purple)">24%</text>
+          <rect x="100" y="112" width="76" height="22" rx="2" fill="var(--nhs-aqua)"/><text class="vlbl" x="182" y="128" fill="var(--nhs-aqua)">19%</text>
+          <text class="axlbl" x="94" y="161" text-anchor="end">Q3</text>
+          <rect x="100" y="146" width="80" height="22" rx="2" fill="var(--nhs-purple)"/><text class="vlbl" x="186" y="162" fill="var(--nhs-purple)">20%</text>
+          <rect x="100" y="170" width="88" height="22" rx="2" fill="var(--nhs-aqua)"/><text class="vlbl" x="194" y="186" fill="var(--nhs-aqua)">22%</text>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--nhs-purple)"></i> Share of COPD need</span>
+        <span><i style="background:var(--nhs-aqua)"></i> Your active users</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Age and sex breakdown</h3>
+      <table class="tbl">
+        <thead><tr><th>Age</th><th class="num">Users</th><th class="num">You</th><th class="num">Register</th><th class="num">Gap</th></tr></thead>
+        <tbody>
+          <tr><td>18&ndash;49</td><td class="num">1,410</td><td class="num">15%</td><td class="num">17%</td><td class="num" style="color:var(--grey-2)">&minus;2pp</td></tr>
+          <tr><td>50&ndash;64</td><td class="num">2,914</td><td class="num">31%</td><td class="num">28%</td><td class="num" style="color:var(--grey-2)">&mdash;</td></tr>
+          <tr><td>65&ndash;74</td><td class="num">3,384</td><td class="num">36%</td><td class="num">30%</td><td class="num" style="color:var(--nhs-green)">+6pp</td></tr>
+          <tr><td>75+</td><td class="num">1,692</td><td class="num">18%</td><td class="num">25%</td><td class="num" style="color:var(--nhs-red)">&minus;7pp</td></tr>
+        </tbody>
+      </table>
+      <table class="tbl" style="margin-top:10px">
+        <thead><tr><th>Sex</th><th class="num">Users</th><th class="num">%</th></tr></thead>
+        <tbody>
+          <tr><td>Female</td><td class="num">5,076</td><td class="num">54%</td></tr>
+          <tr><td>Male</td><td class="num">4,230</td><td class="num">45%</td></tr>
+          <tr><td>Not stated</td><td class="num">94</td><td class="num">1%</td></tr>
+        </tbody>
+      </table>
+      <div class="insight warn" style="margin-top:10px">
+        <strong>So what?</strong> Your biggest equity risk is IMD Q1: 32% of COPD need, 17% of your users. ICBs in deprived areas are already flagging this pattern. To protect renewal, target two actions: (1) SMS-only onboarding for non-smartphone users, (2) community hub sign-up partnerships via the ICB.
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Six-month adoption trend</h2>
+  <p class="section-note">Monthly active users and registration rate, December 2025 to May 2026. Click any month in the chart to highlight it.</p>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Active users &amp; registration rate</h3>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 520 220" role="img" aria-label="Supplier trend">
+          <line class="ax" x1="50" y1="170" x2="490" y2="170"/>
+          <line class="ax" x1="50" y1="20" x2="50" y2="170"/>
+          <line class="ax" x1="50" y1="95" x2="490" y2="95" stroke-dasharray="3 3" opacity=".4"/>
+          <text class="axlbl" x="44" y="174" text-anchor="end">0</text>
+          <text class="axlbl" x="44" y="98" text-anchor="end">5k</text>
+          <text class="axlbl" x="44" y="24" text-anchor="end">10k</text>
+          <!-- area fill -->
+          <polygon fill="#e8f0f9" points="124,52 198,43 272,37 346,30 420,27 490,17 490,170 124,170"/>
+          <!-- active users line: 7900,8200,8500,8800,8900,9400 mapped y: 170-(val/10000*150) -->
+          <polyline fill="none" stroke="var(--nhs-blue)" stroke-width="3" points="124,52 198,47 272,42 346,38 420,37 490,29"/>
+          <g fill="var(--nhs-blue)"><circle cx="124" cy="52" r="4"/><circle cx="198" cy="47" r="4"/><circle cx="272" cy="42" r="4"/><circle cx="346" cy="38" r="4"/><circle cx="420" cy="37" r="4"/><circle cx="490" cy="29" r="5"/></g>
+          <text class="vlbl" x="490" y="22" text-anchor="end" fill="var(--nhs-blue)">9.4k</text>
+          <!-- reg rate line: 46,46,48,48,49,49 mapped y on right axis 170-(val-40)/15*150 -->
+          <polyline fill="none" stroke="var(--nhs-green)" stroke-width="2.5" stroke-dasharray="6 3" points="124,110 198,110 272,90 346,90 420,80 490,80"/>
+          <g fill="var(--nhs-green)"><circle cx="124" cy="110" r="3"/><circle cx="490" cy="80" r="4"/></g>
+          <text class="vlbl" x="490" y="72" text-anchor="end" fill="var(--nhs-green)">49%</text>
+          <text class="axlbl" x="500" y="114" text-anchor="end" fill="var(--nhs-green)">Reg. rate</text>
+          <!-- x labels -->
+          <text class="axlbl" x="124" y="186" text-anchor="middle">Dec</text>
+          <text class="axlbl" x="198" y="186" text-anchor="middle">Jan</text>
+          <text class="axlbl" x="272" y="186" text-anchor="middle">Feb</text>
+          <text class="axlbl" x="346" y="186" text-anchor="middle">Mar</text>
+          <text class="axlbl" x="420" y="186" text-anchor="middle">Apr</text>
+          <text class="axlbl" x="490" y="186" text-anchor="middle">May</text>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--nhs-blue)"></i> Active users (90-day)</span>
+        <span><i style="background:var(--nhs-green)"></i> Registration rate</span>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="tbl">
+        <thead><tr><th>Month</th><th class="num">Invitations</th><th class="num">Active</th><th class="num">Reg. rate</th><th class="num">Completion</th><th class="num">Quality</th></tr></thead>
+        <tbody>
+          <tr><td>Dec 25</td><td class="num">28.1k</td><td class="num">7.9k</td><td class="num">46%</td><td class="num">34%</td><td class="num">91%</td></tr>
+          <tr><td>Jan 26</td><td class="num">29.4k</td><td class="num">8.2k</td><td class="num">46%</td><td class="num">35%</td><td class="num">93%</td></tr>
+          <tr><td>Feb 26</td><td class="num">28.8k</td><td class="num">8.5k</td><td class="num">48%</td><td class="num">35%</td><td class="num">93%</td></tr>
+          <tr><td>Mar 26</td><td class="num">30.2k</td><td class="num">8.8k</td><td class="num">48%</td><td class="num">35%</td><td class="num">94%</td></tr>
+          <tr><td>Apr 26</td><td class="num">30.7k</td><td class="num">8.9k</td><td class="num">49%</td><td class="num">36%</td><td class="num">94%</td></tr>
+          <tr style="background:#f0f6fc"><td><strong>May 26</strong></td><td class="num"><strong>31.9k</strong></td><td class="num"><strong>9.4k</strong></td><td class="num"><strong>49%</strong></td><td class="num"><strong>36%</strong></td><td class="num"><strong>96%</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="insight good" style="margin-top:12px">
+    <strong>So what?</strong> You are on a steady upward trajectory with no seasonal dip. Registration rate climbed 3pp in six months, and data quality now exceeds the 95% threshold for equity reporting. At this pace you will pass 10,000 active users in July &mdash; a milestone worth noting in your next tender response.
+  </div>
+
+  <h2 class="section-title">Waiting list and PIFU contribution</h2>
+  <p class="section-note">Share of your active users who were on an outpatient waiting list at the point of DTx activation, and the rate at which users convert from scheduled follow-up to patient-initiated follow-up (PIFU). These metrics come from the linkage between the deployment register and national waiting list datasets.</p>
+  <div class="grid g3">
+    <div class="kpi"><div class="label">Users on waiting list at activation</div><div class="value">12%</div><div class="delta flat">1,128 of 9,400 active users</div></div>
+    <div class="kpi k-green"><div class="label">PIFU conversion rate</div><div class="value">22%</div><div class="delta up">&#9650; 4pp vs pooled comparable</div></div>
+    <div class="kpi k-aqua"><div class="label">Outpatient follow-ups released</div><div class="value">~2,070</div><div class="delta up">per year at current uptake</div></div>
+  </div>
+  <div class="insight" style="margin-top:14px">
+    <strong>Waiting list bridge.</strong> 12% of your active users were on a respiratory outpatient waiting list when they activated. These patients are receiving supported self-management while waiting. Published evidence suggests DTx use during wait reduces both symptom deterioration and missed appointments at the eventual consultation. The 22% PIFU conversion rate means roughly 1 in 5 users no longer needs a scheduled follow-up &mdash; freeing capacity for new referrals.
+  </div>
+</section>
+
+<!-- ===================== BUYER / ICB ===================== -->
+<section class="view" id="view-buyer">
+  <div class="page-head">
+    <h1>Buyer view &mdash; Greater Manchester ICB</h1>
+    <p class="lede">Your deployments against your own objectives and your eligible population, with safe comparator ranges, a peer&#8209;ICB position, and the evidence you need for a business case. You see your own figures and national ranges &mdash; not another ICB&rsquo;s price or any identifiable patient data.</p>
+  </div>
+
+  <div class="grid g4">
+    <div class="kpi"><div class="label">Live DTx deployments</div><div class="value">6</div><div class="delta up">&#9650; 1 mobilising</div></div>
+    <div class="kpi k-aqua"><div class="label">Eligible reached (period)</div><div class="value">41%</div><div class="delta up">&#9650; of invited cohort</div></div>
+    <div class="kpi k-green"><div class="label">Active users (90-day)</div><div class="value">1.18k</div><div class="delta up">&#9650; 5% vs April</div></div>
+    <div class="kpi k-purple"><div class="label">Contract utilisation</div><div class="value">79%</div><div class="delta flat">&#9679; of contracted capacity</div></div>
+  </div>
+
+  <h2 class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>
+    Population coverage &mdash; from eligible to active
+  </h2>
+  <p class="section-note">Your COPD pathway, starting from the eligible population rather than the invitation. This is the denominator a commissioner needs: most of the eligible cohort is never reached.</p>
+  <div class="grid g2">
+    <div class="card">
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 600 250" role="img" aria-label="Coverage funnel">
+          <g font-family="var(--font)">
+            <!-- scale: eligible 9800 -> 520 width from x40 -->
+            <rect x="40" y="20" width="520" height="32" rx="3" fill="#003087"/>
+            <text class="barlbl" x="50" y="41">Eligible COPD population</text>
+            <text class="barlbl" x="550" y="41" text-anchor="end">~9,800</text>
+
+            <rect x="40" y="60" width="212" height="32" rx="3" fill="#005eb8"/>
+            <text class="barlbl" x="50" y="81">Invited via NHS App</text>
+            <text class="barlbl" x="262" y="81" text-anchor="start" fill="#005eb8" font-size="12" font-weight="700"> 4,000 &middot; 41%</text>
+
+            <rect x="40" y="100" width="104" height="32" rx="3" fill="#0072ce"/>
+            <text class="barlbl" x="50" y="121">Registered</text>
+            <text x="154" y="121" fill="#0072ce" font-size="12" font-weight="700">1,960 &middot; 20%</text>
+
+            <rect x="40" y="140" width="46" height="32" rx="3" fill="#00a9ce"/>
+            <text x="96" y="161" fill="#0a5468" font-size="12" font-weight="700">Active users: 612 &middot; 6%</text>
+
+            <text x="40" y="200" fill="var(--grey-1)" font-size="12.5">Coverage of the eligible cohort is 6%. The largest drop is eligible&#8209;to&#8209;invited:</text>
+            <text x="40" y="218" fill="var(--grey-1)" font-size="12.5">most eligible patients are never offered the product.</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <div class="card">
+      <h3>What the coverage gap tells you</h3>
+      <div class="insight warn">
+        <strong>The constraint is reach, not the product.</strong> Conversion from invitation onward is healthy and above the national range. The loss is upstream: 59% of eligible patients are never invited, because invitations depend on a clinician flagging eligibility in a handful of practices.
+      </div>
+      <p style="font-size:13.5px;color:var(--grey-1);margin:14px 0 0">Moving invitation from opportunistic to systematic &mdash; a search&#8209;and&#8209;invite across all GP practices in the pathway &mdash; is the single biggest lever available to you, and costs nothing in licence terms because you are inside contracted capacity (79% utilised).</p>
+    </div>
+  </div>
+
+  <h2 class="section-title">Your deployments</h2>
+  <p class="section-note">Click any row to see funnel detail, key performance indicators and a quick assessment for that product.</p>
+  <div class="card" style="padding:0">
+    <table class="tbl" id="buyer-deploy-tbl">
+      <thead><tr><th>Product</th><th>Pathway</th><th>Status</th><th>Route</th><th class="num">Active users</th><th class="num">vs target</th></tr></thead>
+      <tbody>
+        <tr class="expandable" data-detail="det-respira"><td>Respira COPD</td><td>COPD</td><td><span class="tag ok">Live</span></td><td>HealthStore</td><td class="num">612</td><td class="num" style="color:var(--nhs-green)">+8%</td></tr>
+        <tr class="detail-row" id="det-respira"><td colspan="6">
+          <div class="detail-inner">
+            <div>
+              <div class="mini-kpi">Invited<strong>2,400</strong></div>
+              <div class="mini-kpi">Registered<strong>1,200 (50%)</strong></div>
+              <div class="mini-kpi">Active 90d<strong>612 (26%)</strong></div>
+              <div class="mini-kpi">Completion rate<strong>36%</strong></div>
+            </div>
+            <div>
+              <div class="mini-kpi">Registration rate vs range<strong style="color:var(--nhs-green)">50% (P78)</strong></div>
+              <div class="mini-kpi">Data completeness<strong>96%</strong></div>
+              <div class="mini-kpi">Waiting list users<strong>74 (12%)</strong></div>
+              <div class="mini-kpi">PIFU conversions<strong>135</strong></div>
+              <div class="insight good" style="margin-top:8px;font-size:13px"><strong>So what?</strong> Strong performer. Above target, above median on registration, high data quality. Focus on expanding invitation reach to hit 10% eligible population coverage.</div>
+            </div>
+          </div>
+        </td></tr>
+        <tr class="expandable" data-detail="det-sleepwell"><td>Sleepwell</td><td>Insomnia</td><td><span class="tag ok">Live</span></td><td>HealthStore</td><td class="num">281</td><td class="num" style="color:var(--nhs-green)">+3%</td></tr>
+        <tr class="detail-row" id="det-sleepwell"><td colspan="6">
+          <div class="detail-inner">
+            <div>
+              <div class="mini-kpi">Invited<strong>1,100</strong></div>
+              <div class="mini-kpi">Registered<strong>490 (45%)</strong></div>
+              <div class="mini-kpi">Active 90d<strong>281 (26%)</strong></div>
+              <div class="mini-kpi">Completion rate<strong>41%</strong></div>
+            </div>
+            <div>
+              <div class="mini-kpi">Registration rate vs range<strong style="color:var(--nhs-green)">45% (P62)</strong></div>
+              <div class="mini-kpi">Data completeness<strong>94%</strong></div>
+              <div class="mini-kpi">Sleep diary adherence<strong>72%</strong></div>
+              <div class="mini-kpi">PHQ-9 improvement (mean)<strong>&minus;3.2 pts</strong></div>
+              <div class="insight" style="margin-top:8px;font-size:13px"><strong>So what?</strong> Solid completion rate (41%) matches the evidence base for digital CBT-i. The PHQ-9 drop suggests secondary benefit on mood. Consider extending to patients on IAPT waiting lists.</div>
+            </div>
+          </div>
+        </td></tr>
+        <tr class="expandable" data-detail="det-calmpath"><td>CalmPath</td><td>Anxiety &amp; dep.</td><td><span class="tag ok">Live</span></td><td>HealthStore</td><td class="num">174</td><td class="num" style="color:var(--nhs-red)">&minus;11%</td></tr>
+        <tr class="detail-row" id="det-calmpath"><td colspan="6">
+          <div class="detail-inner">
+            <div>
+              <div class="mini-kpi">Invited<strong>680</strong></div>
+              <div class="mini-kpi">Registered<strong>260 (38%)</strong></div>
+              <div class="mini-kpi">Active 90d<strong>174 (26%)</strong></div>
+              <div class="mini-kpi">Completion rate<strong>28%</strong></div>
+            </div>
+            <div>
+              <div class="mini-kpi">Registration rate vs range<strong style="color:var(--nhs-warm-yellow)">38% (P31)</strong></div>
+              <div class="mini-kpi">Data completeness<strong>91%</strong></div>
+              <div class="mini-kpi">GAD-7 improvement (mean)<strong>&minus;2.6 pts</strong></div>
+              <div class="insight warn" style="margin-top:8px;font-size:13px"><strong>So what?</strong> Below target and below the comparable range on registration. Low completion (28%) suggests friction in the early modules. Recommend a user-journey review with the supplier and possibly simplifying onboarding.</div>
+            </div>
+          </div>
+        </td></tr>
+        <tr class="expandable" data-detail="det-gluco"><td>GlucoGuide</td><td>Type 2 diabetes</td><td><span class="tag ok">Live</span></td><td>Other route</td><td class="num">79</td><td class="num" style="color:var(--nhs-red)">&minus;22%</td></tr>
+        <tr class="detail-row" id="det-gluco"><td colspan="6">
+          <div class="detail-inner">
+            <div>
+              <div class="mini-kpi">Invited<strong>410</strong></div>
+              <div class="mini-kpi">Registered<strong>140 (34%)</strong></div>
+              <div class="mini-kpi">Active 90d<strong>79 (19%)</strong></div>
+              <div class="mini-kpi">Completion rate<strong>22%</strong></div>
+            </div>
+            <div>
+              <div class="mini-kpi">Registration rate vs range<strong style="color:var(--nhs-red)">34% (P12)</strong></div>
+              <div class="mini-kpi">Data completeness<strong style="color:var(--nhs-red)">70%</strong></div>
+              <div class="mini-kpi">Procurement route<strong style="color:var(--nhs-warm-yellow)">Non-HealthStore</strong></div>
+              <div class="insight warn" style="margin-top:8px;font-size:13px"><strong>So what?</strong> The only non-HealthStore deployment and the worst performer on every metric. Data completeness (70%) is below the reporting threshold, which means this deployment cannot contribute to benchmarks or equity reporting. Migration to the HealthStore route at renewal would fix the data gap and likely improve conversion through NHS App integration.</div>
+            </div>
+          </div>
+        </td></tr>
+        <tr class="expandable" data-detail="det-heart"><td>HeartStep</td><td>Cardiac rehab</td><td><span class="tag ok">Live</span></td><td>HealthStore</td><td class="num">34</td><td class="num" style="color:var(--grey-2)">new</td></tr>
+        <tr class="detail-row" id="det-heart"><td colspan="6">
+          <div class="detail-inner">
+            <div>
+              <div class="mini-kpi">Invited<strong>190</strong></div>
+              <div class="mini-kpi">Registered<strong>62 (33%)</strong></div>
+              <div class="mini-kpi">Active 90d<strong>34 (18%)</strong></div>
+              <div class="mini-kpi">Completion rate<strong>n/a (under 90d)</strong></div>
+            </div>
+            <div>
+              <div class="mini-kpi">Week live<strong>6</strong></div>
+              <div class="mini-kpi">Data completeness<strong>92%</strong></div>
+              <div class="insight" style="margin-top:8px;font-size:13px"><strong>So what?</strong> Too early to assess. Registration rate (33%) is within the range for a new deployment. First performance review at 90 days. The SDE cardiac cohort starts in Q3 &mdash; this deployment will contribute.</div>
+            </div>
+          </div>
+        </td></tr>
+        <tr><td>Respira COPD</td><td>COPD (acute)</td><td><span class="tag warn">Mobilising</span></td><td>HealthStore</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 11V3H8v6H2v12h20V11z"/></svg>
+    How you compare with other buyers
+  </h2>
+  <p class="section-note">Your position among 42 buyers on each measure &middot; anonymised; no other buyer is named and no price is shown.</p>
+  <div class="card">
+    <div class="chart-wrap">
+      <svg class="chart" viewBox="0 0 680 230" role="img" aria-label="Peer buyer ranking">
+        <g>
+          <text class="axlbl" x="172" y="44" text-anchor="end" font-size="12.5">COPD uptake rate</text>
+          <rect x="180" y="34" width="460" height="14" rx="7" fill="var(--grey-4)"/>
+          <rect x="180" y="34" width="331" height="14" rx="7" fill="var(--nhs-green)"/>
+          <circle cx="511" cy="41" r="9" fill="var(--nhs-dark-blue)"/>
+          <text class="vlbl" x="511" y="26" text-anchor="middle">12th of 42</text>
+
+          <text class="axlbl" x="172" y="104" text-anchor="end" font-size="12.5">Equity of uptake</text>
+          <rect x="180" y="94" width="460" height="14" rx="7" fill="var(--grey-4)"/>
+          <rect x="180" y="94" width="175" height="14" rx="7" fill="var(--nhs-warm-yellow)"/>
+          <circle cx="355" cy="101" r="9" fill="var(--nhs-dark-blue)"/>
+          <text class="vlbl" x="355" y="86" text-anchor="middle">26th of 42</text>
+
+          <text class="axlbl" x="172" y="164" text-anchor="end" font-size="12.5">Time to activation</text>
+          <rect x="180" y="154" width="460" height="14" rx="7" fill="var(--grey-4)"/>
+          <rect x="180" y="154" width="373" height="14" rx="7" fill="var(--nhs-green)"/>
+          <circle cx="553" cy="161" r="9" fill="var(--nhs-dark-blue)"/>
+          <text class="vlbl" x="553" y="146" text-anchor="middle">8th of 42</text>
+        </g>
+        <line class="ax" x1="180" y1="190" x2="640" y2="190"/>
+        <text class="axlbl" x="180" y="208" text-anchor="middle">Bottom</text>
+        <text class="axlbl" x="410" y="208" text-anchor="middle">Median (42 buyers)</text>
+        <text class="axlbl" x="640" y="208" text-anchor="middle">Top</text>
+      </svg>
+    </div>
+    <div class="insight" style="margin-top:6px">
+      <strong>Read&#8209;out.</strong> You adopt and activate faster than most buyers (8th), but you sit in the bottom half on equity of uptake (26th). The clinical opportunity and the equity opportunity point to the same action: invite the most deprived, highest&#8209;need patients you are currently missing.
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-top:24px">
+    <div class="card">
+      <h3>Uptake by deprivation &mdash; equity check</h3>
+      <p class="cap">Active users vs local COPD prevalence by IMD quintile (Respira COPD, community)</p>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 560 270" role="img" aria-label="Equity bars">
+          <line class="ax" x1="60" y1="210" x2="540" y2="210"/>
+          <g>
+            <rect x="84"  y="83"  width="26" height="127" fill="var(--nhs-purple)"/>
+            <rect x="112" y="134" width="26" height="76"  fill="var(--nhs-aqua)"/>
+            <text class="axlbl" x="111" y="226" text-anchor="middle">Q1 most</text>
+            <rect x="170" y="108" width="26" height="102" fill="var(--nhs-purple)"/>
+            <rect x="198" y="129" width="26" height="81"  fill="var(--nhs-aqua)"/>
+            <text class="axlbl" x="197" y="226" text-anchor="middle">Q2</text>
+            <rect x="256" y="125" width="26" height="85"  fill="var(--nhs-purple)"/>
+            <rect x="284" y="121" width="26" height="89"  fill="var(--nhs-aqua)"/>
+            <text class="axlbl" x="283" y="226" text-anchor="middle">Q3</text>
+            <rect x="342" y="146" width="26" height="64"  fill="var(--nhs-purple)"/>
+            <rect x="370" y="117" width="26" height="93"  fill="var(--nhs-aqua)"/>
+            <text class="axlbl" x="369" y="226" text-anchor="middle">Q4</text>
+            <rect x="428" y="163" width="26" height="47"  fill="var(--nhs-purple)"/>
+            <rect x="456" y="125" width="26" height="85"  fill="var(--nhs-aqua)"/>
+            <text class="axlbl" x="455" y="226" text-anchor="middle">Q5 least</text>
+          </g>
+          <text class="axlbl" x="54" y="214" text-anchor="end">0%</text>
+          <text class="axlbl" x="54" y="125" text-anchor="end">20%</text>
+          <text class="axlbl" x="54" y="40" text-anchor="end">40%</text>
+          <text x="300" y="258" text-anchor="middle" fill="var(--nhs-red)" font-size="12.5" font-weight="700">Take-up is flat across quintiles while need is highest in Q1 &mdash; an equity gap to close</text>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--nhs-purple)"></i> Share of COPD need</span>
+        <span><i style="background:var(--nhs-aqua)"></i> Share of active users</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Your performance vs safe comparator range</h3>
+      <p class="cap">Registration completion by pathway &middot; your value (dot) within national comparable range (bar)</p>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 560 270" role="img" aria-label="Comparator ranges">
+          <text class="axlbl" x="64" y="44" text-anchor="end">COPD</text>
+          <rect x="232" y="34" width="180" height="14" rx="7" fill="#cfe0f1"/>
+          <circle cx="367" cy="41" r="7" fill="var(--nhs-green)"/>
+          <text class="axlbl" x="64" y="94" text-anchor="end">Insomnia</text>
+          <rect x="160" y="84" width="180" height="14" rx="7" fill="#cfe0f1"/>
+          <circle cx="286" cy="91" r="7" fill="var(--nhs-green)"/>
+          <text class="axlbl" x="64" y="144" text-anchor="end">Anx &amp; dep</text>
+          <rect x="142" y="134" width="162" height="14" rx="7" fill="#cfe0f1"/>
+          <circle cx="169" cy="141" r="7" fill="var(--nhs-warm-yellow)"/>
+          <text class="axlbl" x="64" y="194" text-anchor="end">Diabetes</text>
+          <rect x="160" y="184" width="180" height="14" rx="7" fill="#cfe0f1"/>
+          <circle cx="124" cy="191" r="7" fill="var(--nhs-red)"/>
+          <line class="ax" x1="70" y1="220" x2="520" y2="220"/>
+          <text class="axlbl" x="70" y="236" text-anchor="middle">20%</text>
+          <text class="axlbl" x="295" y="236" text-anchor="middle">45%</text>
+          <text class="axlbl" x="520" y="236" text-anchor="middle">70%</text>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><i style="background:#cfe0f1"></i> National comparable range</span>
+        <span><i style="background:var(--nhs-green)"></i> Above</span>
+        <span><i style="background:var(--nhs-warm-yellow)"></i> In range</span>
+        <span><i style="background:var(--nhs-red)"></i> Below</span>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Buyer-decision tool &mdash; model the case before you commission</h2>
+  <p class="section-note">Combine your local eligible population with the approved national effect estimate to see the likely impact and indicative saving of deploying a therapeutic, before you buy. Move the sliders to test a deployment. A 50% confidence adjustment is applied throughout, in line with the programme&rsquo;s benefit-assumption discipline; unit costs are public reference figures, and price is never shown.</p>
+  <div class="card">
+    <div class="calc-grid">
+      <div>
+        <div class="calc-field">
+          <label for="calc-cond">Pathway</label>
+          <select class="nhsuk-select" id="calc-cond">
+            <option value="copd">COPD self-management</option>
+            <option value="cardiac">Cardiac rehabilitation</option>
+          </select>
+        </div>
+        <div class="calc-field">
+          <label for="calc-pop">Eligible population in your ICB <span class="calc-sub">(patients on the pathway register)</span></label>
+          <input type="range" id="calc-pop" min="2000" max="20000" step="500" value="9800">
+          <div><span class="rangeval" id="calc-pop-val">9,800</span> eligible patients</div>
+        </div>
+        <div class="calc-field">
+          <label for="calc-cov">Coverage you aim to reach <span class="calc-sub">(share invited and activated)</span></label>
+          <input type="range" id="calc-cov" min="5" max="50" step="1" value="12">
+          <div><span class="rangeval" id="calc-cov-val">12%</span> of the eligible cohort &middot; <span id="calc-active">1,176</span> active users</div>
+        </div>
+        <div class="insight" style="margin-top:6px">
+          <strong>How this is built.</strong> Active users are modelled from your reach. Each avoided event is the national Secure Data Environment effect estimate applied per active patient-year, then halved for confidence. This is a planning model, not a measured local outcome.
+        </div>
+      </div>
+      <div>
+        <div class="calc-out">
+          <div class="calc-sub" style="font-size:14px;color:var(--grey-1)">Indicative gross saving per year (50% confidence-adjusted)</div>
+          <div class="big" id="calc-saving">&pound;0</div>
+          <table>
+            <tr><td>Emergency attendances avoided</td><td id="calc-ae">0</td></tr>
+            <tr><td>Non-elective admissions avoided</td><td id="calc-adm">0</td></tr>
+            <tr><td>Bed-days released</td><td id="calc-bed">0</td></tr>
+            <tr><td>Unscheduled GP visits avoided</td><td id="calc-gp">0</td></tr>
+          </table>
+        </div>
+        <div class="footnote" id="calc-foot"></div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Business-case inputs</h2>
+  <div class="grid g3">
+    <div class="card">
+      <h3>COPD &mdash; modelled local impact</h3>
+      <p class="cap">SDE effect estimate (&pound;120 GP tariff, &pound;3,412 admission, &pound;197 A&amp;E), 50% confidence-adjusted</p>
+      <table class="tbl">
+        <tbody>
+          <tr><td>Active COPD users</td><td class="num">612</td></tr>
+          <tr><td>Emergency attendances avoided / yr</td><td class="num">~48</td></tr>
+          <tr><td>Non-elective admissions avoided / yr</td><td class="num">~22</td></tr>
+          <tr><td>Bed-days released / yr</td><td class="num">~110</td></tr>
+          <tr><td>Unscheduled GP visits avoided / yr</td><td class="num">~58</td></tr>
+          <tr><td>PIFU conversions (follow-ups freed)</td><td class="num">~135</td></tr>
+          <tr><td><strong>Indicative gross saving / yr</strong></td><td class="num" style="color:var(--nhs-green)"><strong>&pound;146k</strong></td></tr>
+        </tbody>
+      </table>
+      <div class="footnote">Before licence costs. Modelled from SDE effect estimate at 50% confidence, not a locally measured outcome.</div>
+    </div>
+    <div class="card">
+      <h3>Service quality &amp; safety</h3>
+      <table class="tbl">
+        <tbody>
+          <tr><td>Technical failures (period)</td><td class="num">9</td></tr>
+          <tr><td>Support contacts</td><td class="num">31</td></tr>
+          <tr><td>Median time to activation</td><td class="num">2 days</td></tr>
+          <tr><td>Data completeness</td><td class="num">96%</td></tr>
+          <tr><td>Safety escalations (count only)</td><td class="num">2</td></tr>
+          <tr><td>Escalation response time</td><td class="num">&lt; 4 hrs</td></tr>
+        </tbody>
+      </table>
+      <div class="footnote">Safety escalations are routed for clinical action in your local care pathway; HealthStore holds the count and response time only. No clinical detail is in this report.</div>
+    </div>
+    <div class="card">
+      <h3>If you closed the reach gap (6% &rarr; 12%)</h3>
+      <p class="cap">Systematic invitation to all eligible COPD patients across your GP practices</p>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 480 180" role="img" aria-label="Reach gap comparison">
+          <text x="130" y="20" text-anchor="end" font-size="13" fill="var(--grey-1)" font-weight="600">Today (6%)</text>
+          <rect x="134" y="6" width="60" height="22" rx="2" fill="var(--nhs-blue)"/>
+          <text x="200" y="22" font-size="12" fill="var(--nhs-blue)" font-weight="700">612 users &middot; &pound;146k/yr</text>
+          <text x="130" y="56" text-anchor="end" font-size="13" fill="var(--grey-1)" font-weight="600">At 12%</text>
+          <rect x="134" y="42" width="120" height="22" rx="2" fill="var(--nhs-green)"/>
+          <text x="260" y="58" font-size="12" fill="var(--nhs-green)" font-weight="700">1,220 users &middot; &pound;292k/yr</text>
+          <text x="130" y="92" text-anchor="end" font-size="13" fill="var(--grey-1)" font-weight="600">At 20%</text>
+          <rect x="134" y="78" width="200" height="22" rx="2" fill="var(--nhs-aqua)"/>
+          <text x="340" y="94" font-size="12" fill="var(--nhs-aqua)" font-weight="700">1,960 users &middot; &pound;470k/yr</text>
+          <line class="ax" x1="134" y1="118" x2="420" y2="118"/>
+          <text x="134" y="134" font-size="11" fill="var(--grey-1)" text-anchor="start">0</text>
+          <text x="250" y="134" font-size="11" fill="var(--grey-1)" text-anchor="middle">1,000</text>
+          <text x="380" y="134" font-size="11" fill="var(--grey-1)" text-anchor="middle">2,000 users</text>
+          <text x="134" y="160" font-size="12.5" fill="var(--grey-1)">All three scenarios sit within your contracted capacity (79% utilised).</text>
+          <text x="134" y="176" font-size="12.5" fill="var(--grey-1)">No additional licence cost for you; the lever is expanding the invitation.</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Local user demographics and waiting list contribution</h2>
+  <p class="section-note">How your active users compare to local disease prevalence by age, and the direct capacity you are releasing through PIFU and waiting-list bridging.</p>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Age profile vs local prevalence</h3>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 480 200" role="img" aria-label="Local age demographics">
+          <line class="ax" x1="100" y1="170" x2="460" y2="170"/>
+          <!-- paired bars for each age band -->
+          <text class="axlbl" x="94" y="36" text-anchor="end">18&ndash;49</text>
+          <rect x="100" y="24" width="52" height="18" rx="2" fill="var(--nhs-purple)"/><text class="vlbl" x="158" y="38" fill="var(--nhs-purple)">13%</text>
+          <rect x="100" y="44" width="60" height="18" rx="2" fill="var(--nhs-aqua)"/><text class="vlbl" x="166" y="58" fill="var(--nhs-aqua)">15%</text>
+          <text class="axlbl" x="94" y="82" text-anchor="end">50&ndash;64</text>
+          <rect x="100" y="70" width="112" height="18" rx="2" fill="var(--nhs-purple)"/><text class="vlbl" x="218" y="84" fill="var(--nhs-purple)">28%</text>
+          <rect x="100" y="90" width="124" height="18" rx="2" fill="var(--nhs-aqua)"/><text class="vlbl" x="230" y="104" fill="var(--nhs-aqua)">31%</text>
+          <text class="axlbl" x="94" y="128" text-anchor="end">65&ndash;74</text>
+          <rect x="100" y="116" width="128" height="18" rx="2" fill="var(--nhs-purple)"/><text class="vlbl" x="234" y="130" fill="var(--nhs-purple)">32%</text>
+          <rect x="100" y="136" width="144" height="18" rx="2" fill="var(--nhs-aqua)"/><text class="vlbl" x="250" y="150" fill="var(--nhs-aqua)">36%</text>
+          <text class="axlbl" x="94" y="174" text-anchor="end">75+</text>
+          <rect x="100" y="162" width="108" height="18" rx="2" fill="var(--nhs-purple)"/><text class="vlbl" x="214" y="176" fill="var(--nhs-purple)">27%</text>
+          <rect x="100" y="182" width="72" height="18" rx="2" fill="var(--nhs-aqua)"/><text class="vlbl" x="178" y="196" fill="var(--nhs-aqua)">18% <tspan fill="var(--nhs-red)" font-size="11">&minus;9pp</tspan></text>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--nhs-purple)"></i> Local prevalence</span>
+        <span><i style="background:var(--nhs-aqua)"></i> Your users</span>
+      </div>
+      <div class="insight warn" style="margin-top:10px">
+        <strong>So what?</strong> 75+ is your biggest age gap (&minus;9pp). These patients have the highest admission rates and would benefit most. Assisted onboarding &mdash; GP reception sign-up, family-member support &mdash; has closed similar gaps elsewhere.
+      </div>
+    </div>
+    <div class="card">
+      <h3>Waiting list and PIFU contribution</h3>
+      <p class="cap">1,180 active users across all pathways</p>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 480 160" role="img" aria-label="PIFU and waiting list">
+          <!-- funnel-style horizontal -->
+          <text x="10" y="28" font-size="13" fill="var(--grey-1)">All active users</text>
+          <rect x="160" y="14" width="300" height="26" rx="3" fill="var(--nhs-blue)"/>
+          <text x="310" y="32" text-anchor="middle" fill="#fff" font-size="12" font-weight="600">1,180</text>
+          <text x="10" y="64" font-size="13" fill="var(--grey-1)">On waiting list</text>
+          <rect x="160" y="50" width="42" height="26" rx="3" fill="var(--nhs-aqua)"/>
+          <text x="208" y="68" font-size="12" fill="var(--nhs-aqua)" font-weight="700">165 (14%)</text>
+          <text x="10" y="100" font-size="13" fill="var(--grey-1)">Converted to PIFU</text>
+          <rect x="160" y="86" width="57" height="26" rx="3" fill="var(--nhs-green)"/>
+          <text x="223" y="104" font-size="12" fill="var(--nhs-green)" font-weight="700">224 (19%) &middot; &pound;37k / yr freed</text>
+          <text x="10" y="140" font-size="12.5" fill="var(--grey-1)">Each PIFU conversion at &pound;167 per outpatient slot.</text>
+          <text x="10" y="156" font-size="12.5" fill="var(--grey-1)">This is capacity directly back into your outpatient backlog.</text>
+        </svg>
+      </div>
+      <div class="insight good" style="margin-top:6px">
+        <strong>So what?</strong> 1 in 5 of your DTx users no longer needs a scheduled follow-up. That is 224 outpatient slots freed, worth &pound;37k/yr, before counting avoided A&amp;E and admissions. This is the most directly attributable capacity release from your DTx investment.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== INTERNAL ===================== -->
+<section class="view" id="view-internal">
+  <div class="page-head">
+    <h1>HealthStore internal &mdash; the national picture</h1>
+    <p class="lede">National deployment, adoption, pathway variation, coverage gaps, market concentration, supplier compliance and data quality across the whole estate &mdash; the view that does not exist today. Patient&#8209;level evidence stays in the secure data environment; this is aggregate and organisational data only.</p>
+  </div>
+
+  <div class="grid g4">
+    <div class="kpi"><div class="label">Total deployments</div><div class="value">225</div><div class="delta flat">142 live &middot; 38 mobilising</div></div>
+    <div class="kpi k-aqua"><div class="label">National active users</div><div class="value">38.7k</div><div class="delta up">&#9650; 6% vs April</div></div>
+    <div class="kpi k-purple"><div class="label">Suppliers / products</div><div class="value">17 / 23</div><div class="delta flat">across 6 pathways</div></div>
+    <div class="kpi k-yellow"><div class="label">Feeds needing attention</div><div class="value">4</div><div class="delta down">&#9660; 1 rejected, 3 warnings</div></div>
+  </div>
+
+  <h2 class="section-title">National deployment map &mdash; drill from region to demographics</h2>
+  <p class="section-note">Coverage of the eligible population for the <strong id="map-cond-label">COPD self-management</strong> pathway, by NHS England region. Select a pathway in the filter at the top of the page, click a region to see its Integrated Care Boards, then an ICB to see its activations by age band and sex. Every figure is an aggregate count built from the minimum data set.</p>
+  <div class="card">
+    <div class="map-wrap">
+      <div>
+        <div id="tilemap"></div>
+        <div class="map-scale">
+          <span><i style="background:#d4351c"></i> Under 15%</span>
+          <span><i style="background:#f47738"></i> 15&ndash;29%</span>
+          <span><i style="background:#ffdd00"></i> 30&ndash;44%</span>
+          <span><i style="background:#85994b"></i> 45&ndash;59%</span>
+          <span><i style="background:#007f3b"></i> 60%+</span>
+        </div>
+      </div>
+      <div>
+        <div id="map-drill-crumb" class="drill-crumb"></div>
+        <div id="map-drill"></div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Commissioning-opportunity heatmap &mdash; where to drive adoption
+  </h2>
+  <p class="section-note">Coverage of the eligible population by pathway and NHS England region. Red cells are the largest unmet need; they are where HealthStore should focus supplier introductions and commissioner support. This doubles as the supplier market map.</p>
+  <div class="card">
+    <div class="chart-wrap">
+      <svg class="chart" viewBox="0 0 560 250" role="img" aria-label="Commissioning opportunity heatmap">
+        <g font-family="var(--font)" font-size="11">
+          <!-- column labels -->
+          <text class="axlbl" x="129" y="36" text-anchor="middle">NW</text>
+          <text class="axlbl" x="193" y="36" text-anchor="middle">NE&amp;Y</text>
+          <text class="axlbl" x="257" y="36" text-anchor="middle">Mid</text>
+          <text class="axlbl" x="321" y="36" text-anchor="middle">East</text>
+          <text class="axlbl" x="385" y="36" text-anchor="middle">Lon</text>
+          <text class="axlbl" x="449" y="36" text-anchor="middle">SE</text>
+          <text class="axlbl" x="513" y="36" text-anchor="middle">SW</text>
+
+          <!-- COPD row y44 -->
+          <text class="axlbl" x="92" y="63" text-anchor="end" font-size="12">COPD</text>
+          <rect x="98"  y="44" width="62" height="30" fill="#007f3b"/><text x="129" y="63" text-anchor="middle" fill="#fff" font-weight="700">62</text>
+          <rect x="162" y="44" width="62" height="30" fill="#007f3b"/><text x="193" y="63" text-anchor="middle" fill="#fff" font-weight="700">55</text>
+          <rect x="226" y="44" width="62" height="30" fill="#e9f6ee"/><text x="257" y="63" text-anchor="middle" fill="#006435" font-weight="700">48</text>
+          <rect x="290" y="44" width="62" height="30" fill="#e9f6ee"/><text x="321" y="63" text-anchor="middle" fill="#006435" font-weight="700">30</text>
+          <rect x="354" y="44" width="62" height="30" fill="#e9f6ee"/><text x="385" y="63" text-anchor="middle" fill="#006435" font-weight="700">41</text>
+          <rect x="418" y="44" width="62" height="30" fill="#e9f6ee"/><text x="449" y="63" text-anchor="middle" fill="#006435" font-weight="700">38</text>
+          <rect x="482" y="44" width="62" height="30" fill="#fff6e6"/><text x="513" y="63" text-anchor="middle" fill="#946200" font-weight="700">22</text>
+
+          <!-- Insomnia row y76 -->
+          <text class="axlbl" x="92" y="95" text-anchor="end" font-size="12">Insomnia</text>
+          <rect x="98"  y="76" width="62" height="30" fill="#e9f6ee"/><text x="129" y="95" text-anchor="middle" fill="#006435" font-weight="700">44</text>
+          <rect x="162" y="76" width="62" height="30" fill="#e9f6ee"/><text x="193" y="95" text-anchor="middle" fill="#006435" font-weight="700">38</text>
+          <rect x="226" y="76" width="62" height="30" fill="#007f3b"/><text x="257" y="95" text-anchor="middle" fill="#fff" font-weight="700">51</text>
+          <rect x="290" y="76" width="62" height="30" fill="#fff6e6"/><text x="321" y="95" text-anchor="middle" fill="#946200" font-weight="700">28</text>
+          <rect x="354" y="76" width="62" height="30" fill="#007f3b"/><text x="385" y="95" text-anchor="middle" fill="#fff" font-weight="700">60</text>
+          <rect x="418" y="76" width="62" height="30" fill="#e9f6ee"/><text x="449" y="95" text-anchor="middle" fill="#006435" font-weight="700">33</text>
+          <rect x="482" y="76" width="62" height="30" fill="#fff6e6"/><text x="513" y="95" text-anchor="middle" fill="#946200" font-weight="700">19</text>
+
+          <!-- Anx&Dep row y108 -->
+          <text class="axlbl" x="92" y="127" text-anchor="end" font-size="12">Anx &amp; dep</text>
+          <rect x="98"  y="108" width="62" height="30" fill="#e9f6ee"/><text x="129" y="127" text-anchor="middle" fill="#006435" font-weight="700">35</text>
+          <rect x="162" y="108" width="62" height="30" fill="#e9f6ee"/><text x="193" y="127" text-anchor="middle" fill="#006435" font-weight="700">40</text>
+          <rect x="226" y="108" width="62" height="30" fill="#e9f6ee"/><text x="257" y="127" text-anchor="middle" fill="#006435" font-weight="700">33</text>
+          <rect x="290" y="108" width="62" height="30" fill="#fff6e6"/><text x="321" y="127" text-anchor="middle" fill="#946200" font-weight="700">22</text>
+          <rect x="354" y="108" width="62" height="30" fill="#e9f6ee"/><text x="385" y="127" text-anchor="middle" fill="#006435" font-weight="700">47</text>
+          <rect x="418" y="108" width="62" height="30" fill="#e9f6ee"/><text x="449" y="127" text-anchor="middle" fill="#006435" font-weight="700">30</text>
+          <rect x="482" y="108" width="62" height="30" fill="#fff6e6"/><text x="513" y="127" text-anchor="middle" fill="#946200" font-weight="700">15</text>
+
+          <!-- Diabetes row y140 -->
+          <text class="axlbl" x="92" y="159" text-anchor="end" font-size="12">Diabetes</text>
+          <rect x="98"  y="140" width="62" height="30" fill="#fff6e6"/><text x="129" y="159" text-anchor="middle" fill="#946200" font-weight="700">28</text>
+          <rect x="162" y="140" width="62" height="30" fill="#fff6e6"/><text x="193" y="159" text-anchor="middle" fill="#946200" font-weight="700">22</text>
+          <rect x="226" y="140" width="62" height="30" fill="#e9f6ee"/><text x="257" y="159" text-anchor="middle" fill="#006435" font-weight="700">30</text>
+          <rect x="290" y="140" width="62" height="30" fill="#fbe7e6"/><text x="321" y="159" text-anchor="middle" fill="#9b1c14" font-weight="700">12</text>
+          <rect x="354" y="140" width="62" height="30" fill="#fff6e6"/><text x="385" y="159" text-anchor="middle" fill="#946200" font-weight="700">25</text>
+          <rect x="418" y="140" width="62" height="30" fill="#fff6e6"/><text x="449" y="159" text-anchor="middle" fill="#946200" font-weight="700">18</text>
+          <rect x="482" y="140" width="62" height="30" fill="#fbe7e6"/><text x="513" y="159" text-anchor="middle" fill="#9b1c14" font-weight="700">9</text>
+
+          <!-- Cardiac row y172 -->
+          <text class="axlbl" x="92" y="191" text-anchor="end" font-size="12">Cardiac</text>
+          <rect x="98"  y="172" width="62" height="30" fill="#fff6e6"/><text x="129" y="191" text-anchor="middle" fill="#946200" font-weight="700">18</text>
+          <rect x="162" y="172" width="62" height="30" fill="#fff6e6"/><text x="193" y="191" text-anchor="middle" fill="#946200" font-weight="700">14</text>
+          <rect x="226" y="172" width="62" height="30" fill="#fff6e6"/><text x="257" y="191" text-anchor="middle" fill="#946200" font-weight="700">20</text>
+          <rect x="290" y="172" width="62" height="30" fill="#fbe7e6"/><text x="321" y="191" text-anchor="middle" fill="#9b1c14" font-weight="700">8</text>
+          <rect x="354" y="172" width="62" height="30" fill="#fff6e6"/><text x="385" y="191" text-anchor="middle" fill="#946200" font-weight="700">22</text>
+          <rect x="418" y="172" width="62" height="30" fill="#fbe7e6"/><text x="449" y="191" text-anchor="middle" fill="#9b1c14" font-weight="700">12</text>
+          <rect x="482" y="172" width="62" height="30" fill="#fbe7e6"/><text x="513" y="191" text-anchor="middle" fill="#9b1c14" font-weight="700">6</text>
+
+          <!-- MSK row y204 -->
+          <text class="axlbl" x="92" y="223" text-anchor="end" font-size="12">MSK</text>
+          <rect x="98"  y="204" width="62" height="30" fill="#fbe7e6"/><text x="129" y="223" text-anchor="middle" fill="#9b1c14" font-weight="700">9</text>
+          <rect x="162" y="204" width="62" height="30" fill="#fbe7e6"/><text x="193" y="223" text-anchor="middle" fill="#9b1c14" font-weight="700">6</text>
+          <rect x="226" y="204" width="62" height="30" fill="#fff6e6"/><text x="257" y="223" text-anchor="middle" fill="#946200" font-weight="700">11</text>
+          <rect x="290" y="204" width="62" height="30" fill="#fbe7e6"/><text x="321" y="223" text-anchor="middle" fill="#9b1c14" font-weight="700">4</text>
+          <rect x="354" y="204" width="62" height="30" fill="#fff6e6"/><text x="385" y="223" text-anchor="middle" fill="#946200" font-weight="700">14</text>
+          <rect x="418" y="204" width="62" height="30" fill="#fbe7e6"/><text x="449" y="223" text-anchor="middle" fill="#9b1c14" font-weight="700">7</text>
+          <rect x="482" y="204" width="62" height="30" fill="#fbe7e6"/><text x="513" y="223" text-anchor="middle" fill="#9b1c14" font-weight="700">3</text>
+        </g>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:#fbe7e6"></i> Under 10% &mdash; major gap</span>
+      <span><i style="background:#fff6e6"></i> 10&ndash;29%</span>
+      <span><i style="background:#e9f6ee"></i> 30&ndash;49%</span>
+      <span><i style="background:#007f3b"></i> 50%+</span>
+    </div>
+    <div class="insight warn" style="margin-top:14px">
+      <strong>Where to act.</strong> Cardiac rehab and MSK are near&#8209;empty almost everywhere, and the South West trails on every pathway. These are the cells to target first: each is both a commissioning gap for the NHS and an open market for a willing supplier. HealthStore is uniquely placed to introduce the two.
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-top:6px">
+    <div class="card">
+      <h3>Deployments by status</h3>
+      <p class="cap">National deployment register &middot; May 2026</p>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 560 240" role="img" aria-label="Deployments by status">
+          <line class="ax" x1="130" y1="20" x2="130" y2="200"/>
+          <text class="axlbl" x="124" y="40" text-anchor="end">Live</text>
+          <rect x="130" y="28" width="379" height="22" rx="3" fill="var(--nhs-green)"/><text class="vlbl" x="515" y="44">142</text>
+          <text class="axlbl" x="124" y="76" text-anchor="end">Mobilising</text>
+          <rect x="130" y="64" width="101" height="22" rx="3" fill="var(--nhs-blue)"/><text class="vlbl" x="237" y="80">38</text>
+          <text class="axlbl" x="124" y="112" text-anchor="end">Planned</text>
+          <rect x="130" y="100" width="64" height="22" rx="3" fill="var(--nhs-light-blue)"/><text class="vlbl" x="200" y="116">24</text>
+          <text class="axlbl" x="124" y="148" text-anchor="end">Paused</text>
+          <rect x="130" y="136" width="24" height="22" rx="3" fill="var(--nhs-warm-yellow)"/><text class="vlbl" x="160" y="152">9</text>
+          <text class="axlbl" x="124" y="184" text-anchor="end">Ended</text>
+          <rect x="130" y="172" width="32" height="22" rx="3" fill="var(--grey-2)"/><text class="vlbl" x="168" y="188">12</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Market concentration &mdash; COPD pathway</h3>
+      <p class="cap">Share of active users by supplier (anonymised externally; named internally)</p>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 560 240" role="img" aria-label="Market share donut">
+          <g transform="translate(150,120)">
+            <circle r="90" fill="none" stroke="var(--grey-4)" stroke-width="38"/>
+            <circle r="90" fill="none" stroke="var(--nhs-blue)"       stroke-width="38" stroke-dasharray="260.1 305.4" transform="rotate(-90)"/>
+            <circle r="90" fill="none" stroke="var(--nhs-aqua)"       stroke-width="38" stroke-dasharray="152.7 412.8" stroke-dashoffset="-260.1" transform="rotate(-90)"/>
+            <circle r="90" fill="none" stroke="var(--nhs-light-blue)" stroke-width="38" stroke-dasharray="96.1 469.4" stroke-dashoffset="-412.8" transform="rotate(-90)"/>
+            <circle r="90" fill="none" stroke="var(--nhs-light-green)" stroke-width="38" stroke-dasharray="56.5 509" stroke-dashoffset="-508.9" transform="rotate(-90)"/>
+            <text y="-4" text-anchor="middle" font-size="15" font-weight="800" fill="var(--nhs-dark-blue)">COPD</text>
+            <text y="16" text-anchor="middle" font-size="12" fill="var(--grey-2)">17.8k users</text>
+          </g>
+          <g font-size="13" fill="var(--ink)">
+            <rect x="300" y="44" width="13" height="13" fill="var(--nhs-blue)"/><text x="320" y="55">Respira COPD &mdash; 46%</text>
+            <rect x="300" y="74" width="13" height="13" fill="var(--nhs-aqua)"/><text x="320" y="85">Alder Respiratory &mdash; 27%</text>
+            <rect x="300" y="104" width="13" height="13" fill="var(--nhs-light-blue)"/><text x="320" y="115">BreatheEasy &mdash; 17%</text>
+            <rect x="300" y="134" width="13" height="13" fill="var(--nhs-light-green)"/><text x="320" y="145">Three others &mdash; 10%</text>
+          </g>
+          <text x="320" y="180" font-size="12" fill="var(--grey-2)">Concentration (HHI): 0.32 &mdash; moderately concentrated</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+    Adoption by pathway
+  </h2>
+  <div class="card">
+    <p class="cap">Active users and live deployments by clinical pathway &middot; national, May 2026</p>
+    <div class="chart-wrap">
+      <svg class="chart" viewBox="0 0 720 260" role="img" aria-label="Adoption by pathway">
+        <line class="ax" x1="60" y1="200" x2="700" y2="200"/>
+        <g>
+          <rect x="80"  y="32"  width="70" height="168" fill="var(--nhs-blue)"/><text class="vlbl" x="115" y="24" text-anchor="middle">17.8k</text><text class="axlbl" x="115" y="216" text-anchor="middle">COPD</text><text class="axlbl" x="115" y="231" text-anchor="middle">52 live</text>
+          <rect x="190" y="116" width="70" height="84"  fill="var(--nhs-bright-blue)"/><text class="vlbl" x="225" y="108" text-anchor="middle">8.9k</text><text class="axlbl" x="225" y="216" text-anchor="middle">Insomnia</text><text class="axlbl" x="225" y="231" text-anchor="middle">31 live</text>
+          <rect x="300" y="140" width="70" height="60"  fill="var(--nhs-aqua)"/><text class="vlbl" x="335" y="132" text-anchor="middle">6.4k</text><text class="axlbl" x="335" y="216" text-anchor="middle">Anx &amp; dep</text><text class="axlbl" x="335" y="231" text-anchor="middle">28 live</text>
+          <rect x="410" y="171" width="70" height="29"  fill="var(--nhs-light-blue)"/><text class="vlbl" x="445" y="163" text-anchor="middle">3.1k</text><text class="axlbl" x="445" y="216" text-anchor="middle">Diabetes</text><text class="axlbl" x="445" y="231" text-anchor="middle">17 live</text>
+          <rect x="520" y="183" width="70" height="17"  fill="var(--nhs-light-green)"/><text class="vlbl" x="555" y="175" text-anchor="middle">1.8k</text><text class="axlbl" x="555" y="216" text-anchor="middle">Cardiac</text><text class="axlbl" x="555" y="231" text-anchor="middle">9 live</text>
+          <rect x="630" y="193" width="70" height="7"   fill="var(--grey-2)"/><text class="vlbl" x="665" y="185" text-anchor="middle">0.7k</text><text class="axlbl" x="665" y="216" text-anchor="middle">MSK</text><text class="axlbl" x="665" y="231" text-anchor="middle">5 live</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <h2 class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Supplier compliance &amp; data quality
+  </h2>
+  <div class="grid g2">
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="tbl">
+        <thead><tr><th>Supplier</th><th>Status</th><th class="num">Completeness</th><th class="num">On time</th></tr></thead>
+        <tbody>
+          <tr><td>Respira COPD</td><td><span class="tag ok">Accepted</span></td><td class="num">96%</td><td class="num">Yes</td></tr>
+          <tr><td>Alder Respiratory</td><td><span class="tag ok">Accepted</span></td><td class="num">94%</td><td class="num">Yes</td></tr>
+          <tr><td>Sleepwell</td><td><span class="tag ok">Accepted</span></td><td class="num">98%</td><td class="num">Yes</td></tr>
+          <tr><td>CalmPath</td><td><span class="tag warn">Warning</span></td><td class="num">88%</td><td class="num">Yes</td></tr>
+          <tr><td>GlucoGuide</td><td><span class="tag warn">Warning</span></td><td class="num">71%</td><td class="num">Late</td></tr>
+          <tr><td>BreatheEasy</td><td><span class="tag warn">Warning</span></td><td class="num">82%</td><td class="num">Yes</td></tr>
+          <tr><td>MoveWell MSK</td><td><span class="tag bad">Rejected</span></td><td class="num">&mdash;</td><td class="num">Schema fail</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Estate data quality</h3>
+      <p class="cap">Distribution of feed status across 17 suppliers</p>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 560 200" role="img" aria-label="Data quality distribution">
+          <rect x="40" y="60" width="310" height="44" fill="var(--nhs-green)"/>
+          <rect x="350" y="60" width="141" height="44" fill="var(--nhs-warm-yellow)"/>
+          <rect x="491" y="60" width="29" height="44" fill="var(--nhs-red)"/>
+          <text x="195" y="88" text-anchor="middle" fill="#fff" font-weight="700" font-size="14">11 accepted</text>
+          <text x="420" y="88" text-anchor="middle" fill="#3d2c00" font-weight="700" font-size="13">5 warning</text>
+          <text x="280" y="140" text-anchor="middle" fill="var(--grey-1)" font-size="13">1 rejected feed (MoveWell MSK) excluded from benchmarks until corrected</text>
+        </svg>
+      </div>
+      <div class="insight" style="margin-top:6px">
+        <strong>Action.</strong> A poor or partial feed is visibly labelled and cannot silently enter a benchmark. GlucoGuide&rsquo;s late, 71%-complete return is flagged and held out of the diabetes comparator this period.
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg>
+    Route mix &mdash; HealthStore vs other procurement
+  </h2>
+  <div class="card">
+    <p class="cap">Share of live deployments and their average data completeness, by procurement route</p>
+    <div class="grid g3" style="gap:14px">
+      <div class="kpi"><div class="label">Through HealthStore</div><div class="value">61%</div><div class="delta flat">87 of 142 live deployments</div></div>
+      <div class="kpi k-yellow"><div class="label">Other route</div><div class="value">39%</div><div class="delta flat">55 of 142 live deployments</div></div>
+      <div class="kpi k-green"><div class="label">Completeness gap</div><div class="value">+24pts</div><div class="delta up">96% vs 72% average</div></div>
+    </div>
+    <div class="insight warn" style="margin-top:16px">
+      <strong>Strategic signal.</strong> Two fifths of live deployments still sit outside HealthStore, and they account for most of the data-quality and conversion shortfall. Making the standard aggregate return and deployment update a condition of national listing is the lever that closes this gap.
+    </div>
+  </div>
+
+  <h2 class="section-title">National equity gap &mdash; who is using DTx vs who needs it</h2>
+  <p class="section-note">The deprivation gap is the single biggest estate-wide risk. This chart shows DTx uptake share against eligible population share by IMD quintile. The wider the gap in Q1, the more the programme is failing the people who would benefit most.</p>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Uptake vs need by deprivation</h3>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 520 280" role="img" aria-label="IMD equity gap">
+          <line class="ax" x1="60" y1="240" x2="480" y2="240"/>
+          <!-- Q1 -->
+          <rect x="72" y="132" width="30" height="108" fill="var(--nhs-purple)"/><rect x="104" y="190" width="30" height="50" fill="var(--nhs-aqua)"/>
+          <text class="axlbl" x="103" y="256" text-anchor="middle">Q1 most</text>
+          <!-- Q2 -->
+          <rect x="156" y="154" width="30" height="86" fill="var(--nhs-purple)"/><rect x="188" y="179" width="30" height="61" fill="var(--nhs-aqua)"/>
+          <text class="axlbl" x="187" y="256" text-anchor="middle">Q2</text>
+          <!-- Q3 -->
+          <rect x="240" y="168" width="30" height="72" fill="var(--nhs-purple)"/><rect x="272" y="161" width="30" height="79" fill="var(--nhs-aqua)"/>
+          <text class="axlbl" x="271" y="256" text-anchor="middle">Q3</text>
+          <!-- Q4 -->
+          <rect x="324" y="186" width="30" height="54" fill="var(--nhs-purple)"/><rect x="356" y="150" width="30" height="90" fill="var(--nhs-aqua)"/>
+          <text class="axlbl" x="355" y="256" text-anchor="middle">Q4</text>
+          <!-- Q5 -->
+          <rect x="408" y="200" width="30" height="40" fill="var(--nhs-purple)"/><rect x="440" y="161" width="30" height="79" fill="var(--nhs-aqua)"/>
+          <text class="axlbl" x="439" y="256" text-anchor="middle">Q5 least</text>
+          <!-- gap annotation -->
+          <line x1="87" y1="125" x2="87" y2="190" stroke="var(--nhs-red)" stroke-width="2" stroke-dasharray="3 2"/>
+          <line x1="119" y1="125" x2="119" y2="190" stroke="var(--nhs-red)" stroke-width="2" stroke-dasharray="3 2"/>
+          <line x1="87" y1="125" x2="119" y2="125" stroke="var(--nhs-red)" stroke-width="2"/>
+          <text x="103" y="118" text-anchor="middle" fill="var(--nhs-red)" font-size="12" font-weight="700">&minus;16pp gap</text>
+          <text class="axlbl" x="54" y="244" text-anchor="end">0%</text>
+          <text class="axlbl" x="54" y="168" text-anchor="end">20%</text>
+          <text class="axlbl" x="54" y="96" text-anchor="end">40%</text>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--nhs-purple)"></i> Share of LTC need</span>
+        <span><i style="background:var(--nhs-aqua)"></i> Share of DTx users</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>So what? Two actions for the programme</h3>
+      <div class="insight warn">
+        <strong>1. Make equity a gate, not a metric.</strong> IMD Q1 holds 30% of long-term condition need but only 14% of active DTx users. This gradient is consistent across every pathway and region. HealthStore should require suppliers to report uptake by deprivation quintile and flag any product where Q1 share falls below 20%.
+      </div>
+      <div class="insight" style="margin-top:10px">
+        <strong>2. Fund assisted onboarding in deprived areas.</strong> The SDE study shows the clinical effect is <em>larger</em> in Q1 (&minus;19% admissions vs &minus;9% in Q5). The bottleneck is not efficacy but access. Telephony-assisted sign-up, SMS-only pathways, and community hub support have closed similar gaps in Talking Therapies.
+      </div>
+      <h3 style="margin-top:20px">National capacity release (modelled)</h3>
+      <div class="grid g2" style="gap:10px">
+        <div class="kpi" style="padding:14px"><div class="label">Outpatient slots freed / yr</div><div class="value" style="font-size:28px">~6,966</div><div class="delta up">&pound;1.16m</div></div>
+        <div class="kpi" style="padding:14px"><div class="label">Admissions avoided / yr</div><div class="value" style="font-size:28px">~1,350</div><div class="delta up">&pound;4.61m</div></div>
+      </div>
+      <div class="footnote" style="margin-top:8px">50% confidence-adjusted. COPD estate only.</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Month-on-month estate growth</h2>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Active users and deployments</h3>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 520 220" role="img" aria-label="Estate growth">
+          <line class="ax" x1="50" y1="170" x2="490" y2="170"/>
+          <line class="ax" x1="50" y1="20" x2="50" y2="170"/>
+          <line class="ax" x1="50" y1="95" x2="490" y2="95" stroke-dasharray="3 3" opacity=".4"/>
+          <text class="axlbl" x="44" y="174" text-anchor="end">0</text>
+          <text class="axlbl" x="44" y="98" text-anchor="end">20k</text>
+          <text class="axlbl" x="44" y="24" text-anchor="end">40k</text>
+          <!-- active users area: 29400,31200,33100,34800,36500,38700 → y=170-(val/40000*150) -->
+          <polygon fill="#e8f0f9" points="124,60 198,53 272,46 346,40 420,33 490,25 490,170 124,170"/>
+          <polyline fill="none" stroke="var(--nhs-blue)" stroke-width="3" points="124,60 198,53 272,46 346,40 420,33 490,25"/>
+          <g fill="var(--nhs-blue)"><circle cx="124" cy="60" r="3.5"/><circle cx="198" cy="53" r="3.5"/><circle cx="272" cy="46" r="3.5"/><circle cx="346" cy="40" r="3.5"/><circle cx="420" cy="33" r="3.5"/><circle cx="490" cy="25" r="5"/></g>
+          <text class="vlbl" x="490" y="18" text-anchor="end" fill="var(--nhs-blue)">38.7k users</text>
+          <!-- deployments bar: 108,114,121,128,131,142 → height = val/150*150*0.6 at bottom -->
+          <rect x="112" y="62" width="24" height="108" rx="2" fill="var(--nhs-light-blue)" opacity=".5"/>
+          <rect x="186" y="56" width="24" height="114" rx="2" fill="var(--nhs-light-blue)" opacity=".5"/>
+          <rect x="260" y="49" width="24" height="121" rx="2" fill="var(--nhs-light-blue)" opacity=".5"/>
+          <rect x="334" y="42" width="24" height="128" rx="2" fill="var(--nhs-light-blue)" opacity=".5"/>
+          <rect x="408" y="39" width="24" height="131" rx="2" fill="var(--nhs-light-blue)" opacity=".5"/>
+          <rect x="478" y="28" width="24" height="142" rx="2" fill="var(--nhs-light-blue)" opacity=".5"/>
+          <text class="axlbl" x="124" y="186" text-anchor="middle">Dec</text>
+          <text class="axlbl" x="198" y="186" text-anchor="middle">Jan</text>
+          <text class="axlbl" x="272" y="186" text-anchor="middle">Feb</text>
+          <text class="axlbl" x="346" y="186" text-anchor="middle">Mar</text>
+          <text class="axlbl" x="420" y="186" text-anchor="middle">Apr</text>
+          <text class="axlbl" x="490" y="186" text-anchor="middle">May</text>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--nhs-blue)"></i> Active users</span>
+        <span><i style="background:var(--nhs-light-blue);opacity:.5"></i> Live deployments</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Key estate metrics</h3>
+      <table class="tbl">
+        <thead><tr><th></th><th class="num">Dec 25</th><th class="num">May 26</th><th class="num">Change</th></tr></thead>
+        <tbody>
+          <tr><td>Live deployments</td><td class="num">108</td><td class="num"><strong>142</strong></td><td class="num" style="color:var(--nhs-green)">+31%</td></tr>
+          <tr><td>Active users</td><td class="num">29.4k</td><td class="num"><strong>38.7k</strong></td><td class="num" style="color:var(--nhs-green)">+32%</td></tr>
+          <tr><td>ICBs with live DTx</td><td class="num">22</td><td class="num"><strong>28</strong></td><td class="num" style="color:var(--nhs-green)">+27%</td></tr>
+          <tr><td>Participating suppliers</td><td class="num">14</td><td class="num"><strong>17</strong></td><td class="num" style="color:var(--nhs-green)">+21%</td></tr>
+          <tr><td>Data completeness</td><td class="num">87%</td><td class="num"><strong>93%</strong></td><td class="num" style="color:var(--nhs-green)">+6pp</td></tr>
+          <tr><td>HealthStore route share</td><td class="num">54%</td><td class="num"><strong>61%</strong></td><td class="num" style="color:var(--nhs-green)">+7pp</td></tr>
+        </tbody>
+      </table>
+      <div class="insight good" style="margin-top:10px">
+        <strong>So what?</strong> Every metric is trending in the right direction. The programme is growing at ~6% month-on-month and the HealthStore route is winning organically. At this pace, 50,000 active users by Q4 2026 is achievable &mdash; and each new user comes through a standard, benchmarkable channel.
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Programme financials &mdash; return on investment</h2>
+  <p class="section-note">NHSE programme cost over two financial years against the modelled annual gross saving from the current COPD estate. Each additional pathway reuses the same infrastructure at near-zero marginal programme cost.</p>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Investment vs return</h3>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 480 200" role="img" aria-label="ROI comparison">
+          <!-- cost bar -->
+          <text class="axlbl" x="146" y="50" text-anchor="end" font-size="13">Programme cost</text>
+          <text class="axlbl" x="146" y="66" text-anchor="end">(2-year total)</text>
+          <rect x="150" y="38" width="87" height="38" rx="3" fill="var(--nhs-red)"/>
+          <text x="245" y="62" fill="var(--nhs-red)" font-size="15" font-weight="700">&pound;3.1m</text>
+          <!-- return bar -->
+          <text class="axlbl" x="146" y="114" text-anchor="end" font-size="13">Modelled gross</text>
+          <text class="axlbl" x="146" y="130" text-anchor="end">saving per year</text>
+          <rect x="150" y="102" width="314" height="38" rx="3" fill="var(--nhs-green)"/>
+          <text x="245" y="126" fill="#fff" font-size="15" font-weight="700">&pound;11.1m / yr (COPD only)</text>
+          <!-- scale -->
+          <line class="ax" x1="150" y1="160" x2="464" y2="160"/>
+          <text class="axlbl" x="150" y="176" text-anchor="middle">&pound;0</text>
+          <text class="axlbl" x="290" y="176" text-anchor="middle">&pound;5m</text>
+          <text class="axlbl" x="430" y="176" text-anchor="middle">&pound;10m</text>
+        </svg>
+      </div>
+      <div class="insight good" style="margin-top:4px">
+        <strong>3.6&times; return in year one.</strong> The COPD pathway alone pays back the total two-year programme investment three and a half times over, every year. Adding insomnia, cardiac rehab, and anxiety pathways would multiply this without proportional cost increase.
+      </div>
+    </div>
+    <div class="card">
+      <h3>Where the saving comes from</h3>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 480 200" role="img" aria-label="Saving breakdown">
+          <!-- stacked horizontal bar -->
+          <rect x="40" y="40" width="189" height="44" fill="var(--nhs-dark-blue)"/>
+          <rect x="229" y="40" width="124" height="44" fill="var(--nhs-blue)"/>
+          <rect x="353" y="40" width="48" height="44" fill="var(--nhs-bright-blue)"/>
+          <rect x="401" y="40" width="71" height="44" fill="var(--nhs-light-blue)"/>
+          <text x="134" y="68" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">Admissions &pound;4.6m</text>
+          <text x="291" y="68" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">Bed-days &pound;3.0m</text>
+          <text x="437" y="30" fill="var(--grey-1)" font-size="11" font-weight="600">GP &pound;1.7m</text>
+          <line x1="437" y1="34" x2="437" y2="40" stroke="var(--grey-3)"/>
+          <!-- legend below -->
+          <rect x="40" y="110" width="13" height="13" fill="var(--nhs-dark-blue)"/><text x="60" y="121" font-size="12" fill="var(--ink)">Avoided admissions &pound;4.61m (41%)</text>
+          <rect x="40" y="132" width="13" height="13" fill="var(--nhs-blue)"/><text x="60" y="143" font-size="12" fill="var(--ink)">Released bed-days &pound;3.02m (27%)</text>
+          <rect x="260" y="110" width="13" height="13" fill="var(--nhs-bright-blue)"/><text x="280" y="121" font-size="12" fill="var(--ink)">GP visits &pound;1.74m (16%)</text>
+          <rect x="260" y="132" width="13" height="13" fill="var(--nhs-light-blue)"/><text x="280" y="143" font-size="12" fill="var(--ink)">PIFU + A&amp;E &pound;1.77m (16%)</text>
+        </svg>
+      </div>
+      <div class="footnote">50% confidence-adjusted. COPD products only. Excludes DTx licence costs (local commissioner spend). Each 1% of outpatient avoidance nationally is worth ~&pound;16m.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== OUTCOMES ===================== -->
+<section class="view" id="view-outcomes">
+  <div class="page-head">
+    <h1>Outcome evidence &mdash; linked NHS records</h1>
+    <p class="lede">Routine reporting measures adoption and use. It cannot prove clinical impact. These results come from approved studies in the NHS England Secure Data Environment, linking DTx use to Hospital Episode Statistics, Emergency Care Data Set and community records. Only disclosure-checked aggregate results leave the SDE.</p>
+  </div>
+
+  <div class="subtabs" id="ev-tabs">
+    <button class="active" data-ev="copd">COPD self-management</button>
+    <button data-ev="insomnia">Insomnia CBT-I</button>
+    <button data-ev="anxiety">Anxiety &amp; depression</button>
+    <button data-ev="cardiac">Cardiac rehabilitation</button>
+  </div>
+
+  <!-- ---- COPD evidence (shown by default) ---- -->
+  <div class="ev-panel active" id="ev-copd">
+  <div class="insight" style="margin-bottom:22px">
+    <strong>Study design.</strong> Respira COPD &middot; exposed cohort 8,940 vs propensity-score matched comparator 9,210 &middot; 12-month follow-up &middot; adjusted for age, sex, IMD quintile, comorbidity count, prior exacerbation rate and smoking status &middot; HES APC, ECDS and GPES datasets. Observational association, not proof of causation.
+  </div>
+
+  <h2 class="section-title">Population characteristics</h2>
+  <div class="grid g2">
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="tbl">
+        <thead><tr><th></th><th class="num">Exposed (n=8,940)</th><th class="num">Matched comparator (n=9,210)</th><th class="num">SMD</th></tr></thead>
+        <tbody>
+          <tr><td>Mean age (years)</td><td class="num">64.2</td><td class="num">64.5</td><td class="num">0.02</td></tr>
+          <tr><td>Female (%)</td><td class="num">54.1</td><td class="num">53.8</td><td class="num">0.01</td></tr>
+          <tr><td>IMD Q1 most deprived (%)</td><td class="num">28.6</td><td class="num">28.2</td><td class="num">0.01</td></tr>
+          <tr><td>Mean comorbidity count</td><td class="num">2.4</td><td class="num">2.5</td><td class="num">0.03</td></tr>
+          <tr><td>Prior exacerbations / yr</td><td class="num">1.8</td><td class="num">1.9</td><td class="num">0.04</td></tr>
+          <tr><td>Current smoker (%)</td><td class="num">18.3</td><td class="num">19.1</td><td class="num">0.02</td></tr>
+          <tr><td>On waiting list at index (%)</td><td class="num">12.1</td><td class="num">12.4</td><td class="num">0.01</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Cohort demographics</h3>
+      <p class="cap">Age distribution of exposed users</p>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 480 180" role="img" aria-label="Age distribution">
+          <line class="ax" x1="60" y1="140" x2="440" y2="140"/>
+          <rect x="75" y="124" width="50" height="16" fill="var(--nhs-light-blue)"/><text class="axlbl" x="100" y="156" text-anchor="middle">18-34</text><text class="vlbl" x="100" y="118" text-anchor="middle">4%</text>
+          <rect x="140" y="94" width="50" height="46" fill="var(--nhs-light-blue)"/><text class="axlbl" x="165" y="156" text-anchor="middle">35-49</text><text class="vlbl" x="165" y="88" text-anchor="middle">12%</text>
+          <rect x="205" y="44" width="50" height="96" fill="var(--nhs-blue)"/><text class="axlbl" x="230" y="156" text-anchor="middle">50-64</text><text class="vlbl" x="230" y="38" text-anchor="middle">31%</text>
+          <rect x="270" y="24" width="50" height="116" fill="var(--nhs-dark-blue)"/><text class="axlbl" x="295" y="156" text-anchor="middle">65-74</text><text class="vlbl" x="295" y="18" text-anchor="middle">36%</text>
+          <rect x="335" y="74" width="50" height="66" fill="var(--nhs-bright-blue)"/><text class="axlbl" x="360" y="156" text-anchor="middle">75-84</text><text class="vlbl" x="360" y="68" text-anchor="middle">14%</text>
+          <rect x="400" y="120" width="50" height="20" fill="var(--grey-2)"/><text class="axlbl" x="425" y="156" text-anchor="middle">85+</text><text class="vlbl" x="425" y="114" text-anchor="middle">3%</text>
+        </svg>
+      </div>
+      <div class="footnote">67% of the exposed cohort are aged 50&ndash;74. Under-representation in 18&ndash;34 reflects COPD epidemiology; 85+ under-representation reflects digital exclusion.</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Adjusted effect on health-service use</h2>
+  <div class="card">
+    <p class="cap">Relative change vs matched comparator, with 95% confidence interval. Left of the line = reduction (better). Based on 1.2 million diagnosed COPD patients nationally and 135 million outpatient appointments/year.</p>
+    <div class="chart-wrap">
+      <svg class="chart" viewBox="0 0 720 370" role="img" aria-label="Forest plot of outcomes">
+        <line x1="550" y1="30" x2="550" y2="330" stroke="var(--grey-1)" stroke-width="1.5"/>
+        <text x="550" y="350" text-anchor="middle" class="axlbl">0 (no change)</text>
+        <text x="300" y="350" text-anchor="middle" class="axlbl">&minus;20%</text>
+        <text x="440" y="350" text-anchor="middle" class="axlbl">&minus;10%</text>
+        <text x="640" y="350" text-anchor="middle" class="axlbl">+10%</text>
+        <text x="200" y="20" class="axlbl">Better (fewer events)</text>
+        <text x="660" y="20" text-anchor="end" class="axlbl">Worse</text>
+
+        <text x="210" y="58" text-anchor="end" font-size="13" font-weight="600">COPD emergency attendances</text>
+        <line x1="286" y1="54" x2="429" y2="54" stroke="var(--nhs-blue)" stroke-width="3"/>
+        <circle cx="352" cy="54" r="7" fill="var(--nhs-blue)"/>
+        <text x="468" y="58" font-size="12.5" font-weight="700" fill="var(--nhs-dark-blue)">&minus;18% (&minus;24 to &minus;11)</text>
+
+        <text x="210" y="108" text-anchor="end" font-size="13" font-weight="600">Non-elective admissions</text>
+        <line x1="319" y1="104" x2="484" y2="104" stroke="var(--nhs-blue)" stroke-width="3"/>
+        <circle cx="396" cy="104" r="7" fill="var(--nhs-blue)"/>
+        <text x="500" y="108" font-size="12.5" font-weight="700" fill="var(--nhs-dark-blue)">&minus;14% (&minus;21 to &minus;6)</text>
+
+        <text x="210" y="158" text-anchor="end" font-size="13" font-weight="600">30-day readmission</text>
+        <line x1="363" y1="154" x2="539" y2="154" stroke="var(--nhs-blue)" stroke-width="3"/>
+        <circle cx="451" cy="154" r="7" fill="var(--nhs-blue)"/>
+        <text x="556" y="158" font-size="12.5" font-weight="700" fill="var(--nhs-dark-blue)">&minus;9% (&minus;17 to &minus;1)</text>
+
+        <text x="210" y="208" text-anchor="end" font-size="13" font-weight="600">Unscheduled GP visits</text>
+        <line x1="330" y1="204" x2="462" y2="204" stroke="var(--nhs-blue)" stroke-width="3"/>
+        <circle cx="396" cy="204" r="7" fill="var(--nhs-blue)"/>
+        <text x="478" y="208" font-size="12.5" font-weight="700" fill="var(--nhs-dark-blue)">&minus;19% (&minus;26 to &minus;10)</text>
+
+        <text x="210" y="258" text-anchor="end" font-size="13" font-weight="600">Pulmonary rehab uptake</text>
+        <line x1="627" y1="254" x2="737" y2="254" stroke="var(--nhs-green)" stroke-width="3"/>
+        <circle cx="682" cy="254" r="7" fill="var(--nhs-green)"/>
+        <text x="470" y="258" text-anchor="end" font-size="12.5" font-weight="700" fill="#006435">+12pp (+7 to +17)</text>
+
+        <text x="210" y="308" text-anchor="end" font-size="13" font-weight="600">PIFU conversion rate</text>
+        <line x1="594" y1="304" x2="700" y2="304" stroke="var(--nhs-green)" stroke-width="3"/>
+        <circle cx="649" cy="304" r="7" fill="var(--nhs-green)"/>
+        <text x="470" y="308" text-anchor="end" font-size="12.5" font-weight="700" fill="#006435">+8pp (+4 to +13)</text>
+      </svg>
+    </div>
+    <div class="footnote">Unscheduled GP visit reduction (19%) aligns with published myCOPD real-world data. PIFU conversion = share of patients switching from scheduled to patient-initiated follow-up. Pulmonary rehab uptake is a desired increase.</div>
+  </div>
+
+  <h2 class="section-title">Subgroup analysis &mdash; does it work for everyone?</h2>
+  <p class="section-note">Non-elective admission reduction by patient subgroup. Confidence intervals overlap across most subgroups, suggesting broadly consistent effect. Equity gap is in <em>uptake</em>, not in <em>effect once using</em>.</p>
+  <div class="grid g2">
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="tbl">
+        <thead><tr><th>Subgroup</th><th class="num">n (exposed)</th><th class="num">Admission reduction</th><th class="num">95% CI</th></tr></thead>
+        <tbody>
+          <tr><td><strong>By age</strong></td><td></td><td></td><td></td></tr>
+          <tr><td>&nbsp;&nbsp;Under 50</td><td class="num">1,430</td><td class="num" style="color:var(--nhs-green)">&minus;16%</td><td class="num">&minus;27 to &minus;3</td></tr>
+          <tr><td>&nbsp;&nbsp;50&ndash;64</td><td class="num">2,770</td><td class="num" style="color:var(--nhs-green)">&minus;15%</td><td class="num">&minus;23 to &minus;6</td></tr>
+          <tr><td>&nbsp;&nbsp;65&ndash;74</td><td class="num">3,220</td><td class="num" style="color:var(--nhs-green)">&minus;14%</td><td class="num">&minus;22 to &minus;5</td></tr>
+          <tr><td>&nbsp;&nbsp;75+</td><td class="num">1,520</td><td class="num" style="color:var(--nhs-green)">&minus;11%</td><td class="num">&minus;22 to +1</td></tr>
+          <tr><td><strong>By sex</strong></td><td></td><td></td><td></td></tr>
+          <tr><td>&nbsp;&nbsp;Female</td><td class="num">4,836</td><td class="num" style="color:var(--nhs-green)">&minus;15%</td><td class="num">&minus;23 to &minus;6</td></tr>
+          <tr><td>&nbsp;&nbsp;Male</td><td class="num">4,104</td><td class="num" style="color:var(--nhs-green)">&minus;13%</td><td class="num">&minus;21 to &minus;4</td></tr>
+          <tr><td><strong>By deprivation (IMD)</strong></td><td></td><td></td><td></td></tr>
+          <tr><td>&nbsp;&nbsp;Q1 most deprived</td><td class="num">2,557</td><td class="num" style="color:var(--nhs-green)">&minus;19%</td><td class="num">&minus;28 to &minus;9</td></tr>
+          <tr><td>&nbsp;&nbsp;Q2</td><td class="num">2,146</td><td class="num" style="color:var(--nhs-green)">&minus;15%</td><td class="num">&minus;25 to &minus;4</td></tr>
+          <tr><td>&nbsp;&nbsp;Q3</td><td class="num">1,877</td><td class="num" style="color:var(--nhs-green)">&minus;13%</td><td class="num">&minus;24 to &minus;1</td></tr>
+          <tr><td>&nbsp;&nbsp;Q4</td><td class="num">1,340</td><td class="num" style="color:var(--nhs-green)">&minus;11%</td><td class="num">&minus;23 to +2</td></tr>
+          <tr><td>&nbsp;&nbsp;Q5 least deprived</td><td class="num">1,020</td><td class="num" style="color:var(--nhs-green)">&minus;9%</td><td class="num">&minus;22 to +5</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3>What the subgroups mean</h3>
+      <div class="insight good">
+        <strong>The effect is larger in deprived populations.</strong> Admission reduction in IMD Q1 (&minus;19%) is double Q5 (&minus;9%). This means the clinical return per pound spent is highest where health need is greatest &mdash; but only if those patients are reached. Currently they are under-represented in uptake (see Buyer view equity check).
+      </div>
+      <div class="insight" style="margin-top:12px">
+        <strong>75+ shows a wide confidence interval.</strong> The point estimate (&minus;11%) is clinically meaningful but the interval crosses zero. Digital exclusion in this age group limits both uptake and the precision of the estimate. Assisted onboarding may close the gap.
+      </div>
+      <h3 style="margin-top:20px">Number needed to treat</h3>
+      <table class="tbl">
+        <tbody>
+          <tr><td>NNT to avoid 1 emergency attendance / yr</td><td class="num"><strong>6</strong></td></tr>
+          <tr><td>NNT to avoid 1 non-elective admission / yr</td><td class="num"><strong>14</strong></td></tr>
+          <tr><td>NNT to convert 1 additional patient to PIFU</td><td class="num"><strong>13</strong></td></tr>
+        </tbody>
+      </table>
+      <div class="footnote">NNT based on absolute risk difference in the matched cohort. Lower = more efficient.</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">National cost-effectiveness estimate</h2>
+  <p class="section-note">Applying the SDE effect estimates to the national COPD population, using published NHS reference costs. Real-world economics from the myCOPD evaluations show a 19% fall in unscheduled GP visits and near-elimination of short-term readmissions when engagement is sustained.</p>
+  <div class="grid g4">
+    <div class="kpi"><div class="label">COPD diagnosed nationally</div><div class="value" style="font-size:28px">1.2m</div><div class="delta flat">QOF register, England</div></div>
+    <div class="kpi k-green"><div class="label">If 10% use a DTx</div><div class="value" style="font-size:28px">120k</div><div class="delta flat">active users nationally</div></div>
+    <div class="kpi k-aqua"><div class="label">Emergency attendances avoided / yr</div><div class="value" style="font-size:28px">~9,600</div><div class="delta up">at &minus;18% effect, 50% adjusted</div></div>
+    <div class="kpi k-purple"><div class="label">Indicative gross saving</div><div class="value" style="font-size:24px">&pound;28.5m</div><div class="delta up">before licence costs</div></div>
+  </div>
+  <div class="grid g2" style="margin-top:18px">
+    <div class="card">
+      <h3>Unit economics</h3>
+      <p class="cap">Published NHS reference costs applied to the SDE effect estimate, 50% confidence-adjusted</p>
+      <table class="tbl">
+        <tbody>
+          <tr><td>Avoided emergency attendance</td><td class="num">&pound;197 each</td><td class="num">~4,800 avoided &middot; <strong>&pound;0.9m</strong></td></tr>
+          <tr><td>Avoided non-elective admission</td><td class="num">&pound;3,412 each</td><td class="num">~2,100 avoided &middot; <strong>&pound;7.2m</strong></td></tr>
+          <tr><td>Avoided bed-day</td><td class="num">&pound;450 each</td><td class="num">~10,500 released &middot; <strong>&pound;4.7m</strong></td></tr>
+          <tr><td>Avoided unscheduled GP visit</td><td class="num">&pound;120 each</td><td class="num">~22,800 avoided &middot; <strong>&pound;2.7m</strong></td></tr>
+          <tr><td>PIFU conversion (follow-up slot freed)</td><td class="num">&pound;167 each</td><td class="num">~9,600 freed &middot; <strong>&pound;1.6m</strong></td></tr>
+        </tbody>
+      </table>
+      <div class="footnote">Each percentage point of outpatient avoidance nationally is worth approximately &pound;16m. If DTx cut only 5% of follow-ups across the 135 million appointments nationally, that frees ~6.7 million slots &mdash; roughly the annual output of 8 large teaching hospitals.</div>
+    </div>
+    <div class="card">
+      <h3>What this means for waiting lists</h3>
+      <div class="insight good">
+        <strong>Freed capacity directly reduces backlog pressure.</strong> Three-quarters of the 135 million outpatient appointments relate to long-term conditions patients largely manage themselves. Each avoided follow-up, each PIFU conversion, and each prevented admission frees capacity that shortens waits elsewhere.
+      </div>
+      <p style="font-size:13.5px;color:var(--grey-1);margin:14px 0 0">COPD alone accounts for over 700,000 emergency department attendances and 140,000 emergency admissions annually. The SDE estimate suggests DTx at 10% population coverage could avoid 9,600 of those attendances and 2,100 admissions per year &mdash; roughly the emergency COPD workload of 3 large acute trusts.</p>
+      <div class="insight warn" style="margin-top:12px">
+        <strong>Licence costs are not shown.</strong> Gross savings above would be partially offset by DTx licence, integration and support costs. Unit licence costs vary by product and contract model and are excluded from this reporting service. A commissioner should use the Buyer-decision tool to model net impact using local pricing.</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Evidence tracker &mdash; all products and pathways</h2>
+  <p class="section-note">Click any row to see a short evidence profile. SDE studies take 12&ndash;18 months. Products without SDE data rely on published trials and NICE EVA for their commissioning case.</p>
+  <div class="grid g2">
+    <div class="card" style="padding:0">
+      <table class="tbl" id="ev-tracker-tbl">
+        <thead><tr><th>Product</th><th>NICE EVA</th><th>SDE study</th><th class="num">Adm. effect</th></tr></thead>
+        <tbody>
+          <tr class="expandable" data-detail="evd-respira"><td>Respira COPD</td><td><span class="evstatus ev-have"><i></i> Positive</span></td><td><span class="evstatus ev-have"><i></i> Complete</span></td><td class="num" style="color:var(--nhs-green)">&minus;14%</td></tr>
+          <tr class="detail-row" id="evd-respira"><td colspan="4">
+            <div class="detail-inner"><div>
+              <div class="mini-kpi">Published evidence<strong>3 RCTs, 2 RWE</strong></div>
+              <div class="mini-kpi">SDE follow-up<strong>12 months</strong></div>
+              <div class="mini-kpi">GP visit effect<strong style="color:var(--nhs-green)">&minus;19%</strong></div>
+            </div><div>
+              <div class="mini-kpi">Bed-days saved / user<strong>0.35</strong></div>
+              <div class="mini-kpi">PIFU conversion<strong>22%</strong></div>
+              <div class="insight good" style="font-size:13px;margin-top:4px"><strong>Strongest evidence.</strong> The only product with a completed SDE study. All effect estimates in the calculator and business-case tools derive from this study.</div>
+            </div></div>
+          </td></tr>
+          <tr class="expandable" data-detail="evd-alder"><td>Alder Respiratory</td><td><span class="evstatus ev-have"><i></i> Positive</span></td><td><span class="evstatus ev-prog"><i></i> 6-mo</span></td><td class="num">&mdash;</td></tr>
+          <tr class="detail-row" id="evd-alder"><td colspan="4">
+            <div class="detail-inner"><div>
+              <div class="mini-kpi">Published<strong>2 RCTs</strong></div>
+              <div class="mini-kpi">SDE expected<strong>Q4 2026</strong></div>
+            </div><div>
+              <div class="insight" style="font-size:13px"><strong>Watch.</strong> Parallel COPD study to Respira. Cross-validation will be the first replication of DTx outcomes in the SDE.</div>
+            </div></div>
+          </td></tr>
+          <tr class="expandable" data-detail="evd-sleep"><td>Sleepwell</td><td><span class="evstatus ev-have"><i></i> Positive</span></td><td><span class="evstatus ev-prog"><i></i> Building</span></td><td class="num">&mdash;</td></tr>
+          <tr class="detail-row" id="evd-sleep"><td colspan="4">
+            <div class="detail-inner"><div>
+              <div class="mini-kpi">Published<strong>4 RCTs</strong></div>
+              <div class="mini-kpi">ISI reduction<strong>&minus;7.2 pts (meta)</strong></div>
+            </div><div>
+              <div class="mini-kpi">Hypnotic reduction<strong>&minus;36% at 6mo</strong></div>
+              <div class="insight" style="font-size:13px"><strong>Priority.</strong> Strong published base. SDE study primary outcomes: hypnotic prescribing, GP sleep contacts, MH crisis contacts.</div>
+            </div></div>
+          </td></tr>
+          <tr class="expandable" data-detail="evd-calm"><td>CalmPath</td><td><span class="evstatus ev-have"><i></i> Conditional</span></td><td><span class="evstatus ev-gap"><i></i> None</span></td><td class="num">&mdash;</td></tr>
+          <tr class="detail-row" id="evd-calm"><td colspan="4">
+            <div class="detail-inner"><div>
+              <div class="mini-kpi">Published<strong>2 RCTs</strong></div>
+              <div class="mini-kpi">PHQ-9 reduction<strong>&minus;4.8 pts</strong></div>
+            </div><div>
+              <div class="insight warn" style="font-size:13px"><strong>Conditional EVA.</strong> SDE study not started. The gap means commissioners cannot cite NHS-specific real-world outcome data. Suggest prioritising after Sleepwell.</div>
+            </div></div>
+          </td></tr>
+          <tr class="expandable" data-detail="evd-gluco"><td>GlucoGuide</td><td><span class="evstatus ev-prog"><i></i> In review</span></td><td><span class="evstatus ev-gap"><i></i> None</span></td><td class="num">&mdash;</td></tr>
+          <tr class="detail-row" id="evd-gluco"><td colspan="4">
+            <div class="detail-inner"><div>
+              <div class="mini-kpi">Published<strong>1 RCT</strong></div>
+              <div class="mini-kpi">EVA expected<strong>Q1 2027</strong></div>
+            </div><div>
+              <div class="insight warn" style="font-size:13px"><strong>Risk.</strong> Weakest evidence position. Only 1 RCT, EVA not yet positive, data feed rejected this period. The product cannot be benchmarked nationally until these gaps close.</div>
+            </div></div>
+          </td></tr>
+          <tr class="expandable" data-detail="evd-heart"><td>HeartStep</td><td><span class="evstatus ev-have"><i></i> Positive</span></td><td><span class="evstatus ev-gap"><i></i> Q3 26</span></td><td class="num">&mdash;</td></tr>
+          <tr class="detail-row" id="evd-heart"><td colspan="4">
+            <div class="detail-inner"><div>
+              <div class="mini-kpi">Published<strong>3 RCTs</strong></div>
+              <div class="mini-kpi">Rehab completion (digital)<strong>71% vs 43%</strong></div>
+            </div><div>
+              <div class="insight" style="font-size:13px"><strong>High priority SDE.</strong> Positive EVA and strong trial base. SDE study starts Q3. Biggest coverage gap of any pathway.</div>
+            </div></div>
+          </td></tr>
+          <tr class="expandable" data-detail="evd-msk"><td>MoveWell MSK</td><td><span class="evstatus ev-gap"><i></i> None</span></td><td><span class="evstatus ev-gap"><i></i> None</span></td><td class="num">&mdash;</td></tr>
+          <tr class="detail-row" id="evd-msk"><td colspan="4">
+            <div class="detail-inner"><div>
+              <div class="mini-kpi">Published<strong>1 RWE</strong></div>
+              <div class="mini-kpi">Data feed<strong style="color:var(--nhs-red)">Rejected</strong></div>
+            </div><div>
+              <div class="insight warn" style="font-size:13px"><strong>At risk.</strong> No EVA, no SDE, rejected data feed. Cannot be included in any benchmarking or reporting until compliance is resolved.</div>
+            </div></div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Evidence maturity</h3>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 300 240" role="img" aria-label="Evidence maturity donut">
+          <!-- donut: 7 products. 1 complete, 2 in progress, 4 gap (SDE status) -->
+          <!-- R=90, cx=150, cy=110. circumference=565.5. 1/7=80.8, 2/7=161.6, 4/7=323.1 -->
+          <circle cx="150" cy="110" r="90" fill="none" stroke="var(--grey-4)" stroke-width="28"/>
+          <circle cx="150" cy="110" r="90" fill="none" stroke="var(--nhs-green)" stroke-width="28" stroke-dasharray="80.8 484.7" stroke-dashoffset="141" transform="rotate(-90 150 110)"/>
+          <circle cx="150" cy="110" r="90" fill="none" stroke="var(--nhs-warm-yellow)" stroke-width="28" stroke-dasharray="161.6 403.9" stroke-dashoffset="60.2" transform="rotate(-90 150 110)"/>
+          <text x="150" y="106" text-anchor="middle" class="donut-label">1 of 7</text>
+          <text x="150" y="124" text-anchor="middle" class="donut-sub">SDE complete</text>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--nhs-green)"></i> SDE complete (1)</span>
+        <span><i style="background:var(--nhs-warm-yellow)"></i> In progress (2)</span>
+        <span><i style="background:var(--grey-4)"></i> Gap (4)</span>
+      </div>
+      <div class="insight warn" style="margin-top:14px">
+        <strong>So what?</strong> Only 1 of 7 products has completed an SDE study. Without SDE data, business-case models for other pathways rely on trial evidence with wider confidence intervals. Priority: Sleepwell and HeartStep have strong published evidence and should enter the SDE pipeline next. MoveWell MSK cannot progress until its data feed is fixed.
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Limitations and governance boundary</h2>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Study limitations</h3>
+      <ul style="font-size:13.5px;color:var(--grey-1);margin:6px 0 0;padding-left:18px">
+        <li>Observational design; residual confounding possible despite propensity-score matching on 14 covariates</li>
+        <li>Coding lag in the latest two months of HES data may understate events</li>
+        <li>Exposure defined as first qualifying use; non-adherers diluted the estimate toward null (conservative bias)</li>
+        <li>Single supplier, single condition &mdash; not directly generalisable to other products or pathways</li>
+        <li>GP data from GPES; some practices have incomplete submissions</li>
+        <li>No patient-reported outcome measures (PROMs) available in the SDE; self-reported symptom and quality-of-life data remain with the supplier</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Governance boundary</h3>
+      <div class="insight warn">
+        <strong>SDE evidence is separate from routine reporting.</strong> Routine HealthStore data answers &ldquo;is it being adopted and used?&rdquo;. SDE evidence answers &ldquo;did it change real outcomes?&rdquo;. The two must not be conflated in a business case. Cost-effectiveness figures above use the SDE effect estimate with a 50% confidence adjustment to reflect this uncertainty.
+      </div>
+      <p style="font-size:13.5px;color:var(--grey-1);margin:14px 0 0">SDE access is governed by the NHS England Secure Data Environment governance framework. Study protocols require independent review. No patient-level data leaves the environment. Only disclosure-checked, suppressed aggregate outputs are published in this report.</p>
+    </div>
+  </div>
+  </div>
+
+  <!-- ---- Insomnia evidence (placeholder) ---- -->
+  <div class="ev-panel" id="ev-insomnia">
+    <div class="insight" style="margin-bottom:18px"><strong>SDE study status: cohort building.</strong> Sleepwell &middot; Target exposed cohort ~4,200 &middot; 12-month follow-up planned &middot; Primary outcomes: hypnotic prescribing rate, GP sleep-related contacts, mental health crisis contacts, sickness absence days. Study protocol approved; cohort identification in progress. Estimated first results: Q1 2027.</div>
+    <div class="grid g3">
+      <div class="kpi"><div class="label">Published RCT evidence</div><div class="value" style="font-size:22px">4 trials</div><div class="delta flat">ISI reduction &minus;7.2 pts (meta-analysis)</div></div>
+      <div class="kpi k-aqua"><div class="label">Hypnotic prescribing (RCT)</div><div class="value" style="font-size:22px">&minus;36%</div><div class="delta up">at 6 months vs usual care</div></div>
+      <div class="kpi k-green"><div class="label">Insomnia remission rate</div><div class="value" style="font-size:22px">58%</div><div class="delta flat">ISI &lt; 8 at 6 months</div></div>
+    </div>
+    <div class="insight" style="margin-top:16px"><strong>Why this matters nationally.</strong> 1 in 3 adults reports poor sleep; insomnia drives 1.5 million GP consultations per year and is a leading cause of long-term sickness absence. Hypnotic prescribing costs the NHS over &pound;50m annually with well-documented harm in older adults. CBT-I delivered digitally at scale could materially reduce both.</div>
+  </div>
+
+  <!-- ---- Anxiety & depression evidence (placeholder) ---- -->
+  <div class="ev-panel" id="ev-anxiety">
+    <div class="insight" style="margin-bottom:18px"><strong>SDE study status: not started.</strong> CalmPath &middot; NICE EVA conditional positive &middot; Evidence from 2 RCTs showing PHQ-9 reduction of &minus;4.8 pts vs waitlist. HealthStore is not competing with Talking Therapies (IAPT); it covers the specialist and out-of-scope conditions Talking Therapies was not designed for &mdash; including severe anxiety with comorbidity, eating disorders, and waiting-list bridging.</div>
+    <div class="grid g3">
+      <div class="kpi"><div class="label">Talking Therapies waiting list</div><div class="value" style="font-size:22px">1.6m</div><div class="delta down">referrals/year, England</div></div>
+      <div class="kpi k-aqua"><div class="label">Median wait to first session</div><div class="value" style="font-size:22px">18 days</div><div class="delta flat">national median (Jun 2026)</div></div>
+      <div class="kpi k-green"><div class="label">DTx as bridge (RCT)</div><div class="value" style="font-size:22px">&minus;2.1 pts</div><div class="delta up">PHQ-9 during wait vs usual care</div></div>
+    </div>
+    <div class="insight" style="margin-top:16px"><strong>The gap HealthStore fills.</strong> For conditions outside Talking Therapies scope &mdash; specialist SMI technologies (AVATAR Therapy, SlowMo, gameChangeVR), insomnia, eating disorders &mdash; there is no national assured pathway today. Each local service rebuilds DTAC, IG, clinical safety, procurement and equity reporting independently. HealthStore is the infrastructure layer for that wider landscape.</div>
+  </div>
+
+  <!-- ---- Cardiac evidence (placeholder) ---- -->
+  <div class="ev-panel" id="ev-cardiac">
+    <div class="insight" style="margin-bottom:18px"><strong>SDE study status: planned Q3 2026.</strong> HeartStep &middot; NICE EVA positive &middot; 3 RCTs show 15&ndash;22% improvement in 6-minute walk test and 28% higher programme completion vs centre-based rehab. Currently only 9 live deployments nationally; SDE cohort building will begin once active user base exceeds 2,000.</div>
+    <div class="grid g3">
+      <div class="kpi"><div class="label">Cardiac rehab national uptake</div><div class="value" style="font-size:22px">33%</div><div class="delta down">of eligible patients (NACR 2025)</div></div>
+      <div class="kpi k-aqua"><div class="label">Digital rehab completion (RCT)</div><div class="value" style="font-size:22px">71%</div><div class="delta up">vs 43% centre-based</div></div>
+      <div class="kpi k-green"><div class="label">6MWT improvement</div><div class="value" style="font-size:22px">+18%</div><div class="delta up">digital vs centre-based</div></div>
+    </div>
+    <div class="insight" style="margin-top:16px"><strong>Why digital cardiac rehab is the biggest growth opportunity.</strong> Two-thirds of eligible patients never start cardiac rehab, primarily due to transport, work and caring barriers. Digital programmes remove those barriers. The heatmap on the Internal tab shows cardiac coverage is under 20% in most regions &mdash; the largest coverage gap of any pathway.</div>
+  </div>
+
+</section>
+
+</main>
+
+<footer class="app">
+  HealthStore reporting service &mdash; concept report &middot; Built to illustrate the data exchange specification (DTx in NHS App). All data synthetic.
+  Layout and controls use NHS design-system classes from nhsuk&#8209;frontend. Header typography uses Frutiger webfont references with system fallbacks. Charts are static SVGs for easy embedding in design reviews.
+</footer>
+
+<script>
+  (function(){
+    document.querySelectorAll('.card').forEach(function(el){
+      el.classList.add('nhsuk-card', 'nhsuk-card--feature');
+    });
+    document.querySelectorAll('.kpi').forEach(function(el){
+      el.classList.add('nhsuk-card', 'nhsuk-card--feature');
+    });
+    document.querySelectorAll('table.tbl').forEach(function(el){
+      el.classList.add('nhsuk-table');
+    });
+    document.querySelectorAll('h1').forEach(function(el){ el.classList.add('nhsuk-heading-xl'); });
+    document.querySelectorAll('h2.section-title').forEach(function(el){ el.classList.add('nhsuk-heading-l'); });
+    document.querySelectorAll('.lede').forEach(function(el){ el.classList.add('nhsuk-lede-text'); });
+
+    var nav = document.getElementById('nav');
+    var buttons = nav.querySelectorAll('button');
+    var views = document.querySelectorAll('.view');
+    nav.addEventListener('click', function(e){
+      var btn = e.target.closest('button');
+      if(!btn) return;
+      var target = btn.getAttribute('data-view');
+      buttons.forEach(function(b){ b.classList.toggle('active', b===btn); });
+      views.forEach(function(v){ v.classList.toggle('active', v.id === 'view-'+target); });
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+
+    /* ---- Outcome evidence condition tabs ---- */
+    var evTabs = document.getElementById('ev-tabs');
+    if(evTabs){
+      var evBtns = evTabs.querySelectorAll('button');
+      var evPanels = document.querySelectorAll('.ev-panel');
+      evTabs.addEventListener('click', function(e){
+        var btn = e.target.closest('button');
+        if(!btn) return;
+        var target = btn.getAttribute('data-ev');
+        evBtns.forEach(function(b){ b.classList.toggle('active', b===btn); });
+        evPanels.forEach(function(p){ p.classList.toggle('active', p.id === 'ev-'+target); });
+      });
+    }
+
+    /* ---- Calculator with real programme numbers ---- */
+    var calcPop = document.getElementById('calc-pop');
+    var calcCov = document.getElementById('calc-cov');
+    var calcCond = document.getElementById('calc-cond');
+    if(calcPop && calcCov){
+      var params = {
+        copd: {aeRate:0.079, admRate:0.036, bedRate:0.175, gpRate:0.095, pifuRate:0.055, aeCost:197, admCost:3412, bedCost:450, gpCost:120, pifuCost:167, label:'COPD self-management'},
+        cardiac: {aeRate:0.062, admRate:0.028, bedRate:0.14, gpRate:0.07, pifuRate:0.042, aeCost:197, admCost:3412, bedCost:450, gpCost:120, pifuCost:167, label:'Cardiac rehabilitation'}
+      };
+      function calcUpdate(){
+        var pop = parseInt(calcPop.value);
+        var cov = parseInt(calcCov.value)/100;
+        var active = Math.round(pop * cov);
+        var c = calcCond.value;
+        var p = params[c] || params.copd;
+        var ae = Math.round(active * p.aeRate);
+        var adm = Math.round(active * p.admRate);
+        var bed = Math.round(active * p.bedRate);
+        var gp = Math.round(active * p.gpRate);
+        var pifu = Math.round(active * p.pifuRate);
+        var saving = ae*p.aeCost + adm*p.admCost + bed*p.bedCost + gp*p.gpCost + pifu*p.pifuCost;
+        document.getElementById('calc-pop-val').textContent = pop.toLocaleString();
+        document.getElementById('calc-cov-val').textContent = calcCov.value + '%';
+        document.getElementById('calc-active').textContent = active.toLocaleString();
+        document.getElementById('calc-saving').textContent = '\u00A3' + Math.round(saving/1000).toLocaleString() + 'k';
+        document.getElementById('calc-ae').textContent = '~' + ae.toLocaleString();
+        document.getElementById('calc-adm').textContent = '~' + adm.toLocaleString();
+        document.getElementById('calc-bed').textContent = '~' + bed.toLocaleString();
+        document.getElementById('calc-gp').textContent = '~' + gp.toLocaleString();
+        document.getElementById('calc-foot').textContent = 'All figures are 50% confidence-adjusted from the SDE effect estimate for ' + p.label + '. Unit costs: A&E \u00A3' + p.aeCost + ', admission \u00A3' + p.admCost.toLocaleString() + ', bed-day \u00A3' + p.bedCost + ', GP visit \u00A3' + p.gpCost + ', PIFU slot \u00A3' + p.pifuCost + '. Not a measured local outcome.';
+      }
+      calcPop.addEventListener('input', calcUpdate);
+      calcCov.addEventListener('input', calcUpdate);
+      calcCond.addEventListener('change', calcUpdate);
+      calcUpdate();
+    }
+
+    /* ---- Interactive tilemap (England regions) ---- */
+    var tileEl = document.getElementById('tilemap');
+    if(tileEl){
+      var regions = [
+        {id:'NW', name:'North West', x:2, y:1, cov:62, elig:31200, active:19344, icbs:5},
+        {id:'NEY', name:'North East & Yorkshire', x:3, y:0, cov:55, elig:34600, active:19030, icbs:4},
+        {id:'MID', name:'Midlands', x:3, y:2, cov:48, elig:38400, active:18432, icbs:6},
+        {id:'EE', name:'East of England', x:4, y:2, cov:30, elig:24100, active:7230, icbs:3},
+        {id:'LON', name:'London', x:3, y:3, cov:41, elig:22600, active:9266, icbs:5},
+        {id:'SE', name:'South East', x:4, y:3, cov:38, elig:27800, active:10564, icbs:4},
+        {id:'SW', name:'South West', x:2, y:3, cov:22, elig:21500, active:4730, icbs:3}
+      ];
+      function covColor(c){
+        if(c>=60) return '#007f3b';
+        if(c>=45) return '#85994b';
+        if(c>=30) return '#ffdd00';
+        if(c>=15) return '#f47738';
+        return '#d4351c';
+      }
+      var tW=72, tH=60, gap=4;
+      var svgNS='http://www.w3.org/2000/svg';
+      var svg=document.createElementNS(svgNS,'svg');
+      svg.setAttribute('class','tilemap');
+      svg.setAttribute('viewBox','0 0 '+((5*tW)+(4*gap))+' '+((4*tH)+(3*gap)));
+      svg.setAttribute('role','img');
+      svg.setAttribute('aria-label','England region map');
+      regions.forEach(function(r){
+        var g=document.createElementNS(svgNS,'g');
+        g.setAttribute('data-region',r.id);
+        var rect=document.createElementNS(svgNS,'rect');
+        rect.setAttribute('class','tile');
+        rect.setAttribute('x', r.x*(tW+gap));
+        rect.setAttribute('y', r.y*(tH+gap));
+        rect.setAttribute('width', tW);
+        rect.setAttribute('height', tH);
+        rect.setAttribute('rx', 4);
+        rect.setAttribute('fill', covColor(r.cov));
+        g.appendChild(rect);
+        var t1=document.createElementNS(svgNS,'text');
+        t1.setAttribute('x', r.x*(tW+gap)+tW/2);
+        t1.setAttribute('y', r.y*(tH+gap)+26);
+        t1.setAttribute('text-anchor','middle');
+        t1.setAttribute('fill','#fff');
+        t1.setAttribute('font-size','13');
+        t1.setAttribute('font-weight','700');
+        t1.textContent=r.id;
+        g.appendChild(t1);
+        var t2=document.createElementNS(svgNS,'text');
+        t2.setAttribute('x', r.x*(tW+gap)+tW/2);
+        t2.setAttribute('y', r.y*(tH+gap)+44);
+        t2.setAttribute('text-anchor','middle');
+        t2.setAttribute('fill','#fff');
+        t2.setAttribute('font-size','11');
+        t2.textContent=r.cov+'%';
+        g.appendChild(t2);
+        svg.appendChild(g);
+      });
+      tileEl.appendChild(svg);
+
+      var drillEl = document.getElementById('map-drill');
+      var crumbEl = document.getElementById('map-drill-crumb');
+      function showRegionDetail(r){
+        crumbEl.innerHTML = '<button onclick="resetMap()">All regions</button><span class="sep">/</span><span class="cur">'+r.name+'</span>';
+        drillEl.innerHTML = '<div class="card"><h3>'+r.name+'</h3><table class="tbl"><tbody>'+
+          '<tr><td>Eligible COPD population</td><td class="num">'+r.elig.toLocaleString()+'</td></tr>'+
+          '<tr><td>Active users</td><td class="num">'+r.active.toLocaleString()+'</td></tr>'+
+          '<tr><td>Coverage</td><td class="num"><strong>'+r.cov+'%</strong></td></tr>'+
+          '<tr><td>ICBs with live DTx</td><td class="num">'+r.icbs+'</td></tr>'+
+          '<tr><td>Headroom (unserved eligible)</td><td class="num" style="color:var(--nhs-red)">'+(r.elig - r.active).toLocaleString()+'</td></tr>'+
+          '</tbody></table></div>';
+        svg.querySelectorAll('.tile').forEach(function(t){t.classList.remove('sel');});
+        svg.querySelector('[data-region="'+r.id+'"] .tile').classList.add('sel');
+      }
+      window.resetMap = function(){
+        crumbEl.innerHTML = '';
+        drillEl.innerHTML = '<p class="section-note" style="margin:0">Click a region on the map to drill into its coverage, ICBs and headroom.</p>';
+        svg.querySelectorAll('.tile').forEach(function(t){t.classList.remove('sel');});
+      };
+      svg.addEventListener('click', function(e){
+        var g = e.target.closest('[data-region]');
+        if(!g) return;
+        var rid = g.getAttribute('data-region');
+        var r = regions.find(function(x){return x.id===rid;});
+        if(r) showRegionDetail(r);
+      });
+      window.resetMap();
+    }
+
+    /* ---- Expandable detail rows ---- */
+    document.querySelectorAll('tr.expandable').forEach(function(row){
+      row.addEventListener('click', function(){
+        var detailId = row.getAttribute('data-detail');
+        var detailRow = document.getElementById(detailId);
+        if(!detailRow) return;
+        var isOpen = row.classList.contains('open');
+        row.classList.toggle('open', !isOpen);
+        detailRow.classList.toggle('open', !isOpen);
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>
