@@ -1,15 +1,7 @@
 {
   "brand": "The Woodland Spa",
-  "parentLocation": "Crow Wood Leisure",
-  "address": "Royle Lane, Burnley, Lancashire, BB12 0RT",
-  "coordinates": {"latitude": 53.8018907, "longitude": -2.2529769},
-  "contact": {"phone": "01282 471913", "email": "reception@thewoodlandspa.com"},
-  "verifiedPublicCategories": ["Day spa", "Beauty salon", "Facial spa", "Gym", "Massage therapist", "Skin care clinic"],
-  "coreExperiences": ["Indoor and outdoor hydrotherapy", "Infinity and vitality pools", "Thermal rooms and saunas", "Quiet relaxation spaces", "Face and body treatments", "Bertram's Restaurant", "Crow Wood Hotel accommodation", "Day and twilight spa visits"],
-  "prototypeOnly": {
-    "pricingNote": "Illustrative interface data, not a live tariff. Confirm all prices and package rules against the booking system before launch.",
-    "menuNote": "Sample dishes written for the concept, not a transcription of a current production menu.",
-    "packageDiscount": "10% of treatment and dining extras",
-    "prices": {"classicStay": 295, "featureStay": 395, "twoNightStay": 620, "morningSpa": 99, "twilightSpa": 89, "completeSpaDay": 139}
-  }
+  "location": "Royle Lane, Burnley, Lancashire, BB12 0RT",
+  "contact": {"phone":"01282 471913","email":"reception@thewoodlandspa.com"},
+  "offerings": ["Thermal spa experiences", "Hydrotherapy and outdoor pools", "Face and body treatments", "Bertram's Restaurant", "Overnight accommodation", "Day and twilight spa visits"],
+  "demoPricing": {"note":"Indicative prototype pricing; verify against the live booking engine before production use.","overnightClassic":295,"overnightSuite":395,"twoNightRetreat":620,"morningSpa":99,"twilightSpa":89,"completeSpaDay":139}
 }
