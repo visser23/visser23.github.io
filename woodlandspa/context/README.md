@@ -1,12 +1,17 @@
 # Woodland Spa content archive
 
-The `woodlandspa-scrape/` directory is the supplied 20 August 2026 capture of the live Woodland Spa site. It contains 23 page transcripts, an image-to-page map and locally stored brand/property photography.
+This folder records the content inventory used by the static redesign.
 
-The redesign uses that archive as its content source. Published package and treatment prices, menus, opening hours, facilities, address and contact details have been carried into the prototype. The interactive planner is a static demonstration: availability, appointment slots, package-discount rules, suite/departure-access supplements and reservation submission require connection to production systems before launch.
+## Acquisition note
 
-## Main source mapping
-- `pages/the-experience.txt`: thermal facilities and opening hours
-- `pages/spa-days.txt`, `spa-evenings.txt`, `spa-breaks.txt`: packages and published tariffs
-- `pages/treatments-*.txt`: treatment names, descriptions, duration and prices
-- `pages/spa-dining.txt`: restaurant, vegan, Terrace and Rooftop menus
-- `images/`: supplied logo, property photography and award marks
+The production domain blocked automated access from the build environment (HTTP 403), so a faithful binary crawl could not be committed. `content.json` captures the publicly presented brand, location, contact details and core service taxonomy used in the concept. The visual compositions in the prototype are original CSS artwork, avoiding third-party rights and hotlinks. No production logo was fabricated; the wordmark is represented typographically.
+
+Pricing in the booking prototype is explicitly marked as indicative. It must be replaced from the live availability/booking source before any production launch, because hospitality prices vary by date, party and inventory.
+
+## Production handover
+
+1. Export the approved logo in SVG and WebP formats.
+2. Supply licensed photography for spa, treatments, Bertram's, rooms and Pendle.
+3. Connect the package builder to the property/spa booking APIs.
+4. Confirm current tariffs, treatment durations, opening times and package discount rules.
+5. Add privacy, cookie, accessibility and booking terms pages.
