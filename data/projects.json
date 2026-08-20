@@ -1,5 +1,17 @@
 [
   {
+    "title": "Yap",
+    "slug": "yap",
+    "category": "product",
+    "status": "alpha",
+    "year": "2026",
+    "summary": "macOS voice dictation that formats your speech into clean text. Menu bar native, local-first, bring your own key.",
+    "link": "/yap/",
+    "external": false,
+    "icon": "mic",
+    "featured": true
+  },
+  {
     "title": "OYO",
     "slug": "oyo",
     "category": "product",
@@ -70,18 +82,6 @@
     "external": true,
     "icon": "globe",
     "featured": true
-  },
-  {
-    "title": "SmartSign",
-    "slug": "smartsign",
-    "category": "product",
-    "status": "live",
-    "year": "2025",
-    "summary": "Modern document signing platform.",
-    "link": "https://ssign.app/",
-    "external": true,
-    "icon": "pen",
-    "featured": false
   },
   {
     "title": "CV / Profile",

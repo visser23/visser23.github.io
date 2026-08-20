@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yap — Voice to text, without the mess</title>
+    <meta name="description" content="macOS dictation that actually formats your words. Speak naturally, get clean notes. Record meetings without joining the call. Free, bring your own API key.">
+    <link rel="icon" type="image/png" href="icon.png">
+    <style>
+        :root {
+            --bg: #0f2624;
+            --bg-surface: #132e2b;
+            --bg-card: #1a3d39;
+            --text: #e8e4df;
+            --text-muted: #9aaba7;
+            --teal: #3db8a0;
+            --teal-dim: #2a7d6e;
+            --coral: #e07850;
+            --coral-light: #f0956a;
+            --gold: #d4a855;
+            --gold-dim: #a07830;
+            --white: #faf8f5;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ─── NAV ─── */
+        nav {
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .nav-brand img {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+        }
+
+        .nav-brand span {
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+
+        /* ─── HERO ─── */
+        .hero {
+            padding: 4rem 2rem 2.5rem;
+            max-width: 1080px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto auto;
+            column-gap: 3rem;
+            align-items: start;
+        }
+
+        .hero-badge {
+            grid-column: 1 / -1;
+            justify-self: start;
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            background: var(--bg-card);
+            border: 1px solid var(--teal-dim);
+            border-radius: 100px;
+            font-size: 0.75rem;
+            color: var(--teal);
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 1.2rem;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.2rem;
+        }
+
+        .hero h1 .accent {
+            color: var(--coral);
+        }
+
+        .hero-right {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-top: 0.5rem;
+        }
+
+        .hero-sub {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            margin-bottom: 1.8rem;
+            line-height: 1.65;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 740px) {
+            .hero {
+                grid-template-columns: 1fr;
+            }
+            .hero-right {
+                padding-top: 0;
+            }
+        }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.85rem 1.6rem;
+            background: var(--coral);
+            color: var(--white);
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s, transform 0.15s;
+        }
+
+        .btn-download:hover {
+            background: var(--coral-light);
+            transform: translateY(-1px);
+        }
+
+        .btn-download svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .hero-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .hero-meta span {
+            opacity: 0.5;
+            margin: 0 0.4rem;
+        }
+
+        /* ─── APP MOCK ─── */
+        .app-mock {
+            padding: 2rem 2rem 2.5rem;
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        .mock-window {
+            background: rgba(15,38,36,.95);
+            border: 1px solid rgba(61,184,160,.12);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,.4);
+        }
+
+        .mock-titlebar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 14px;
+            background: rgba(0,0,0,.2);
+        }
+
+        .mock-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .mock-dot:nth-child(1) { background: #ff5f57; }
+        .mock-dot:nth-child(2) { background: #febc2e; }
+        .mock-dot:nth-child(3) { background: #28c840; }
+
+        .mock-body {
+            display: flex;
+            min-height: 280px;
+        }
+
+        .mock-sidebar {
+            width: 155px;
+            border-right: 1px solid rgba(255,255,255,.06);
+            padding: 12px 0;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 600px) {
+            .mock-sidebar { display: none; }
+        }
+
+        .mock-sb-title {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 0 12px 8px;
+            color: var(--text);
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            margin-bottom: 8px;
+        }
+
+        .mock-sb-grp {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            padding: 6px 12px 3px;
+        }
+
+        .mock-sb-item {
+            font-size: 10.5px;
+            padding: 5px 12px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mock-sb-item.active {
+            background: rgba(255,255,255,.06);
+            color: var(--text);
+        }
+
+        .mock-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 12px 16px;
+            min-width: 0;
+        }
+
+        .mock-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .mock-title {
+            font-size: 11.5px;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .mock-tabs {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 12px;
+        }
+
+        .mock-tab {
+            font-size: 9.5px;
+            padding: 3px 10px;
+            border-radius: 100px;
+            color: var(--text-muted);
+        }
+
+        .mock-tab.active {
+            background: rgba(255,255,255,.08);
+            color: var(--text);
+        }
+
+        .mock-content {
+            flex: 1;
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        .mock-content p { margin-bottom: 8px; }
+
+        .mock-speaker {
+            font-weight: 600;
+            display: block;
+            margin-top: 10px;
+        }
+
+        .mock-controls {
+            display: flex;
+            gap: 6px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,.06);
+            margin-top: auto;
+        }
+
+        .mock-btn {
+            font-size: 9.5px;
+            padding: 3px 12px;
+            border-radius: 100px;
+            border: 1px solid var(--text-muted);
+            color: var(--text-muted);
+        }
+
+        .mock-btn.primary {
+            background: var(--coral);
+            border-color: var(--coral);
+            color: #fff;
+        }
+
+        /* Floating pebble + recording status below the window */
+        .mock-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .mock-pebble {
+            width: 44px;
+            height: 22px;
+            border-radius: 100px;
+            background: rgba(15,38,36,.92);
+            border: 1px solid rgba(61,184,160,.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+        }
+
+        .mock-pebble span {
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: var(--coral);
+            animation: wave 1.2s ease-in-out infinite;
+        }
+        .mock-pebble span:nth-child(2) { animation-delay: .1s; }
+        .mock-pebble span:nth-child(3) { animation-delay: .2s; }
+        .mock-pebble span:nth-child(4) { animation-delay: .3s; }
+        .mock-pebble span:nth-child(5) { animation-delay: .4s; }
+
+        @keyframes wave {
+            0%, 100% { transform: scaleY(1); opacity: 0.5; }
+            50% { transform: scaleY(2.2); opacity: 1; }
+        }
+
+        .mock-rec-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .mock-rec-label .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--coral);
+            animation: pulse 1.4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: scale(0.85); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* ─── MODES ─── */
+        .modes {
+            padding: 3rem 2rem 2rem;
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        .modes-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .modes-header h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.4rem;
+        }
+
+        .modes-header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .mode-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.2rem;
+        }
+
+        @media (max-width: 700px) {
+            .mode-cards { grid-template-columns: 1fr; }
+        }
+
+        .mode-card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: border-color 0.3s;
+        }
+
+        .mode-card:hover {
+            border-color: rgba(61, 184, 160, 0.2);
+        }
+
+        .mode-card .hotkey {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.55rem;
+            background: var(--bg-card);
+            border-radius: 6px;
+            font-family: 'SF Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--gold);
+            margin-bottom: 0.8rem;
+        }
+
+        .mode-card h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .mode-card p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        /* ─── MEETING HIGHLIGHT ─── */
+        .meeting {
+            padding: 2.5rem 2rem;
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        .meeting-box {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,.05);
+            border-radius: 12px;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        @media (max-width: 700px) {
+            .meeting-box { grid-template-columns: 1fr; }
+        }
+
+        .meeting-text h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.6rem;
+        }
+
+        .meeting-text p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.65;
+            margin-bottom: 0.5rem;
+        }
+
+        .meeting-demo {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1.2rem 1.5rem;
+            font-size: 0.85rem;
+            line-height: 1.8;
+        }
+
+        .meeting-demo .spk {
+            font-weight: 600;
+            display: block;
+            margin-top: 0.6rem;
+        }
+        .meeting-demo .spk:first-child { margin-top: 0; }
+        .meeting-demo .spk-a { color: var(--coral); }
+        .meeting-demo .spk-b { color: var(--teal); }
+        .meeting-demo .spk-c { color: var(--gold); }
+
+        .meeting-demo .words {
+            color: var(--text-muted);
+            margin-left: 0.2rem;
+        }
+
+        /* ─── FEATURES ─── */
+        .features {
+            padding: 2.5rem 2rem;
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        .features h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 0.8rem;
+        }
+
+        .feature-item {
+            padding: 1rem 1.2rem;
+            border-left: 2px solid var(--teal-dim);
+            transition: border-color 0.2s;
+        }
+
+        .feature-item:hover {
+            border-color: var(--teal);
+        }
+
+        .feature-item h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .feature-item p {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* ─── PRIVACY ─── */
+        .privacy {
+            padding: 2.5rem 2rem;
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        .privacy-box {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 600px) {
+            .privacy-box { grid-template-columns: 1fr; }
+        }
+
+        .privacy-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--bg-card);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .privacy-icon svg {
+            width: 22px;
+            height: 22px;
+            color: var(--teal);
+        }
+
+        .privacy-content h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.6rem;
+        }
+
+        .privacy-content p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            line-height: 1.65;
+            margin-bottom: 0.5rem;
+        }
+
+        .privacy-content ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 0.8rem;
+        }
+
+        .privacy-content li {
+            position: relative;
+            padding-left: 1.1rem;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .privacy-content li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.5rem;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--teal-dim);
+        }
+
+        /* ─── REQUIREMENTS ─── */
+        .requirements {
+            padding: 2rem 2rem 3rem;
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        .requirements h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .req-grid {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .req-item {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+        }
+
+        .req-item .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .req-item .value {
+            font-size: 0.88rem;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        /* ─── FOOTER ─── */
+        footer {
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding: 1.5rem 2rem;
+            max-width: 1080px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        footer p {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.78rem;
+            transition: color 0.2s;
+        }
+
+        footer a:hover { color: var(--text); }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-brand">
+        <img src="icon.png" alt="Yap">
+        <span>Yap</span>
+    </div>
+    <ul class="nav-links">
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#privacy">Privacy</a></li>
+    </ul>
+</nav>
+
+<section class="hero">
+    <div class="hero-badge">Alpha &middot; macOS</div>
+    <h1>Talk. It <span class="accent">writes.</span></h1>
+    <div class="hero-right">
+        <p class="hero-sub">
+            Yap sits in your menu bar and turns speech into clean, formatted text.
+            Record meetings, dictate notes, or speak directly at your cursor.
+            No subscriptions — bring your own OpenAI key.
+        </p>
+        <div class="hero-actions">
+            <a href="https://github.com/visser23/yap-releases/releases/download/v1.0.0/Yap-1.0.0-arm64.dmg" class="btn-download">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                Apple Silicon
+            </a>
+            <a href="https://github.com/visser23/yap-releases/releases/download/v1.0.0/Yap-1.0.0-x86_64.dmg" class="btn-download" style="background:var(--teal-dim)">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                Intel
+            </a>
+            <span class="hero-meta">v1.0.0<span>&middot;</span>macOS 12+</span>
+        </div>
+    </div>
+</section>
+
+<!-- App UI mockup -->
+<section class="app-mock" id="how">
+    <div class="mock-window">
+        <div class="mock-titlebar">
+            <div class="mock-dot"></div>
+            <div class="mock-dot"></div>
+            <div class="mock-dot"></div>
+        </div>
+        <div class="mock-body">
+            <div class="mock-sidebar">
+                <div class="mock-sb-title">Notes</div>
+                <div class="mock-sb-grp">Today</div>
+                <div class="mock-sb-item active">Sprint planning sync</div>
+                <div class="mock-sb-item">Product roadmap thoughts</div>
+                <div class="mock-sb-grp">Yesterday</div>
+                <div class="mock-sb-item">Client feedback call</div>
+                <div class="mock-sb-item">Architecture decision</div>
+            </div>
+            <div class="mock-main">
+                <div class="mock-header">
+                    <div class="mock-title">Sprint planning sync</div>
+                </div>
+                <div class="mock-tabs">
+                    <div class="mock-tab active">Clean</div>
+                    <div class="mock-tab">Raw</div>
+                    <div class="mock-tab">Notes</div>
+                </div>
+                <div class="mock-content">
+                    <p><span class="mock-speaker" style="color:var(--coral)">Sarah</span>
+                    I think we should push the auth refactor to next sprint. The design team still needs another week on the new flows.</p>
+                    <p><span class="mock-speaker" style="color:var(--teal)">Matt</span>
+                    Agreed. Let's keep this sprint focused on the API migration. We can pull in auth once the mocks are signed off.</p>
+                    <p><span class="mock-speaker" style="color:var(--gold)">James</span>
+                    Works for me. I'll update the board and let the stakeholders know about the shift.</p>
+                </div>
+                <div class="mock-controls">
+                    <div class="mock-btn">Copy</div>
+                    <div class="mock-btn">Convert to Notes</div>
+                    <div style="flex:1"></div>
+                    <div class="mock-btn primary">Done</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Pebble + recording indicator below the window -->
+    <div class="mock-status">
+        <div class="mock-pebble">
+            <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="mock-rec-label">
+            <div class="dot"></div>
+            Listening&hellip;
+        </div>
+    </div>
+</section>
+
+<section class="modes">
+    <div class="modes-header">
+        <h2>Two ways to yap</h2>
+        <p>Different situations, same clean output.</p>
+    </div>
+    <div class="mode-cards">
+        <div class="mode-card">
+            <div class="hotkey">&#8984;N</div>
+            <h3>Notes mode</h3>
+            <p>
+                Press the hotkey from anywhere. A small pill appears at the bottom of your screen.
+                Speak for as long as you want — minutes or hours. When you stop, Yap formats everything
+                into a clean note with an auto-generated title and speaker labels.
+            </p>
+        </div>
+        <div class="mode-card">
+            <div class="hotkey">Fn</div>
+            <h3>Live insertion</h3>
+            <p>
+                Hold the Fn key and start talking. Yap transcribes, formats, and pastes directly
+                at your cursor — in any app. It detects context (email, Slack, code) and adjusts
+                formatting to match. Auto-latches after 10 seconds.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Meeting recording callout -->
+<section class="meeting">
+    <div class="meeting-box">
+        <div class="meeting-text">
+            <h2>Record any meeting. From your desk.</h2>
+            <p>
+                Yap uses your Mac's microphone to capture everything in the room — or from
+                your speakers. It doesn't need to join the call or integrate with anything.
+                Just press &#8984;N when a meeting starts.
+            </p>
+            <p>
+                After you stop, Yap identifies individual speakers and labels them by name
+                (inferred from introductions or context). You get a full transcript with clear
+                attribution — no meeting bot, no awkward "an AI is recording this" notifications.
+            </p>
+        </div>
+        <div class="meeting-demo">
+            <span class="spk spk-a">Sarah</span>
+            <span class="words">I think we should push the auth refactor to next sprint. The design team still needs another week.</span>
+            <span class="spk spk-b">Matt</span>
+            <span class="words">Agreed. Let's keep this sprint focused on the API migration.</span>
+            <span class="spk spk-c">James</span>
+            <span class="words">Works for me. I'll update the board and let the stakeholders know about the shift.</span>
+        </div>
+    </div>
+</section>
+
+<section class="features" id="features">
+    <h2>What you get</h2>
+    <div class="feature-list">
+        <div class="feature-item">
+            <h4>Format, don't rewrite</h4>
+            <p>Punctuation, capitalisation, and paragraphs. Your words stay exactly as spoken.</p>
+        </div>
+        <div class="feature-item">
+            <h4>Speaker diarisation</h4>
+            <p>Detects who's talking and labels them by name. Works with meetings, interviews, or any multi-person conversation.</p>
+        </div>
+        <div class="feature-item">
+            <h4>Menu bar native</h4>
+            <p>No dock icon, no window clutter. Lives quietly in your menu bar until you need it.</p>
+        </div>
+        <div class="feature-item">
+            <h4>Local-first storage</h4>
+            <p>Notes saved as Markdown files on your machine. No cloud, no sync, no account needed.</p>
+        </div>
+        <div class="feature-item">
+            <h4>Context-aware formatting</h4>
+            <p>In Fn mode, detects whether you're in email, chat, or code and formats accordingly.</p>
+        </div>
+        <div class="feature-item">
+            <h4>Free to use</h4>
+            <p>Yap costs nothing. Bring your own OpenAI API key — you only pay for what you use.</p>
+        </div>
+    </div>
+</section>
+
+<section class="privacy" id="privacy">
+    <div class="privacy-box">
+        <div class="privacy-icon">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="privacy-content">
+            <h2>Your data stays yours</h2>
+            <p>
+                Yap processes audio through OpenAI's Whisper and GPT APIs — that's the only time
+                data leaves your machine. Everything else is local.
+            </p>
+            <ul>
+                <li>Notes stored as plain Markdown in ~/.yap/</li>
+                <li>API key stored in macOS Keychain</li>
+                <li>No telemetry, no analytics, no accounts</li>
+                <li>No data sent anywhere except OpenAI for transcription</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="requirements">
+    <h2>Requirements</h2>
+    <div class="req-grid">
+        <div class="req-item">
+            <span class="label">OS</span>
+            <span class="value">macOS 12+ (Monterey)</span>
+        </div>
+        <div class="req-item">
+            <span class="label">Chip</span>
+            <span class="value">Apple Silicon</span>
+        </div>
+        <div class="req-item">
+            <span class="label">Key</span>
+            <span class="value">OpenAI API key</span>
+        </div>
+        <div class="req-item">
+            <span class="label">Permissions</span>
+            <span class="value">Microphone + Accessibility</span>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <p>&copy; 2026 Matt Visser &middot; Yap is alpha software. Expect rough edges.</p>
+</footer>
+
+</body>
+</html>
