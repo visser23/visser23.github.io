@@ -1,0 +1,18 @@
+{
+  "attemptedAt": "2026-08-20",
+  "origin": "https://thewoodlandspa.com/",
+  "attempts": [
+    {"method": "curl with browser user-agent", "result": "proxy HTTP 403 / CONNECT tunnel failed"},
+    {"method": "Playwright Chromium navigation", "result": "net::ERR_TUNNEL_CONNECTION_FAILED"},
+    {"method": "direct-IP HTTPS without proxy", "result": "network unreachable"},
+    {"method": "public extraction proxy routes", "result": "blocked by outbound domain allow-list"},
+    {"method": "Google Maps place result", "result": "success; business identity and contact fields corroborated"}
+  ],
+  "corroborated": {
+    "name": "The Woodland Spa",
+    "address": "Crow Wood Leisure, Royle Lane, Burnley BB12 0RT, United Kingdom",
+    "phone": "+44 1282 471913",
+    "coordinates": [53.8018907, -2.2529769],
+    "categories": ["Day spa", "Beauty salon", "Facial spa", "Gym", "Massage therapist", "Skin care clinic"]
+  }
+}
