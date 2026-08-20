@@ -1,0 +1,7 @@
+{
+  "brand": "The Woodland Spa",
+  "location": "Royle Lane, Burnley, Lancashire, BB12 0RT",
+  "contact": {"phone":"01282 471913","email":"reception@thewoodlandspa.com"},
+  "offerings": ["Thermal spa experiences", "Hydrotherapy and outdoor pools", "Face and body treatments", "Bertram's Restaurant", "Overnight accommodation", "Day and twilight spa visits"],
+  "demoPricing": {"note":"Indicative prototype pricing; verify against the live booking engine before production use.","overnightClassic":295,"overnightSuite":395,"twoNightRetreat":620,"morningSpa":99,"twilightSpa":89,"completeSpaDay":139}
+}
