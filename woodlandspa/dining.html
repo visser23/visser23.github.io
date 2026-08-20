@@ -1,1 +1,640 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Spa dining & menus | The Woodland Spa</title><link rel="stylesheet" href="style.css"></head><body><div class="announcement">Two AA Rosettes · freshly prepared · beautifully served</div><header class="site-head"><a class="logo" href="index.html"><img src="context/woodlandspa-scrape/images/The-Woodland-Spa-Logo-Transparent-Border.jpg" alt="The Woodland Spa"><span>The Woodland Spa<small>Burnley · Lancashire</small></span></a><button class="menu">Menu</button><nav><a href="experience.html">Experience</a><a href="spa-days.html">Visits</a><a href="treatments.html">Treatments</a><a href="dining.html">Dining</a><a href="stays.html">Stay</a><a href="gallery.html">Gallery</a></nav><a class="plan" href="plan.html">Build your visit</a></header><main><section class="page-hero"><img src="context/woodlandspa-scrape/images/Cocktails-at-The-Woodland-Spa.jpg" alt="Cocktails at The Woodland Spa"><div><p class="eyebrow">Spa dining</p><h1>Food is part<br><em>of the feeling.</em></h1></div></section><section class="prose"><h2>Choose your table.</h2><p>Dress for the transformed Spa Restaurant, share tapas beside the Terrace firepit, or take a stone-baked pizza to the Rooftop. Browse every menu before you choose where and when to pause.</p><p class="notice">The Terrace cannot accommodate allergies, intolerances or coeliac disease. The Spa Restaurant and Rooftop accommodate the 14 main allergens; give at least 48 hours’ notice for others. Menus change seasonally.</p></section><div class="menu-tabs" id="tabs"></div><section class="menu-sheet" id="menu"></section><section class="image-band"><figure><img src="context/woodlandspa-scrape/images/Pizza-on-the-Rooftop.png" alt="Stone-baked rooftop pizza" loading="lazy"><figcaption>The Rooftop</figcaption></figure><figure><img src="context/woodlandspa-scrape/images/Firepit_Woodland_Spa_For_Men.jpg" alt="Terrace firepit lounge" loading="lazy"><figcaption>The Terrace</figcaption></figure><figure><img src="context/woodlandspa-scrape/images/Cocktails-at-The-Woodland-Spa.jpg" alt="Cocktails at The Woodland Spa" loading="lazy"><figcaption>Stay for a drink</figcaption></figure></section><section class="cta"><h2>Your table,<br>already waiting.</h2><a class="button dark" href="plan.html">Build dining into your visit</a></section></main><footer><div><strong>The Woodland Spa</strong><p>Within Crow Wood Resort, Burnley</p></div><div><a href="treatments.html">Treatments</a><a href="stays.html">Stay</a></div><div>01282 471 913</div><small>Menus captured August 2026 and subject to seasonal change.</small></footer><script src="shared.js"></script><script src="catalog.js"></script><script>function show(id){tabs.innerHTML=Object.entries(MENUS).map(([k,v])=>`<button class="${k===id?'active':''}" data-id="${k}">${v.title}</button>`).join('');tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>show(b.dataset.id));let m=MENUS[id];menu.innerHTML=`<p class="eyebrow">Browse the menu</p><h2>${m.title}</h2><p>${m.intro}</p>`+m.groups.map(g=>`<div class="menu-group"><h3>${g[0]}</h3>${g[1].map(d=>`<div class="dish"><div><strong>${d[0]}</strong><small>${d[1]}</small></div><b>${d[2]}</b></div>`).join('')}</div>`).join('')}show('restaurant')</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spa Dining | The Woodland Spa</title>
+  <meta name="description" content="Exquisite freshly prepared food in unique surroundings. Award-winning 2 AA Rosette spa restaurant, Tapas in the Terrace, and Pizza on the Rooftop.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo"><img src="context/woodlandspa-scrape/images/The-Woodland-Spa-Logo-Transparent-Border.jpg" alt="The Woodland Spa"></a>
+      <nav class="main-nav" id="mainNav">
+        <a href="experience.html">The Experience</a>
+        <a href="spa-days.html">Spa Days</a>
+        <a href="stays.html">Spa Breaks</a>
+        <a href="treatments.html">Treatments</a>
+        <a href="dining.html">Dining</a>
+        <a href="plan.html" class="nav-cta">Build Your Visit</a>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- HERO -->
+    <section class="hero hero--short">
+      <div class="hero-image">
+        <img src="context/woodlandspa-scrape/images/Pizza-on-the-Rooftop.png" alt="Pizza on the Rooftop at The Woodland Spa">
+      </div>
+      <div class="hero-content">
+        <p class="eyebrow">Dining</p>
+        <h1>Spa Dining</h1>
+        <p>Complete your sensory journey with exquisite freshly prepared food, beautifully presented and served in the most unique of surroundings.</p>
+      </div>
+    </section>
+
+
+    <!-- INTRO -->
+    <section class="section">
+      <div class="container container--narrow text-center">
+        <p class="eyebrow reveal">Our Menus</p>
+        <h2 class="reveal">Passion for food</h2>
+        <p class="section-intro reveal" style="margin: var(--space-md) auto 0;">
+          We&rsquo;ve embraced our passion for food. Our beautiful Spa Restaurant has recently undergone a complete transformation. For a more relaxed experience, enjoy pizza on the Rooftop or tapas in the Terrace Bar. Ask our Spa Reservations Team to book a table.
+        </p>
+      </div>
+    </section>
+
+
+    <!-- TABBED MENUS -->
+    <section class="section section--warm reveal">
+      <div class="container">
+
+        <div class="menu-container">
+
+          <div class="menu-tabs">
+            <button type="button" class="menu-tab active" data-tab="restaurant">Spa Restaurant</button>
+            <button type="button" class="menu-tab" data-tab="vegan">Vegan Menu</button>
+            <button type="button" class="menu-tab" data-tab="tapas">Tapas</button>
+            <button type="button" class="menu-tab" data-tab="pizza">Pizza</button>
+          </div>
+
+          <!-- SPA RESTAURANT -->
+          <div class="menu-section active" data-menu="restaurant">
+            <p class="note" style="margin-bottom: var(--space-lg); font-style: italic; color: var(--color-text-light);">Your spa day includes a main course, dessert &amp; glass of wine. Supplementary charges may apply.</p>
+
+            <div class="menu-category">
+              <h3>Bread &amp; Nibbles</h3>
+              <p class="note">Make today extra tasty&hellip; Supplementary charges apply</p>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Home-Made Breads <span class="menu-item-tags">(v)(pg)</span></div>
+                  <div class="menu-item-desc">Wignalls Rapeseed Oils, Truffle Aioli</div>
+                </div>
+                <div class="menu-item-price">&pound;7</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Mixed Olives <span class="menu-item-tags">(vegan)(g)</span></div>
+                </div>
+                <div class="menu-item-price">&pound;6.50</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Stonebaked Garlic Pizza Bread <span class="menu-item-tags">(v)</span></div>
+                  <div class="menu-item-desc">Oregano, Mozzarella</div>
+                </div>
+                <div class="menu-item-price">&pound;11</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Aspen Fries <span class="menu-item-tags">(v)(pg)</span></div>
+                  <div class="menu-item-desc">Black Pepper, Italian Cheese, Sea Salt, White Truffle Oil</div>
+                </div>
+                <div class="menu-item-price">&pound;7</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Hummus <span class="menu-item-tags">(v)(pg)</span></div>
+                  <div class="menu-item-desc">Chilli Jam, Crumbled Feta</div>
+                </div>
+                <div class="menu-item-price">&pound;8</div>
+              </div>
+            </div>
+
+            <div class="menu-category">
+              <h3>Favourites</h3>
+              <p class="note">Includes one complimentary side</p>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Pan-Seared Seabass Fillet <span class="menu-item-tags">(g)</span></div>
+                  <div class="menu-item-desc">Tenderstem Broccoli, Tomato, Lemon &amp; Spinach Butter</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Buttermilk Halloumi Ciabatta <span class="menu-item-tags">(v)</span></div>
+                  <div class="menu-item-desc">Onion Relish, Roasted Pepper, Rocket &amp; Basil Mayonnaise</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Steak Diane En Croute</div>
+                  <div class="menu-item-desc">Toasted Sourdough, Confit Tomato, Crispy Onion, Watercress</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Battered Haddock <span class="menu-item-tags">(pg)</span></div>
+                  <div class="menu-item-desc">Minted Pea, Tartare Sauce, Lemon</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">The Connoisseur&rsquo;s Choice <span class="menu-item-tags">(pg)</span></div>
+                  <div class="menu-item-desc">Sirloin &amp; Brisket Burger, French Brioche, Onion Relish, Cracked Black Pepper Sauce</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Pork &amp; Leek Sausage</div>
+                  <div class="menu-item-desc">Red Onion Gravy, Crispy Shallots</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="menu-category">
+              <h3>Pasta &amp; Salads</h3>
+              <p class="note">Do not include sides</p>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Chicken &amp; Chorizo Tortiglioni</div>
+                  <div class="menu-item-desc">&rsquo;Nduja Cream, Spinach, Parmesan</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Malaysian Risotto <span class="menu-item-tags">(vegan)(g)</span></div>
+                  <div class="menu-item-desc">Baby Sweetcorn, Pak Choi, Bean Sprouts</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Bang Bang Chicken Salad</div>
+                  <div class="menu-item-desc">Asian Noodle Salad, Mango, Pomegranate, Miso Toffee Popcorn</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Tagliatelle Pomodoro <span class="menu-item-tags">(vegan)</span></div>
+                  <div class="menu-item-desc">Sun Blushed Tomato &amp; Basil Sauce</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Goat Cheese &amp; Beetroot Salad <span class="menu-item-tags">(v)(g)</span></div>
+                  <div class="menu-item-desc">Confit Lancashire Beetroot, Goat Cheese Pearls, Toasted Pine Nuts, Aged Balsamic</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Bang Bang Tofu Salad <span class="menu-item-tags">(vegan)(g)</span></div>
+                  <div class="menu-item-desc">Asian Noodle Salad, Mango, Pomegranate, Miso Toffee Popcorn</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="menu-category">
+              <h3>Soup &amp; Sandwiches</h3>
+              <p class="note">Gourmet sandwich with cup of home-made soup or a side</p>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Salmon &amp; Prawn Sandwich <span class="menu-item-tags">(pg)</span></div>
+                  <div class="menu-item-desc">Home-Made Rye Bread, Lemon &amp; Dill Mayo, Marie Rose Sauce</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Vegan Hoisin Duck Wrap <span class="menu-item-tags">(vegan)</span></div>
+                  <div class="menu-item-desc">Cucumber Relish, Spring Onion, Sesame</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Cajun Chicken Ciabatta</div>
+                  <div class="menu-item-desc">Buttermilk Halloumi, Roast Peppers, Rocket &amp; Basil Mayonnaise</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="menu-category">
+              <h3>Sides</h3>
+              <p class="note">Supplementary &pound;6</p>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Buttered Mashed Potato <span class="menu-item-tags">(v)(g)</span></div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Seasoned Fries <span class="menu-item-tags">(vegan)(pg)</span></div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">French Beans <span class="menu-item-tags">(v)(g)</span></div>
+                  <div class="menu-item-desc">Shallot Butter</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Pesto New Potatoes <span class="menu-item-tags">(v)(g)</span></div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Hand-Cut Triple Cooked Chips <span class="menu-item-tags">(vegan)(pg)</span></div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Mixed Salad <span class="menu-item-tags">(vegan)(g)</span></div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Onion Rings <span class="menu-item-tags">(v)</span></div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Peppercorn Sauce <span class="menu-item-tags">(pg)</span></div>
+                </div>
+                <div class="menu-item-price">&pound;4</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Diane Sauce</div>
+                </div>
+                <div class="menu-item-price">&pound;4.50</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">B&eacute;arnaise <span class="menu-item-tags">(v)(g)</span></div>
+                </div>
+                <div class="menu-item-price">&pound;4.50</div>
+              </div>
+            </div>
+
+            <div class="menu-category">
+              <h3>Homemade Desserts</h3>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Sticky Toffee Pudding <span class="menu-item-tags">(v)</span></div>
+                  <div class="menu-item-desc">Sticky Toffee Sauce, Gingernut Crumb, Vanilla Ice Cream</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Pineapple &amp; Melon Fruit Salad <span class="menu-item-tags">(vegan)(g)</span></div>
+                  <div class="menu-item-desc">Passion Fruit Syrup, Mango Sorbet</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Vegan Chocolate Brownie <span class="menu-item-tags">(vegan)(g)</span></div>
+                  <div class="menu-item-desc">Salted Caramel Ice Cream</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Seasonal Br&ucirc;l&eacute;e of the Moment <span class="menu-item-tags">(v)(pg)</span></div>
+                  <div class="menu-item-desc">Home-Made Biscuit</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Baileys &amp; Chocolate</div>
+                  <div class="menu-item-desc">Honeycomb Brownie, Valrhona Mousse, Baileys Cream, Vanilla Ice Cream</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- VEGAN MENU -->
+          <div class="menu-section" data-menu="vegan">
+
+            <div class="menu-category">
+              <h3>Bread &amp; Nibbles</h3>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Mixed Olives <span class="menu-item-tags">(vegan)(g)</span></div>
+                </div>
+                <div class="menu-item-price">&pound;6.50</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Hummus <span class="menu-item-tags">(v)(pg)</span></div>
+                  <div class="menu-item-desc">Chilli Jam, Focaccia</div>
+                </div>
+                <div class="menu-item-price">&pound;8</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Garlic Pizza Bread with Tomato <span class="menu-item-tags">(v)</span></div>
+                </div>
+                <div class="menu-item-price">&pound;11</div>
+              </div>
+            </div>
+
+            <div class="menu-category">
+              <h3>Main Courses</h3>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Tagliatelle Pomodoro <span class="menu-item-tags">(vegan)</span></div>
+                  <div class="menu-item-desc">Sun Blushed Tomato &amp; Basil Sauce</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Malaysian Risotto <span class="menu-item-tags">(vegan)(g)</span></div>
+                  <div class="menu-item-desc">Baby Sweetcorn, Pak Choi, Bean Sprouts</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Bang Bang Tofu Salad <span class="menu-item-tags">(vegan)(g)</span></div>
+                  <div class="menu-item-desc">Asian Noodle Salad, Mango, Pomegranate, Miso Toffee Popcorn</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Vegan Hoisin Duck Wrap <span class="menu-item-tags">(vegan)</span></div>
+                  <div class="menu-item-desc">Cucumber Relish, Spring Onion, Sesame</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="menu-category">
+              <h3>Desserts</h3>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Vegan Chocolate Brownie <span class="menu-item-tags">(vegan)(g)</span></div>
+                  <div class="menu-item-desc">Salted Caramel Ice Cream</div>
+                </div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Pineapple &amp; Melon Fruit Salad <span class="menu-item-tags">(vegan)(g)</span></div>
+                  <div class="menu-item-desc">Passion Fruit Syrup, Mango Sorbet</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- TAPAS -->
+          <div class="menu-section" data-menu="tapas">
+            <p class="note" style="margin-bottom: var(--space-lg); font-style: italic; color: var(--color-text-light);">Available 12pm &ndash; 7.30pm in the Terrace Bar</p>
+
+            <div class="menu-category">
+              <h3>Meat</h3>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Keema Lamb Samosas</div>
+                </div>
+                <div class="menu-item-price">&pound;15</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Sesame Chicken Popcorn</div>
+                </div>
+                <div class="menu-item-price">&pound;15</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Spiced Beef Kofta</div>
+                </div>
+                <div class="menu-item-price">&pound;15</div>
+              </div>
+            </div>
+
+            <div class="menu-category">
+              <h3>Fish</h3>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Sake Washed Smoked Salmon</div>
+                </div>
+                <div class="menu-item-price">&pound;15</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Cod &amp; Crab Fishcakes</div>
+                </div>
+                <div class="menu-item-price">&pound;15</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Gambas Pil Pil</div>
+                </div>
+                <div class="menu-item-price">&pound;15</div>
+              </div>
+            </div>
+
+            <div class="menu-category">
+              <h3>Vegetable</h3>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Manchego Potato Bravas <span class="menu-item-tags">(v)</span></div>
+                </div>
+                <div class="menu-item-price">&pound;14</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Truffle Mac &rsquo;N&rsquo; Cheese Croquettes <span class="menu-item-tags">(v)</span></div>
+                </div>
+                <div class="menu-item-price">&pound;14</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Hummus &amp; Olives <span class="menu-item-tags">(v)</span></div>
+                </div>
+                <div class="menu-item-price">&pound;15</div>
+              </div>
+            </div>
+
+            <div class="menu-category">
+              <h3>Special Offer</h3>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">2 tapas + Prosecco Cocktail</div>
+                  <div class="menu-item-desc">Saves &pound;4</div>
+                </div>
+                <div class="menu-item-price">&pound;22</div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- PIZZA -->
+          <div class="menu-section" data-menu="pizza">
+            <p class="note" style="margin-bottom: var(--space-lg); font-style: italic; color: var(--color-text-light);">All 12&rdquo; round, Italian &rsquo;00&rsquo; flour, Cuppone stone-bake oven. Naturally leavened, long fermentation.</p>
+
+            <div class="menu-category">
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Bufalina <span class="menu-item-tags">(v)</span></div>
+                  <div class="menu-item-desc">Tomato, Buffalo Mozzarella, Cherry Tomato, Italian Cheese, Basil</div>
+                </div>
+                <div class="menu-item-price">&pound;18</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Calabrese</div>
+                  <div class="menu-item-desc">&rsquo;Nduja, Pepperoni, Mozzarella, Tomato, Garlic, Chilli</div>
+                </div>
+                <div class="menu-item-price">&pound;20</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Hoisin Duck</div>
+                  <div class="menu-item-desc">Asian Tomato BBQ Sauce, Confit Duck Leg, Hoisin Aioli, Mozzarella, Sesame Cucumber</div>
+                </div>
+                <div class="menu-item-price">&pound;20</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Vegan</div>
+                  <div class="menu-item-desc">Tomato Sauce, Roquito Peppers, Sweetcorn, Mushroom, Artichoke, Vegan Mozzarella</div>
+                </div>
+                <div class="menu-item-price">&pound;20</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Pollo &amp; Pancetta</div>
+                  <div class="menu-item-desc">Mozzarella, Chicken, Bacon, Garlic, Parmesan, No Tomato</div>
+                </div>
+                <div class="menu-item-price">&pound;20</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">The Greek</div>
+                  <div class="menu-item-desc">Tomato, Oregano, Lamb Kofta, Roast Aubergine, Mozzarella &amp; Feta</div>
+                </div>
+                <div class="menu-item-price">&pound;20</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">White Truffle &amp; Parmesan <span class="menu-item-tags">(v)</span></div>
+                  <div class="menu-item-desc">Garlic Butter, Chestnut Mushrooms, Buffalo Mozzarella, Rocket</div>
+                </div>
+                <div class="menu-item-price">&pound;20</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Chicken Pesto</div>
+                  <div class="menu-item-desc">Grilled Chicken, Basil Pesto, Roquito Peppers, Goat Cheese, Tomato</div>
+                </div>
+                <div class="menu-item-price">&pound;20</div>
+              </div>
+              <div class="menu-item">
+                <div>
+                  <div class="menu-item-name">Lancaster Smoked Salmon <span class="menu-item-tags">(Signature)</span></div>
+                  <div class="menu-item-desc">Roquito Pepper Pearls, Buffalo Mozzarella, Rocket, Sun Blushed Tomatoes, Lilliput Capers</div>
+                </div>
+                <div class="menu-item-price">&pound;26</div>
+              </div>
+            </div>
+
+            <p class="note" style="margin-top: var(--space-md);">GF base +&pound;2 supplement</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ALLERGEN INFO -->
+    <section class="section reveal">
+      <div class="container container--narrow">
+        <p class="eyebrow text-center">Dietary Requirements</p>
+        <h2 class="text-center">Allergen information</h2>
+        <p class="section-intro text-center" style="margin: var(--space-md) auto 0;">
+          We cannot accommodate dietary requirements at the Terrace Bar. Within Bertram&rsquo;s Restaurant and Rooftop Bar, we accommodate the 14 main allergens. Notify us 48 hours in advance for requirements outside these.
+        </p>
+        <p class="text-center reveal" style="margin-top: var(--space-md); font-size: 0.85rem; color: var(--color-text-secondary); line-height: 1.8;">
+          <span class="menu-item-tags">(v)</span> Vegetarian &nbsp;&middot;&nbsp;
+          <span class="menu-item-tags">(g)</span> Gluten-free ingredients &nbsp;&middot;&nbsp;
+          <span class="menu-item-tags">(pg)</span> Can be made gluten-free on request
+        </p>
+      </div>
+    </section>
+
+
+    <!-- BERTRAM'S RESTAURANT -->
+    <section class="reveal">
+      <div class="feature-block">
+        <div class="feature-block__image">
+          <img src="context/woodlandspa-scrape/images/Cocktails-at-The-Woodland-Spa.jpg" alt="Bertram's Restaurant at The Woodland Spa">
+        </div>
+        <div class="feature-block__content">
+          <p class="eyebrow">Bertram&rsquo;s Restaurant</p>
+          <h2>2&nbsp;AA Rosette dining</h2>
+          <p>Our award-winning spa restaurant has been completely transformed &mdash; a destination in its own right. Season-led Lancashire produce, an extensive wine list, and a dedicated vegan menu. Your spa day includes a main course, dessert and glass of wine.</p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- TAPAS IN THE TERRACE -->
+    <section class="reveal">
+      <div class="feature-block feature-block--reverse">
+        <div class="feature-block__image">
+          <img src="context/woodlandspa-scrape/images/Tapas-in-the-Terrace-Logo.png" alt="Tapas in the Terrace">
+        </div>
+        <div class="feature-block__content">
+          <p class="eyebrow">Tapas in the Terrace</p>
+          <h2>Relaxed terrace dining</h2>
+          <p>Share small plates on our retractable-roof terrace &mdash; from keema lamb samosas to gambas pil pil. Available 12pm to 7.30pm, with a special offer of two tapas and a Prosecco cocktail for &pound;22.</p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- PIZZA ON THE ROOFTOP -->
+    <section class="reveal">
+      <div class="feature-block">
+        <div class="feature-block__image">
+          <img src="context/woodlandspa-scrape/images/Firepit_Woodland_Spa_For_Men.jpg" alt="Rooftop fire pit lounge at The Woodland Spa">
+        </div>
+        <div class="feature-block__content">
+          <p class="eyebrow">Pizza on the Rooftop</p>
+          <h2>Stone-baked under open skies</h2>
+          <p>Twelve-inch pizzas from our Cuppone stone-bake oven, naturally leavened with Italian &rsquo;00&rsquo; flour. The south-facing Rooftop is the place to be when the sun shines &mdash; stonebaked pizza, cocktails, and fire pit loungers with views over Lancashire.</p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- CTA -->
+    <section class="section section--dark text-center reveal">
+      <div class="container container--narrow">
+        <p class="eyebrow">Plan your visit</p>
+        <h2>Book your table</h2>
+        <p style="color: rgba(240,237,229,0.8); margin: var(--space-md) auto var(--space-lg); max-width: 540px; line-height: 1.8;">
+          Ask our Spa Reservations Team to reserve a table in the restaurant, Terrace Bar or on the Rooftop when you build your visit.
+        </p>
+        <div class="hero-actions" style="justify-content: center;">
+          <a href="plan.html" class="btn btn--primary">Build your visit</a>
+          <a href="tel:01282471913" class="btn btn--outline">Call 01282 471 913</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand"><img src="context/woodlandspa-scrape/images/The-Woodland-Spa-Logo-Transparent-Border.jpg" alt="The Woodland Spa"><p>Set within 100 acres of the most magnificent Lancashire countryside, The Woodland Spa is the perfect sanctuary in which to nourish body, mind and soul.</p></div>
+        <div class="footer-col"><h4>Explore</h4><a href="experience.html">The Experience</a><a href="spa-days.html">Spa Days</a><a href="stays.html">Spa Breaks</a><a href="treatments.html">Treatments</a><a href="dining.html">Dining</a></div>
+        <div class="footer-col"><h4>Visit</h4><a href="plan.html">Build Your Visit</a><a href="tel:01282471913">01282 471 913</a><a href="mailto:reception@thewoodlandspa.com">Email Us</a></div>
+        <div class="footer-col"><h4>Contact</h4><p style="font-size:0.9rem;color:rgba(240,237,229,0.7);line-height:1.7;">The Woodland Spa<br>Within Crow Wood Resort<br>Holme Road, Burnley<br>Lancashire, BB12 0RT</p></div>
+      </div>
+      <div class="footer-bottom"><small>&copy; The Woodland Spa. All rights reserved.</small><span class="demo-badge">Concept Redesign &middot; Prices captured August 2026</span></div>
+    </div>
+  </footer>
+
+  <script src="shared.js"></script>
+</body>
+</html>

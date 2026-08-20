@@ -1,1 +1,513 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Luxury treatments | The Woodland Spa</title><link rel="stylesheet" href="style.css"></head><body><div class="announcement">Expert touch · beautifully appointed rooms · time entirely for you</div><header class="site-head"><a class="logo" href="index.html"><img src="context/woodlandspa-scrape/images/The-Woodland-Spa-Logo-Transparent-Border.jpg" alt="The Woodland Spa"><span>The Woodland Spa<small>Burnley · Lancashire</small></span></a><button class="menu">Menu</button><nav><a href="experience.html">Experience</a><a href="spa-days.html">Visits</a><a href="treatments.html">Treatments</a><a href="dining.html">Dining</a><a href="stays.html">Stay</a><a href="gallery.html">Gallery</a></nav><a class="plan" href="plan.html">Build your visit</a></header><main><section class="page-hero"><img src="context/woodlandspa-scrape/images/Luxury-Treatment-Room-at-The-Woodland-Spa.jpg" alt="Luxury treatment room"><div><p class="eyebrow">Luxury treatments</p><h1>Choose what<br><em>you need.</em></h1></div></section><section class="prose"><h2>Undivided attention.</h2><p>Signature rituals found nowhere else, results-led Medik8 facials, TEMPLESPA body treatments and holistic NEOM massage—delivered by highly trained therapists in calm, opulent rooms.</p></section><section class="treatment-layout"><aside class="filters" id="filters"></aside><div id="treatmentList"></div></section><section class="image-band"><figure><img src="context/woodlandspa-scrape/images/Spa-Treatment-at-The-Woodland-Spa.jpg" alt="Spa treatment in progress" loading="lazy"><figcaption>Undivided attention</figcaption></figure><figure><img src="context/woodlandspa-scrape/images/Solo-Spa-Treatment-at-The-Woodland-Spa.jpg" alt="Solo spa treatment" loading="lazy"><figcaption>Your room, your ritual</figcaption></figure><figure><img src="context/woodlandspa-scrape/images/Spa-Days-With-Treatments-Woodland-Spa-1.jpg" alt="Woodland Spa therapist" loading="lazy"><figcaption>Made personal</figcaption></figure></section><section class="cta"><h2>Make it personal.</h2><p>Assign a different ritual and appointment time to every person in your party.</p><a class="button dark" href="plan.html">Add treatments to a visit</a></section></main><footer><div><strong>The Woodland Spa</strong><p>Within Crow Wood Resort<br>Holme Road, Burnley BB12 0RT</p></div><div><a href="experience.html">The experience</a><a href="dining.html">Dining</a></div><div>01282 471 913</div><small>Prices captured August 2026 and subject to confirmation.</small></footer><script src="shared.js"></script><script src="catalog.js"></script><script>const cats=['All',...new Set(TREATMENTS.map(x=>x.cat))];function draw(cat='All'){filters.innerHTML=cats.map(x=>`<button class="${x===cat?'active':''}">${x}</button>`).join('');filters.querySelectorAll('button').forEach(b=>b.onclick=()=>draw(b.textContent));treatmentList.innerHTML=TREATMENTS.filter(x=>cat==='All'||x.cat===cat).map(x=>`<article class="treatment-item"><div><p class="eyebrow">${x.cat}</p><h3>${x.name}</h3><p>${x.desc}</p><a href="plan.html?treatment=${x.id}">Add to an itinerary →</a></div><b>${x.min} minutes<br>£${x.price}</b></article>`).join('')}draw()</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luxury Treatments | The Woodland Spa</title>
+  <meta name="description" content="Luxury beauty treatments delivered in the most luxurious of surroundings. Signature treatments, facials, massage, body treatments, and more.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo"><img src="context/woodlandspa-scrape/images/The-Woodland-Spa-Logo-Transparent-Border.jpg" alt="The Woodland Spa"></a>
+      <nav class="main-nav" id="mainNav">
+        <a href="experience.html">The Experience</a>
+        <a href="spa-days.html">Spa Days</a>
+        <a href="stays.html">Spa Breaks</a>
+        <a href="treatments.html">Treatments</a>
+        <a href="dining.html">Dining</a>
+        <a href="plan.html" class="nav-cta">Build Your Visit</a>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- HERO -->
+    <section class="hero hero--short">
+      <div class="hero-image">
+        <img src="context/woodlandspa-scrape/images/Spa-Treatment-at-The-Woodland-Spa.jpg" alt="Spa treatment at The Woodland Spa">
+      </div>
+      <div class="hero-content">
+        <p class="eyebrow">Treatments</p>
+        <h1>Luxury Treatments</h1>
+        <p>Delivered in beautifully appointed treatment rooms by highly trained therapists who provide you with their undivided attention.</p>
+      </div>
+    </section>
+
+
+    <!-- INTRO -->
+    <section class="section">
+      <div class="container container--narrow text-center">
+        <p class="eyebrow reveal">Expert touch</p>
+        <h2 class="reveal">Undivided attention</h2>
+        <p class="section-intro reveal" style="margin: var(--space-md) auto 0;">
+          Our luxury treatments are delivered in equally luxurious surroundings. Whether you visit one of our beautifully appointed treatment rooms or indulge in a hand or foot treatment at our luxury pedicure stations &mdash; you&rsquo;re sure to enjoy your treatments. Our therapists are trained by Amethyst Trust and welcome guests living with cancer.
+        </p>
+      </div>
+    </section>
+
+
+    <!-- TREATMENT MENU -->
+    <section class="section">
+      <div class="container">
+        <div class="text-center mb-lg reveal">
+          <p class="eyebrow">Which treatment will you choose?</p>
+          <h2>Our luxury menu</h2>
+        </div>
+
+        <div class="treatment-filters reveal">
+          <button class="filter-btn active" data-filter="all" type="button">All</button>
+          <button class="filter-btn" data-filter="signature" type="button">Signature</button>
+          <button class="filter-btn" data-filter="facials" type="button">Facials</button>
+          <button class="filter-btn" data-filter="massage" type="button">Massage</button>
+          <button class="filter-btn" data-filter="body" type="button">Body</button>
+          <button class="filter-btn" data-filter="pre-mummy" type="button">Pre-Mummy</button>
+          <button class="filter-btn" data-filter="finishing" type="button">Finishing Touches</button>
+        </div>
+
+
+        <!-- SIGNATURE TREATMENTS -->
+        <div class="treatment-group reveal" data-category="signature">
+          <p class="eyebrow">Signature</p>
+          <h3 style="margin-bottom: var(--space-md);">Signature Treatments</h3>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">The Total Glow Up</p>
+              <p class="treatment-brand">Woodland Spa Signature</p>
+              <p class="treatment-desc">This unique face and body treatment leaves your skin positively glowing from top-to-toe. Body brush, scrub, moisturiser, face and body contouring, and advanced skin-transforming facial.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">90 minutes</p>
+              <p class="treatment-price">&pound;148</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Paradise Escape</p>
+              <p class="treatment-brand">Woodland Spa Signature</p>
+              <p class="treatment-desc">After our aromatic foot ritual, your body is exfoliated to restore radiance. A relaxing full body massage with pure essential oils, warm hand and foot masks, and blissful neck and scalp massage.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">105 minutes</p>
+              <p class="treatment-price">&pound;168</p>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- FACIALS -->
+        <div class="treatment-group reveal" data-category="facials">
+          <p class="eyebrow">Facials</p>
+          <h3 style="margin-bottom: var(--space-md);">Facials</h3>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Champagne &amp; Truffles Deluxe Facial</p>
+              <p class="treatment-brand">TEMPLESPA</p>
+              <p class="treatment-desc">A luxury facial combining award-winning truffle skincare with specialist lifting massage techniques that iron out deep lines, strengthen muscle tone and reduce puffiness.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">75 minutes</p>
+              <p class="treatment-price">&pound;117</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Crystal Retinal Age-Defying Facial</p>
+              <p class="treatment-brand">MEDIK8</p>
+              <p class="treatment-desc">Our most rejuvenating facial, powered by Crystal Retinal with transformative sculpting massage. Reduces wrinkles, boosts radiance, improves firmness.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">75 minutes</p>
+              <p class="treatment-price">&pound;117</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Expert Facial</p>
+              <p class="treatment-brand">MEDIK8</p>
+              <p class="treatment-desc">Crafted for a truly personalised experience. Nourishes deeply, enhances skin clarity, promotes a smoother, more even complexion.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">60 minutes</p>
+              <p class="treatment-price">&pound;104</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">My Kinda Skin Prescription Facial</p>
+              <p class="treatment-brand">TEMPLESPA</p>
+              <p class="treatment-desc">Let us analyse your skin and prepare a tailored treatment. Includes face and d&eacute;collet&eacute; massage, plus relaxing scalp massage.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">60 minutes</p>
+              <p class="treatment-price">&pound;104</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Skin Smoothie Facial</p>
+              <p class="treatment-brand">TEMPLESPA</p>
+              <p class="treatment-desc">Revitalising facial with deep power cleanse, nutritious skin scrub, lymph drainage techniques and wake-up scalp massage.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">30 minutes</p>
+              <p class="treatment-price">&pound;62</p>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- MASSAGE -->
+        <div class="treatment-group reveal" data-category="massage">
+          <p class="eyebrow">Massage</p>
+          <h3 style="margin-bottom: var(--space-md);">Massage</h3>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">NEOM Mood Boost</p>
+              <p class="treatment-brand">NEOM</p>
+              <p class="treatment-desc">Guided meditation to lift mood. Invigorating oils of wild mint and mandarin decrease stress and release endorphins.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">75 minutes</p>
+              <p class="treatment-price">&pound;117</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">NEOM Sleep</p>
+              <p class="treatment-brand">NEOM</p>
+              <p class="treatment-desc">Peaceful guided meditation, reflexology and breathing. Blend of 19 essential oils including English Lavender, basil and jasmine.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">75 minutes</p>
+              <p class="treatment-price">&pound;117</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">NEOM De-Stress</p>
+              <p class="treatment-brand">NEOM</p>
+              <p class="treatment-desc">Guided meditation, reflexology and breathing. 24 essential oils including Lavender and Brazilian rosewood.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">75 minutes</p>
+              <p class="treatment-price">&pound;117</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Express NEOM De-Stress</p>
+              <p class="treatment-brand">NEOM</p>
+              <p class="treatment-desc">Focus on breathing and relieving key stress points on back and scalp.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">45 minutes</p>
+              <p class="treatment-price">&pound;69</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Feeling Good Aromatherapy</p>
+              <p class="treatment-brand">TEMPLESPA</p>
+              <p class="treatment-desc">Revitalising power massage with bergamot, sweet orange, lemon and cooling mint.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">60 minutes</p>
+              <p class="treatment-price">&pound;104</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Drift Away Relaxing Aromatherapy</p>
+              <p class="treatment-brand">TEMPLESPA</p>
+              <p class="treatment-desc">Deeply relaxing top-to-toe massage with Frankincense, Lavender, and Patchouli.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">60 minutes</p>
+              <p class="treatment-price">&pound;104</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Work It Out Deep Tissue</p>
+              <p class="treatment-brand">TEMPLESPA</p>
+              <p class="treatment-desc">Detoxifying deep tissue massage with body brushing, Juniper, Lavender and Cypress.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">60 minutes</p>
+              <p class="treatment-price">&pound;104</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Bamboo Massage</p>
+              <p class="treatment-desc">Unique therapy using warmed bamboo tools for deep, soothing pressure.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">60 minutes</p>
+              <p class="treatment-price">&pound;104</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Hot Stone Massage</p>
+              <p class="treatment-desc">Smooth, heat-releasing stones guided by intuitive touch.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">60 minutes</p>
+              <p class="treatment-price">&pound;104</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Back Massage</p>
+              <p class="treatment-desc">Tailored to address areas of concern with appropriate massage techniques.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">30 minutes</p>
+              <p class="treatment-price">&pound;62</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Tranquillity Head Massage</p>
+              <p class="treatment-desc">Sublimely calming massage easing tension from scalp, neck and shoulders.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">30 minutes</p>
+              <p class="treatment-price">&pound;62</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">AAAHHH! Leg &amp; Foot Energiser</p>
+              <p class="treatment-desc">Instant relief for tired legs and feet. Skin brushing, warm oil massage, invigorating foot rub.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">30 minutes</p>
+              <p class="treatment-price">&pound;62</p>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- BODY TREATMENTS -->
+        <div class="treatment-group reveal" data-category="body">
+          <p class="eyebrow">Body</p>
+          <h3 style="margin-bottom: var(--space-md);">Body Treatments</h3>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">NEOM Real Luxury Body Scrub</p>
+              <p class="treatment-brand">NEOM</p>
+              <p class="treatment-desc">Skin nourishment and rich exfoliation with lavender, jasmine &amp; sandalwood.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">75 minutes</p>
+              <p class="treatment-price">&pound;117</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Golden Truffle Experience</p>
+              <p class="treatment-brand">TEMPLESPA</p>
+              <p class="treatment-desc">Radiance-boosting exfoliation with luxurious Truffle Massage Oil and Body Truffle Cr&egrave;me.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">60 minutes</p>
+              <p class="treatment-price">&pound;104</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Back To Life</p>
+              <p class="treatment-brand">TEMPLESPA</p>
+              <p class="treatment-desc">Exfoliation scrub, deep cleanse with warm purifying mud, stimulating massage.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">45 minutes</p>
+              <p class="treatment-price">&pound;69</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">NEOM Reviving Back Ritual</p>
+              <p class="treatment-brand">NEOM</p>
+              <p class="treatment-desc">Amazing exfoliation followed by aromatic back, neck, and scalp massage.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">45 minutes</p>
+              <p class="treatment-price">&pound;69</p>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- PRE-MUMMY RELAXATION -->
+        <div class="treatment-group reveal" data-category="pre-mummy">
+          <p class="eyebrow">Pre-Mummy</p>
+          <h3 style="margin-bottom: var(--space-md);">Pre-Mummy Relaxation</h3>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">New Beginnings</p>
+              <p class="treatment-brand">TEMPLESPA</p>
+              <p class="treatment-desc">Full body massage specially designed for pregnancy, without lying on your tummy. Face and scalp massage for baby soft skin.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">60 minutes</p>
+              <p class="treatment-price">&pound;104</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Pregnancy Treatment</p>
+              <p class="treatment-brand">NEOM</p>
+              <p class="treatment-desc">Safe, supportive prenatal massage with hand-picked 100% natural essential oils. Guided meditation, body and scalp massage.</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">60 minutes</p>
+              <p class="treatment-price">&pound;104</p>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- FINISHING TOUCHES -->
+        <div class="treatment-group reveal" data-category="finishing">
+          <p class="eyebrow">Finishing Touches</p>
+          <h3 style="margin-bottom: var(--space-md);">Finishing Touches</h3>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Luxury Manicure/Pedicure (OPI Infinite Shine)</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">60 minutes</p>
+              <p class="treatment-price">&pound;60</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Spa Manicure/Pedicure</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-duration">45 minutes</p>
+              <p class="treatment-price">&pound;50</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Shape &amp; Paint</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-price">&pound;35</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Gel Colour (OPI)</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-price">&pound;45</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Manicure/Pedicure with Gel Colour</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-price">&pound;60</p>
+            </div>
+          </div>
+
+          <div class="treatment-item">
+            <div>
+              <p class="treatment-name">Gel Colour Removal &amp; Re-application</p>
+            </div>
+            <div class="treatment-meta">
+              <p class="treatment-price">&pound;55</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- TREATMENT INFO -->
+    <section class="section section--warm">
+      <div class="container container--narrow text-center reveal">
+        <p class="eyebrow">Before you arrive</p>
+        <h2>Spa Treatment Information</h2>
+        <p class="section-intro" style="margin: var(--space-md) auto 0;">
+          Please advise us of any medical conditions and allergies prior to arrival. Arrive 15 minutes before your treatment. 24 hours cancellation notice required. The Spa is adults only (16+).
+        </p>
+      </div>
+    </section>
+
+
+    <!-- CTA -->
+    <section class="section section--dark text-center reveal">
+      <div class="container container--narrow">
+        <p class="eyebrow">Make it personal</p>
+        <h2>Add treatments to your visit</h2>
+        <p style="color: rgba(240,237,229,0.8); margin: var(--space-md) auto var(--space-lg); max-width: 540px; line-height: 1.8;">
+          Assign a different ritual and appointment time to every person in your party &mdash; all in one seamless itinerary.
+        </p>
+        <a href="plan.html" class="btn btn--primary">Add treatments to your visit</a>
+      </div>
+    </section>
+
+  </main>
+
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand"><img src="context/woodlandspa-scrape/images/The-Woodland-Spa-Logo-Transparent-Border.jpg" alt="The Woodland Spa"><p>Set within 100 acres of the most magnificent Lancashire countryside, The Woodland Spa is the perfect sanctuary in which to nourish body, mind and soul.</p></div>
+        <div class="footer-col"><h4>Explore</h4><a href="experience.html">The Experience</a><a href="spa-days.html">Spa Days</a><a href="stays.html">Spa Breaks</a><a href="treatments.html">Treatments</a><a href="dining.html">Dining</a></div>
+        <div class="footer-col"><h4>Visit</h4><a href="plan.html">Build Your Visit</a><a href="tel:01282471913">01282 471 913</a><a href="mailto:reception@thewoodlandspa.com">Email Us</a></div>
+        <div class="footer-col"><h4>Contact</h4><p style="font-size:0.9rem;color:rgba(240,237,229,0.7);line-height:1.7;">The Woodland Spa<br>Within Crow Wood Resort<br>Holme Road, Burnley<br>Lancashire, BB12 0RT</p></div>
+      </div>
+      <div class="footer-bottom"><small>&copy; The Woodland Spa. All rights reserved.</small><span class="demo-badge">Concept Redesign &middot; Prices captured August 2026</span></div>
+    </div>
+  </footer>
+
+  <script src="shared.js"></script>
+</body>
+</html>

@@ -1,7 +1,387 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Build your Woodland Spa visit</title><link rel="stylesheet" href="style.css"></head><body><div class="announcement">Build one complete itinerary · no phone call required</div><header class="site-head"><a class="logo" href="index.html"><img src="context/woodlandspa-scrape/images/The-Woodland-Spa-Logo-Transparent-Border.jpg" alt="The Woodland Spa"><span>The Woodland Spa<small>Burnley · Lancashire</small></span></a><a href="index.html">← Back to the spa</a></header><main><section class="intro" style="padding-bottom:2rem"><p class="eyebrow">Your complete escape</p><h2>Make it entirely yours.</h2><p>Choose the visit, name your party, then arrange every treatment and table. Your itinerary and saving update as you go.</p></section><div class="builder"><div class="builder-main"><div class="progress" id="progress"></div>
-<section class="step active"><p class="eyebrow">01 · The shape of your visit</p><h2>When can we welcome you?</h2><div class="choice-grid" id="types"></div><div class="form-grid"><label>Arrival date<input type="date" id="date"></label><label id="departureLabel">Departure date<input type="date" id="departure"></label></div><h3>Choose your experience</h3><div class="choice-grid" id="packages"></div><button class="button dark next">Continue to your party →</button></section>
-<section class="step"><p class="eyebrow">02 · Your people</p><h2>Who is escaping?</h2><p>Name every guest so the details ahead feel effortless.</p><div id="guests"></div><button class="button ghost" id="addGuest">+ Add another guest</button> <button class="button dark next">Choose treatments →</button></section>
-<section class="step"><p class="eyebrow">03 · Personal rituals</p><h2>What does everyone need?</h2><p>Choose separately for every guest. Appointment times are arranged to keep your day flowing.</p><div id="guestTreatments"></div><button class="button dark next">Choose dining →</button></section>
-<section class="step"><p class="eyebrow">04 · Your table</p><h2>Where will you pause?</h2><div class="choice-grid" id="diningChoices"></div><div class="form-grid"><label>Preferred time<select id="diningTime"><option>12:00</option><option>13:00</option><option>14:00</option><option>18:00</option><option selected>19:00</option><option>20:00</option></select></label><label>Dietary needs<input id="dietary" placeholder="Allergies or preferences"></label></div><button class="button dark next">Add finishing touches →</button></section>
-<section class="step"><p class="eyebrow">05 · Make more of it</p><h2>The finishing touches.</h2><div class="choice-grid" id="extras"></div><div class="notice" style="margin:2rem 0"><strong>Your package saving grows with you.</strong><br>2 extras unlock 5%; 4 unlock 10%; 6 or more unlock 15% off eligible extras and treatments.</div><button class="button dark next">Review your escape →</button></section>
-<section class="step"><p class="eyebrow">06 · Everything in its place</p><h2>Your itinerary.</h2><div id="review"></div><div class="form-grid"><label>Lead guest<input id="lead" required placeholder="Full name"></label><label>Email<input type="email" id="email" required placeholder="you@example.com"></label></div><button class="button dark" id="confirm">Request this itinerary →</button><p class="notice">Demonstration only. No payment or real reservation will be made.</p></section></div><aside class="basket" id="basket"></aside></div><div class="mobile-total" id="mobileTotal"></div></main><script src="catalog.js"></script><script src="builder.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Build Your Visit | The Woodland Spa</title>
+  <meta name="description" content="Build your perfect spa experience. Choose your visit type, add treatments, book dining and watch your package savings grow.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">
+        <img src="context/woodlandspa-scrape/images/The-Woodland-Spa-Logo-Transparent-Border.jpg" alt="The Woodland Spa">
+      </a>
+      <nav class="main-nav" id="mainNav">
+        <a href="experience.html">The Experience</a>
+        <a href="spa-days.html">Spa Days</a>
+        <a href="stays.html">Spa Breaks</a>
+        <a href="treatments.html">Treatments</a>
+        <a href="dining.html">Dining</a>
+        <a href="plan.html" class="nav-cta">Build Your Visit</a>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div class="spacer"></div>
+
+    <section class="section">
+      <div class="container">
+        <div class="text-center mb-xl">
+          <p class="eyebrow">Your Time, Your Way</p>
+          <h1>Build your experience</h1>
+          <p class="section-intro" style="margin: var(--space-sm) auto 0;">
+            Choose every detail in one place &mdash; visit type, treatments, dining &mdash; and watch your package saving grow as you add more.
+          </p>
+        </div>
+
+        <!-- Step indicators -->
+        <div class="builder-progress" id="builderProgress">
+          <div class="builder-step-indicator active" data-step="1">
+            <span class="step-num">1</span>
+            <span class="step-label">Visit</span>
+          </div>
+          <div class="builder-step-indicator" data-step="2">
+            <span class="step-num">2</span>
+            <span class="step-label">Party</span>
+          </div>
+          <div class="builder-step-indicator" data-step="3">
+            <span class="step-num">3</span>
+            <span class="step-label">Treatments</span>
+          </div>
+          <div class="builder-step-indicator" data-step="4">
+            <span class="step-num">4</span>
+            <span class="step-label">Dining</span>
+          </div>
+          <div class="builder-step-indicator" data-step="5">
+            <span class="step-num">5</span>
+            <span class="step-label">Review</span>
+          </div>
+        </div>
+
+        <div class="builder-layout">
+          <div class="builder-panels">
+
+            <!-- STEP 1: Visit Type -->
+            <div class="builder-panel active" data-panel="1">
+              <h2>How would you like to visit?</h2>
+              <p class="section-intro mb-lg">Choose the shape of your day &mdash; or night.</p>
+
+              <div class="visit-type-cards" id="visitTypes">
+                <div class="visit-type-card" data-visit="thermal">
+                  <h3>Thermal Experience</h3>
+                  <p>Full-day access to all thermal facilities. No time limit.</p>
+                  <div class="price-grid mt-md">
+                    <span class="day-label">Mon&ndash;Thu</span>
+                    <span class="day-label">Fri &amp; Sun</span>
+                    <span class="day-label">Sat</span>
+                    <span>&pound;120</span>
+                    <span>&pound;150</span>
+                    <span>&pound;160</span>
+                  </div>
+                </div>
+
+                <div class="visit-type-card" data-visit="thermal-dine">
+                  <h3>Thermal &amp; Dine</h3>
+                  <p>Full-day thermal access plus main course, dessert &amp; glass of wine.</p>
+                  <div class="price-grid mt-md">
+                    <span class="day-label">Mon&ndash;Thu</span>
+                    <span class="day-label">Fri &amp; Sun</span>
+                    <span class="day-label">Sat</span>
+                    <span>&pound;152</span>
+                    <span>&pound;182</span>
+                    <span>&pound;192</span>
+                  </div>
+                </div>
+
+                <div class="visit-type-card" data-visit="twilight">
+                  <h3>Twilight Experience</h3>
+                  <p>Evening thermal access from 5.30pm &ndash; 9.30pm.</p>
+                  <div class="price-grid mt-md">
+                    <span class="day-label">Mon&ndash;Thu</span>
+                    <span class="day-label">Fri &amp; Sun</span>
+                    <span class="day-label">Sat</span>
+                    <span>&pound;85</span>
+                    <span>&pound;90</span>
+                    <span>&pound;95</span>
+                  </div>
+                </div>
+
+                <div class="visit-type-card" data-visit="bb">
+                  <h3>Spa Break &mdash; B&amp;B</h3>
+                  <p>Overnight stay with breakfast &amp; arrival-day thermal access.</p>
+                  <div class="price-grid mt-md">
+                    <span class="day-label">Mon&ndash;Thu</span>
+                    <span class="day-label">Fri &amp; Sun</span>
+                    <span class="day-label">Sat</span>
+                    <span>&pound;200pp</span>
+                    <span>&pound;240pp</span>
+                    <span>&pound;275pp</span>
+                  </div>
+                </div>
+
+                <div class="visit-type-card" data-visit="dbb">
+                  <h3>Spa Break &mdash; Dinner, B&amp;B</h3>
+                  <p>Overnight stay with dinner (&pound;40pp credit), breakfast &amp; spa access.</p>
+                  <div class="price-grid mt-md">
+                    <span class="day-label">Mon&ndash;Thu</span>
+                    <span class="day-label">Fri &amp; Sun</span>
+                    <span class="day-label">Sat</span>
+                    <span>&pound;240pp</span>
+                    <span>&pound;280pp</span>
+                    <span>&pound;315pp</span>
+                  </div>
+                </div>
+
+                <div class="visit-type-card" data-visit="sparkling">
+                  <h3>English Sparkling Retreat</h3>
+                  <p>Thermal access, overnight stay, breakfast &amp; sparkling wine in room. Sun&ndash;Fri only.</p>
+                  <div class="price-grid mt-md">
+                    <span class="day-label">Sun&ndash;Fri</span>
+                    <span class="day-label">&nbsp;</span>
+                    <span class="day-label">&nbsp;</span>
+                    <span>&pound;175pp</span>
+                    <span>&nbsp;</span>
+                    <span>&nbsp;</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group mt-lg">
+                <label for="visitDay">When are you visiting?</label>
+                <select id="visitDay">
+                  <option value="midweek">Monday &ndash; Thursday</option>
+                  <option value="weekend-fs">Friday or Sunday</option>
+                  <option value="weekend-sat">Saturday</option>
+                </select>
+              </div>
+
+              <button class="btn btn--primary mt-lg" id="toStep2" disabled>Choose your party &rarr;</button>
+            </div>
+
+
+            <!-- STEP 2: Party -->
+            <div class="builder-panel" data-panel="2">
+              <h2>Who's coming?</h2>
+              <p class="section-intro mb-lg">Set the number of guests in your party.</p>
+
+              <div class="form-group">
+                <label>Number of guests</label>
+                <div class="guest-counter">
+                  <button id="guestMinus">&minus;</button>
+                  <span class="count" id="guestCount">2</span>
+                  <button id="guestPlus">+</button>
+                </div>
+              </div>
+
+              <div class="form-row mt-lg">
+                <div class="form-group">
+                  <label for="arrivalDate">Preferred date</label>
+                  <input type="date" id="arrivalDate">
+                </div>
+              </div>
+
+              <div style="display: flex; gap: var(--space-sm); margin-top: var(--space-lg);">
+                <button class="btn btn--ghost" id="backTo1">&larr; Back</button>
+                <button class="btn btn--primary" id="toStep3">Add treatments &rarr;</button>
+              </div>
+            </div>
+
+
+            <!-- STEP 3: Treatments -->
+            <div class="builder-panel" data-panel="3">
+              <h2>Add treatments</h2>
+              <p class="section-intro mb-md">Optional &mdash; add treatments for each guest. Prices are per person.</p>
+
+              <div class="treatment-filters mb-md">
+                <button class="filter-btn active" data-bfilter="all">All</button>
+                <button class="filter-btn" data-bfilter="signature">Signature</button>
+                <button class="filter-btn" data-bfilter="facials">Facials</button>
+                <button class="filter-btn" data-bfilter="massage">Massage</button>
+                <button class="filter-btn" data-bfilter="body">Body</button>
+                <button class="filter-btn" data-bfilter="nails">Finishing Touches</button>
+              </div>
+
+              <div id="builderTreatments"></div>
+
+              <div style="display: flex; gap: var(--space-sm); margin-top: var(--space-lg);">
+                <button class="btn btn--ghost" id="backTo2">&larr; Back</button>
+                <button class="btn btn--primary" id="toStep4">Choose dining &rarr;</button>
+              </div>
+            </div>
+
+
+            <!-- STEP 4: Dining -->
+            <div class="builder-panel" data-panel="4">
+              <h2>Dining preferences</h2>
+              <p class="section-intro mb-lg">Let us know if you'd like to book a table.</p>
+
+              <div id="diningOptions">
+                <div class="form-group">
+                  <label for="lunchVenue">Lunch</label>
+                  <select id="lunchVenue">
+                    <option value="">No lunch booking needed</option>
+                    <option value="restaurant">Bertram's Spa Restaurant</option>
+                    <option value="terrace">Tapas in the Terrace</option>
+                    <option value="rooftop">Pizza on the Rooftop</option>
+                  </select>
+                </div>
+                <div class="form-group" id="dinnerGroup" style="display:none;">
+                  <label for="dinnerVenue">Dinner</label>
+                  <select id="dinnerVenue">
+                    <option value="">No dinner booking needed</option>
+                    <option value="restaurant">Bertram's Restaurant (6pm)</option>
+                    <option value="restaurant-7">Bertram's Restaurant (7pm)</option>
+                    <option value="restaurant-8">Bertram's Restaurant (8pm)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group mt-lg">
+                <label>Extras</label>
+                <div id="extrasList">
+                  <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0; cursor: pointer;">
+                    <input type="checkbox" id="rasulExtra" value="rasul"> Rasul Mud Ritual &mdash; from &pound;20pp
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0; cursor: pointer;">
+                    <input type="checkbox" id="departureSpa" value="departure-spa" style="display:none;"> 
+                    <span id="departureLabel" style="display:none;">Departure-day spa access &mdash; from &pound;85pp</span>
+                  </label>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: var(--space-sm); margin-top: var(--space-lg);">
+                <button class="btn btn--ghost" id="backTo3">&larr; Back</button>
+                <button class="btn btn--primary" id="toStep5">Review your visit &rarr;</button>
+              </div>
+            </div>
+
+
+            <!-- STEP 5: Review -->
+            <div class="builder-panel" data-panel="5">
+              <h2>Your Woodland escape</h2>
+              <p class="section-intro mb-lg">Review your selections below.</p>
+
+              <div id="reviewSummary"></div>
+
+              <div class="divider"></div>
+
+              <h3 class="mb-md">Your details</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="guestName">Full name</label>
+                  <input type="text" id="guestName" placeholder="Your name">
+                </div>
+                <div class="form-group">
+                  <label for="guestEmail">Email</label>
+                  <input type="email" id="guestEmail" placeholder="you@example.com">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="guestPhone">Phone</label>
+                  <input type="tel" id="guestPhone" placeholder="07...">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="guestNotes">Special requests</label>
+                <textarea id="guestNotes" rows="3" placeholder="Allergies, celebrations, accessibility needs..."></textarea>
+              </div>
+
+              <div style="display: flex; gap: var(--space-sm); margin-top: var(--space-lg);">
+                <button class="btn btn--ghost" id="backTo4">&larr; Back</button>
+                <button class="btn btn--primary" id="confirmBooking">Request this experience &rarr;</button>
+              </div>
+              <p style="margin-top: var(--space-sm); font-size: 0.8rem; color: var(--color-text-light);">
+                Demo only &mdash; no payment will be taken. Prices captured August 2026.
+              </p>
+            </div>
+
+          </div>
+
+          <!-- Sticky basket (desktop sidebar, mobile bottom bar) -->
+          <div class="builder-basket" id="builderBasket">
+            <div class="basket-summary">
+              <h4>Your Package</h4>
+              <div class="basket-items" id="basketItems">
+                <p style="font-size: 0.9rem; color: var(--color-text-light);">Select a visit type to begin.</p>
+              </div>
+              <div class="basket-saving" id="basketSaving" style="display: none;">
+                You save &pound;<span id="savingAmount">0</span>
+              </div>
+              <div class="basket-total">
+                <span>Total</span>
+                <strong>&pound;<span id="basketTotal">0</span></strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- Confirmation overlay -->
+    <div id="confirmOverlay" style="display:none; position:fixed; inset:0; z-index:200; background: rgba(27,59,47,0.92); align-items:center; justify-content:center; padding: var(--space-md);">
+      <div style="background: var(--color-white); border-radius: var(--radius-lg); padding: var(--space-xl); max-width: 500px; text-align: center;">
+        <h2 style="color: var(--color-primary); margin-bottom: var(--space-sm);">Thank you</h2>
+        <p style="margin-bottom: var(--space-md);">Your experience request has been submitted. In reality, our reservations team would call you to confirm availability and take payment.</p>
+        <p style="font-size: 0.85rem; color: var(--color-text-light); margin-bottom: var(--space-lg);">This is a concept demo &mdash; no real booking has been made.</p>
+        <a href="index.html" class="btn btn--primary">Return home</a>
+      </div>
+    </div>
+
+  </main>
+
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <img src="context/woodlandspa-scrape/images/The-Woodland-Spa-Logo-Transparent-Border.jpg" alt="The Woodland Spa">
+          <p>Set within 100 acres of the most magnificent Lancashire countryside, The Woodland Spa is the perfect sanctuary in which to nourish body, mind and soul.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Explore</h4>
+          <a href="experience.html">The Experience</a>
+          <a href="spa-days.html">Spa Days</a>
+          <a href="stays.html">Spa Breaks</a>
+          <a href="treatments.html">Treatments</a>
+          <a href="dining.html">Dining</a>
+        </div>
+        <div class="footer-col">
+          <h4>Visit</h4>
+          <a href="plan.html">Build Your Visit</a>
+          <a href="tel:01282471913">01282 471 913</a>
+          <a href="mailto:reception@thewoodlandspa.com">Email Us</a>
+        </div>
+        <div class="footer-col">
+          <h4>Contact</h4>
+          <p style="font-size: 0.9rem; color: rgba(240,237,229,0.7); line-height: 1.7;">
+            The Woodland Spa<br>
+            Within Crow Wood Resort<br>
+            Holme Road, Burnley<br>
+            Lancashire, BB12 0RT
+          </p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <small>&copy; The Woodland Spa. All rights reserved.</small>
+        <span class="demo-badge">Concept Redesign &middot; Prices captured August 2026</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="shared.js"></script>
+  <script src="builder.js"></script>
+</body>
+</html>
