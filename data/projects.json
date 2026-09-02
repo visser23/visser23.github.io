@@ -84,6 +84,18 @@
     "featured": true
   },
   {
+    "title": "Work Context Builder",
+    "slug": "work-context-builder",
+    "category": "open-source",
+    "status": "live",
+    "year": "2026",
+    "summary": "Syncs Confluence, Jira, SharePoint and local files into a clean Markdown knowledge base for any LLM.",
+    "link": "https://github.com/visser23/work-context-builder",
+    "external": true,
+    "icon": "sync",
+    "featured": true
+  },
+  {
     "title": "CV / Profile",
     "slug": "cv",
     "category": "reference",
