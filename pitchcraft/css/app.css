@@ -361,6 +361,7 @@ button { cursor: pointer; }
 .ai-steps { margin: 0 0 14px; padding-left: 22px; display: flex; flex-direction: column; gap: 16px; } .ai-steps > li { padding-left: 4px; } .ai-steps > li > b:first-child { font-size: 14.5px; }
 .ai-steps .txt { margin-top: 8px; } .ai-steps .row { margin-top: 10px; }
 .ai-mode { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; } .ai-mode label { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; } .ai-mode input { margin-top: 3px; }
+.ai-approach { border: 1px solid var(--ui-line); border-radius: 10px; padding: 8px 12px 10px; margin: 0 0 12px; display: flex; flex-direction: column; gap: 6px; } .ai-approach legend { font-size: 12px; font-weight: 700; padding: 0 6px; } .ai-approach label { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; } .ai-approach input { margin-top: 3px; }
 .ai-can { background: var(--ui-bg); border-radius: 12px; padding: 12px 16px; font-size: 13.5px; } .ai-can ul { margin: 6px 0 4px; padding-left: 20px; } .ai-can p { margin: 6px 0 0; }
 .ai-prev { margin-top: 12px; font-size: 13px; } .ai-prev summary { cursor: pointer; font-weight: 600; color: var(--ui-muted); } .ai-prev textarea { margin-top: 8px; }
 .ai-foot { margin: 16px 0 0; font-size: 12.5px; color: var(--ui-muted); }
@@ -370,3 +371,15 @@ button { cursor: pointer; }
 @media (max-width: 860px) { .ribbon[data-rtab='insert'] .rg[data-g='insert'] { display: flex; } }
 
 .faq { border-bottom: 1px solid var(--ui-line); padding: 10px 2px; } .faq summary { cursor: pointer; font-weight: 600; } .faq p { margin: 8px 0 2px; color: var(--ui-muted); font-size: 13.5px; }
+
+/* ── "How this slide is built": three routes, the HTML/CSS/JS one included ── */
+.modes { display: flex; flex-direction: column; gap: 6px; }
+.mode { display: flex; gap: 10px; align-items: flex-start; text-align: left; width: 100%; padding: 9px 11px; border: 1.5px solid var(--ui-line); border-radius: 10px; background: var(--ui-panel); color: var(--ui-fg); cursor: pointer; font: inherit; }
+.mode:hover { border-color: var(--ui-acc); }
+.mode.on { border-color: var(--ui-acc); background: var(--ui-acc-soft); }
+.mode > svg { flex: none; margin-top: 2px; color: var(--ui-acc); }
+.mode b { display: block; font-size: 13px; } .mode b .hint { font-weight: 500; margin-left: 4px; }
+.mode small { display: block; font-size: 12px; color: var(--ui-muted); line-height: 1.35; margin-top: 1px; }
+.audit-out { margin-top: 8px; font-size: 12.5px; }
+.audit-list { margin: 6px 0 0; padding-left: 18px; color: var(--ui-bad); } .audit-list li { margin-bottom: 4px; } .audit-list b { font-family: var(--ui-mono, monospace); font-size: 11.5px; }
+.note.ok { color: var(--ui-muted); }

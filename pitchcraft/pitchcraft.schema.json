@@ -568,7 +568,7 @@
       "fields": "kicker, headline, body, code:{language:\"json\"|\"js\"|\"html\"|\"css\"|\"bash\",filename?,source}"
     },
     "custom": {
-      "name": "Custom HTML",
+      "name": "HTML, CSS and JS",
       "group": "Custom",
       "fields": "headline (a NAME only, not drawn), custom:{html,css?,js?,base?,interactive?}. html is the whole 1280x720 slide: write anything. See \"Custom layout\" in the AI guide."
     },

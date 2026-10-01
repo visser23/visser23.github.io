@@ -110,7 +110,9 @@ F.html = function () {
   const T = St.targets();
   if (!T.length) {
     const s = S.slide(), blank = s && s.layout === 'blank';
-    return sec('Format', `<p class="note">Click anything on the slide to format it. <b>Drag</b> to move, use the <b>handles</b> to resize and rotate, <b>double-click</b> a text box to type, arrow keys to nudge, <b>Shift</b> to select several.</p>`)
+    if (s && s.layout === 'custom') return Ins.panelBuild(s) + sec('Edit this slide', `<p class="note">This slide is code, so there is nothing on it to click and format. Open the code editors to change it, or ask an AI to.</p><div class="row wrap"><button class="btn sm primary" data-build="custom">${icon('code', 14)} Open the code editors</button><button class="btn sm" data-act="ai">${icon('sparkles', 14)} Ask an AI</button></div>`)
+      + sec('Add to this slide', `<div class="row wrap"><button class="btn sm" data-act="ins-text">${icon('type', 14)} Text box</button><button class="btn sm" data-act="ins-image">${icon('image', 14)} Image</button><button class="btn sm" data-act="ins-shape">${icon('shapes', 14)} Shape</button><button class="btn sm" data-act="ins-icon">${icon('star', 14)} Icon</button></div>`);
+    return (s ? Ins.panelBuild(s) : '') + sec('Format', `<p class="note">Click anything on the slide to format it. <b>Drag</b> to move, use the <b>handles</b> to resize and rotate, <b>double-click</b> a text box to type, arrow keys to nudge, <b>Shift</b> to select several.</p>`)
       + sec(blank ? 'This slide is blank' : 'Add to this slide', `<div class="row wrap"><button class="btn sm" data-act="ins-text">${icon('type', 14)} Text box</button><button class="btn sm" data-act="ins-image">${icon('image', 14)} Image</button><button class="btn sm" data-act="ins-shape">${icon('shapes', 14)} Shape</button><button class="btn sm" data-act="ins-icon">${icon('star', 14)} Icon</button></div>`, blank ? '' : 'sits above the layout');
   }
   const objsSel = T.filter(t => t.obj), fx = T.filter(t => !t.obj);

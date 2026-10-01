@@ -6,8 +6,15 @@
 <style>body{font:16px/1.6 system-ui,sans-serif;max-width:860px;margin:40px auto;padding:0 20px;color:#16161d}code{background:#f0eee8;padding:1px 5px;border-radius:4px;font-size:.92em}pre{background:#16161d;color:#f4f1ea;padding:16px;border-radius:10px;overflow:auto}pre code{background:none;padding:0;color:inherit}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:6px 10px;text-align:left;vertical-align:top}h1,h2,h3{line-height:1.2}a{color:#4b3bff}</style></head>
 <body><p><a href="./">Open Pitchcraft</a> · <a href="ai-guide.md">Raw markdown</a></p>
 <h1>Pitchcraft: guide for AI assistants</h1>
-<p>Version 3.2.1 · canonical copy: https://visser23.github.io/pitchcraft/ai-guide.md · also inside the app: <code>Pitchcraft.guide()</code></p>
-<p>Pitchcraft is a browser presentation studio. A deck is <strong>plain JSON</strong>. You write or edit that JSON, the user opens it in Pitchcraft, edits it visually and presents it. There is no server: everything is validated and rendered in the user's browser. This guide is generated from the same specs the app runs on, so it is always accurate for version 3.2.1.</p>
+<p>Version 3.3.0 · canonical copy: https://visser23.github.io/pitchcraft/ai-guide.md · also inside the app: <code>Pitchcraft.guide()</code></p>
+<p>Pitchcraft is a browser presentation studio. A deck is <strong>plain JSON</strong>. You write or edit that JSON, the user opens it in Pitchcraft, edits it visually and presents it. There is no server: everything is validated and rendered in the user's browser. This guide is generated from the same specs the app runs on, so it is always accurate for version 3.3.0.</p>
+<p><strong>Plain-text routes.</strong> If your tool rewrites URLs, equals signs or long output, fetch this guide as plain markdown (https://visser23.github.io/pitchcraft/ai-guide.md) or together with the schema in one file (https://visser23.github.io/pitchcraft/llms-full.txt). In the page, <code>Pitchcraft.guide(9)</code> returns one section at a time.</p>
+<p><strong>Three ways to build a slide, and you can mix them in one deck.</strong></p>
+<ol>
+<li><strong>Template layout</strong>: fill in fields such as <code>headline</code> and <code>items</code>. Fast and consistent. Best for plain text, lists and simple charts (section 4).</li>
+<li><strong>Blank layout with objects</strong>: text, shapes, images and icons placed at x/y/w/h (section 6).</li>
+<li><strong>Custom slide</strong>: your own HTML, CSS and JavaScript (section 9). This is the full-capability route. It can do any layout, brand styling, diagram, animation or canvas. When the look of a slide matters, write a custom slide.</li>
+</ol>
 <h2>1. Which job are you doing?</h2>
 <ol>
 <li><strong>You are a chat window</strong> (ChatGPT, Claude, Gemini, Copilot, etc.) and you cannot touch the user's open Pitchcraft. Produce a deck file (section 2) for the user to import. Follow sections 3 to 10.</li>
@@ -78,18 +85,20 @@
 </ul>
 <h3>Custom</h3>
 <ul>
-<li><code>custom</code>: Custom HTML. Any HTML, CSS and JavaScript. No walls. Fields: headline (a NAME only, not drawn), custom:{html,css?,js?,base?,interactive?}. html is the whole 1280x720 slide: write anything. See "Custom layout" in the AI guide.</li>
+<li><code>custom</code>: HTML, CSS and JS. Write the slide as code: any layout, brand style or animation. Fields: headline (a NAME only, not drawn), custom:{html,css?,js?,base?,interactive?}. html is the whole 1280x720 slide: write anything. See "Custom layout" in the AI guide.</li>
 </ul>
 <p>Icon names (for <code>icon</code> fields and icon objects): <code>bolt</code>, <code>layers</code>, <code>sparkles</code>, <code>chart</code>, <code>lock</code>, <code>globe</code>, <code>wand</code>, <code>cursor</code>, <code>clock</code>, <code>check</code>, <code>users</code>, <code>user</code>, <code>target</code>, <code>rocket</code>, <code>shield</code>, <code>cpu</code>, <code>box</code>, <code>link</code>, <code>star</code>, <code>type</code>, <code>image</code>, <code>table</code>, <code>pie</code>, <code>terminal</code>, <code>flag</code>, <code>presentation</code>, <code>heart</code>, <code>key</code>, <code>puzzle</code>, <code>git</code>, <code>compass</code>, <code>mail</code>, <code>feather</code>, <code>gauge</code>, <code>edit</code>, <code>tag</code>, <code>map</code>, <code>file</code>, <code>code</code>, <code>download</code>, <code>upload</code>, <code>eye</code>, <code>palette</code>, <code>grid</code>, <code>play</code></p>
 <h3>Text markup (every text field, including text in objects)</h3>
 <p><code><strong>bold</strong></code>, <code><em>italic</em></code>, <code>==accent highlight==</code> and `<code> </code>code<code> </code><code>. Use </code>==highlight==` on one or two words of a headline. Line breaks inside free-form text objects are kept; generated fields are single-line.</p>
 <h2>5. Choosing between template, free-form and custom</h2>
+<p>Decide per slide. The three routes mix freely, so a deck can be mostly templates with a few custom slides, or custom all the way through.</p>
 <ul>
-<li><strong>Template layouts</strong> (section 4) for normal slides. They adapt to any theme and are the most reliable.</li>
-<li><strong>Blank layout + objects</strong> (section 6) when the user wants precise placement: their own composition, diagrams from shapes, logos, photos, callouts. The slide is empty and every element is an object you position on the 1280 x 720 stage.</li>
+<li><strong>Custom slide</strong> (section 9): your own HTML, CSS and JavaScript. Use it whenever the design matters: a brand look, a diagram, a timeline, a chart that is not one of the built-in types, an animation, a canvas, an interactive demo. There is no layout it cannot produce. If the user supplied a brand guide, build in custom slides and put the shared styling in <code>meta.css</code>. Custom slides cost more effort to write, and they are edited as code rather than field by field.</li>
+<li><strong>Template layouts</strong> (section 4): plain text, lists, simple charts, tables. They adapt to every theme and the user can edit them field by field without touching code. Use them for slides where the content matters more than the layout.</li>
+<li><strong>Blank layout + objects</strong> (section 6): precise placement without code. Good for a big number, a logo, photos, callouts and simple diagrams built from shapes.</li>
 <li><strong>Objects on top of a template slide</strong>: any layout accepts <code>objects</code>; they float above the layout. Good for a logo, a sticker, an annotation.</li>
-<li><strong>Custom layout</strong> (section 9): full HTML, CSS and JavaScript for one slide. Use it only for things the above cannot do (animations, canvas, interactive demos).</li>
 </ul>
+<p>If the user said nothing about style, a good default is templates for the plain slides and custom slides for the two or three that carry the story.</p>
 <h2>6. Free-form objects</h2>
 <p><code>objects</code> is an array, drawn in order: later items are on top. The stage is <strong>1280 wide, 720 tall</strong>, origin top-left, all units are pixels, <code>rot</code> is degrees clockwise. Maximum 120 objects per slide.</p>
 <p>Common fields: <code>id</code> (unique on the slide; generated if you omit it), <code>type</code>, <code>x</code>, <code>y</code>, <code>w</code>, <code>h</code> (optional for text: it grows with its content), <code>rot</code>, <code>opacity</code> (0 to 1), <code>shadow</code> (true), <code>name</code> (label shown in the editor's layers list).</p>
@@ -125,16 +134,37 @@
 <li>Choose a theme that fits the tone of the brief; do not mix <code>bg</code> and <code>fill</code> on the same slide (<code>bg</code> wins).</li>
 <li>Write speaker notes (<code>notes</code>) when the user will be presenting.</li>
 </ul>
+<h3>Writing style</h3>
+<p>Slides are read in seconds, so weak writing shows. Write the way a knowledgeable person who has one point to make would write it.</p>
+<ul>
+<li>State the point first. No scene-setting ("In today's fast-moving world"), no announcing ("Let's break this down"), no "In summary" or "The bottom line" slide unless the content needs one.</li>
+<li>Plain words. Use "use" and not "leverage"; avoid "unlock", "seamless", "robust", "powerful", "game-changing", "holistic", "journey", "landscape", "ecosystem", "tangible value", "actionable insights".</li>
+<li>Say what happens. Name who does what ("The team reviews each order") and avoid abstract nouns such as "alignment", "capability", "transformation" and "outcomes".</li>
+<li>No "not X but Y" or "it's not just X, it's Y". No rhetorical question followed by its answer. No dramatic fragments ("The result? Chaos.").</li>
+<li>Do not group everything in threes. Use as many points as the subject has. Do not invent frameworks, pillars or named models.</li>
+<li>Few em dashes. Use commas, colons, brackets or a new sentence.</li>
+<li>Do not overclaim. Skip "crucially", "importantly", "ultimately", and superlatives you cannot back up. Give a number or a source, or leave the claim out.</li>
+<li>Do not attribute feelings to the audience ("You may be wondering"), and do not reassure, cheer or sell. No exclamation marks.</li>
+<li>Do not end with a slogan, a call to embrace change or "Now is the time to". End on the actual next step or decision.</li>
+<li>Vary the length of bullets and sentences. A slide where every bullet is a bold label, a colon and eight words reads as machine output.</li>
+</ul>
 <h2>9. Custom layout (HTML, CSS, JavaScript)</h2>
 <pre><code>{ "id": "s5", "layout": "custom", "headline": "short name", "custom": { "html": "...", "css": "...", "js": "...", "interactive": false } }</code></pre>
 <ul>
 <li><code>custom.html</code> is the whole 1280 x 720 slide body (no <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code> or <code>&lt;script&gt;</code>). The root is an empty <code>position:relative; overflow:hidden</code> box: use absolute positioning, grid, flex, inline SVG or canvas.</li>
-<li>It runs in a sandboxed iframe with no access to the editor, storage or network. Embed brand images and fonts as <code>data:</code> URIs. Scripts, forms, iframes and <code>fetch</code> are blocked.</li>
+<li>It runs in a sandboxed iframe with no access to the editor, storage or network. Your inline <code>js</code> runs. What is blocked: external scripts (<code>&lt;script src&gt;</code>), iframes, forms, <code>fetch</code> and other network calls, and storage. Images and fonts: <code>data:</code> URIs always work; <code>https:</code> images and fonts load but may fail offline, so embed brand assets.</li>
 <li>Theme variables are available: <code>var(--fg)</code>, <code>var(--muted)</code>, <code>var(--acc)</code>, <code>var(--on-acc)</code>, <code>var(--slide-bg)</code>, <code>var(--card)</code>, <code>var(--line)</code>, <code>var(--radius)</code>, <code>var(--shadow)</code>, <code>var(--c1)</code> to <code>var(--c6)</code>, <code>var(--font-d)</code>, <code>var(--font-b)</code>, <code>var(--f-mono)</code>. Helper classes: <code>.kicker</code>, <code>.display</code>, <code>.h2</code>, <code>.lead</code>, <code>mark.hl</code>, <code>.rv</code> (fades up when presenting).</li>
 <li>Shared brand CSS (colours, <code>@font-face</code>, logo classes) belongs in <code>meta.css</code>, not in each slide.</li>
-<li>Set <code>interactive: true</code> only if the slide has buttons or inputs. Thumbnails and PDF export draw the slide from html + css, so it must look complete before <code>js</code> runs.</li>
+<li>Set <code>interactive: true</code> only if the slide has buttons or inputs.</li>
+<li><strong>Thumbnails and PDF export do not run <code>js</code>.</strong> They draw the slide from html + css, so it must look complete before <code>js</code> runs. If something only appears after <code>js</code> runs (a canvas, ripples, counters), the sidebar thumbnail will not show it. That is expected.</li>
 <li>Keep every important element 60 px from the edges, text at least 22 px, respect <code>prefers-reduced-motion</code>.</li>
 </ul>
+<h3>Text width: theme fonts are wide</h3>
+<p>Headline fonts differ a lot. The Contrast theme sets headlines in uppercase Syne ExtraBold, roughly twice the width of Editorial's serif. Do not assume a character is half its font size. Estimate with these averages (em per character, measured on mixed English text; multiply by the font size in px to get the width of one character):</p>
+<table><thead><tr><th>theme</th><th>headline font</th><th>em per character, headline</th><th>em per character, body</th></tr></thead><tbody><tr><td><code>studio</code></td><td>Bricolage Grotesque</td><td>0.47</td><td>0.48</td></tr><tr><td><code>editorial</code></td><td>Instrument Serif</td><td>0.33</td><td>0.48</td></tr><tr><td><code>contrast</code></td><td>Syne, UPPERCASE</td><td>1.01</td><td>0.48</td></tr><tr><td><code>aurora</code></td><td>Bricolage Grotesque</td><td>0.47</td><td>0.48</td></tr><tr><td><code>brutal</code></td><td>Syne</td><td>0.77</td><td>0.48</td></tr></tbody></table>
+<p>Characters per line is about <code>box width / (font size x em)</code>. Example: a 900 px box at 64 px in Contrast fits about 900 / (64 x 1.01) = 13 characters per line; in Editorial it fits about 42. Size from the widest theme the deck might use, or measure: <code>Pitchcraft.measureText("Quarterly results", { font: "display", size: 72, w: 900 })</code> returns the real width, height and line count in the current theme. Long words never wrap, so check the longest word.</p>
+<h3>Checking a custom slide</h3>
+<p><code>Pitchcraft.audit()</code> cannot see inside a custom slide (the slide is a sandboxed iframe), so it returns <code>checked: false</code> for those. Use <code>await Pitchcraft.auditAll()</code>: it runs each custom slide in a hidden sandbox, waits for its <code>js</code> and fonts, and measures the rendered text. It reports <code>text-off-slide</code>, <code>outside-safe-area</code>, <code>clipped</code> (hidden by an <code>overflow:hidden</code> container), <code>text-wider-than-box</code>, <code>text-overlap</code> and <code>script-error</code>. It checks text only: it cannot judge colour contrast, images or canvas drawings, so still look at a screenshot when you can.</p>
 <h3>Writing a custom slide without a file (browser AIs)</h3>
 <pre><code>Pitchcraft.addCustomSlide({
   html: '&lt;div class="wrap"&gt;&lt;h1&gt;Hello&lt;/h1&gt;&lt;canvas id="c" width="600" height="300"&gt;&lt;/canvas&gt;&lt;/div&gt;',
@@ -249,7 +279,7 @@ Pitchcraft.setMeta({ css: "@font-face{...} .logo{...}" });   // brand CSS shared
 <p>When Pitchcraft is open in the tab you control, use the global <code>Pitchcraft</code> object (for example through the page's JavaScript console). There is no separate "AI import" button because you do not need one: <code>Pitchcraft.importText(json)</code> loads a whole deck, <code>Pitchcraft.addCustomSlide(...)</code> adds an HTML/CSS/JS slide, and <code>Pitchcraft.schema()</code> / <code>Pitchcraft.manifest()</code> describe everything. (Humans use the AI button, then Import.) Every call is validated and <strong>undoable</strong> (the user can press Ctrl+Z). <code>ref</code> is a slide id (<code>"s3"</code>) or a 0-based index.</p>
 <p><strong>Read</strong></p>
 <ul>
-<li><code>Pitchcraft.guide()</code>: The complete AI guide as markdown (this document). Read it before editing.</li>
+<li><code>Pitchcraft.guide(section?)</code>: The complete AI guide as markdown (this document). Pass a section number such as 9, or a word from its heading, to get just that part. Read it before editing.</li>
 <li><code>Pitchcraft.manifest()</code>: JSON: version, guide URL, every method below, layouts, themes, object types, limits.</li>
 <li><code>Pitchcraft.getDeck()</code>: Copy of the whole deck JSON.</li>
 <li><code>Pitchcraft.getSlide(ref)</code>: Copy of one slide. ref = slide id ("s3") or 0-based index.</li>
@@ -257,7 +287,9 @@ Pitchcraft.setMeta({ css: "@font-face{...} .logo{...}" });   // brand CSS shared
 <li><code>Pitchcraft.html(ref)</code>: The rendered HTML of one slide (what the DOM contains).</li>
 <li><code>Pitchcraft.prettyHtml(ref)</code>: The same, indented for reading.</li>
 <li><code>Pitchcraft.exportJSON()</code>: The deck as a JSON string, exactly what a .pitchcraft file contains.</li>
-<li><code>Pitchcraft.audit(deck?)</code>: Layout audit: finds text that clips or leaves the safe area. Returns one entry per slide with a problems list.</li>
+<li><code>Pitchcraft.audit(deck?)</code>: Fast layout audit of templated and blank slides: finds text that clips or leaves the safe area. Returns one entry per slide with a problems list. It cannot see inside custom slides: those come back with checked:false. Use auditAll() for them.</li>
+<li><code>Pitchcraft.auditAll(deck?)</code>: Async. Everything audit() does, plus it runs each custom slide in a hidden sandbox and measures the rendered text: text off the slide, outside the safe area, clipped by its container, or overlapping other text. Entries have checked:true. Await it.</li>
+<li><code>Pitchcraft.measureText(text, opts?)</code>: Measure text before you place it. opts {font "display"|"body"|"mono"|a CSS family, size (px, default 28), weight, caps, ls, lh, w (box width px)}. Returns {width, height, lines, em}: width of the longest line, height at the wrapped width, and the average em per character in this theme.</li>
 <li><code>Pitchcraft.current()</code>: Index of the selected slide.</li>
 <li><code>Pitchcraft.count()</code>: Number of slides.</li>
 <li><code>Pitchcraft.schema()</code>: JSON Schema (draft 2020-12) of a deck, including slide custom {html, css, js}, objects and tweaks. Also published as pitchcraft.schema.json.</li>
@@ -268,6 +300,7 @@ Pitchcraft.setMeta({ css: "@font-face{...} .logo{...}" });   // brand CSS shared
 <li><code>Pitchcraft.importText(text, mode?)</code>: Import deck JSON text. mode "replace" (default) or "append". Returns {deck, warnings}.</li>
 <li><code>Pitchcraft.setMeta(patch)</code>: Patch deck meta: {name, theme, numbers, transition, css}.</li>
 <li><code>Pitchcraft.setTheme(theme)</code>: Set the deck theme key.</li>
+<li><code>Pitchcraft.newDeck()</code>: Replace the deck with a fresh one-slide deck (the starter). Undoable. The New deck button asks the user to save first; this call does not.</li>
 <li><code>Pitchcraft.loadTemplate(id)</code>: Load a built-in template deck (for example "tour").</li>
 </ul>
 <p><strong>Slides</strong></p>
@@ -304,9 +337,9 @@ Pitchcraft.setMeta({ css: "@font-face{...} .logo{...}" });   // brand CSS shared
 </ul>
 <p>Workflow:</p>
 <ol>
-<li><code>Pitchcraft.guide()</code> (this document) and <code>Pitchcraft.getDeck()</code> to understand the current state.</li>
-<li>Make the smallest change that does what was asked. Prefer <code>updateObject</code>, <code>setPath</code> and <code>setTweak</code> over replacing whole slides.</li>
-<li><code>Pitchcraft.audit()</code> afterwards: every slide's <code>problems</code> list should be empty. Fix what it reports.</li>
+<li><code>Pitchcraft.guide()</code> (this document; <code>Pitchcraft.guide(9)</code> for one section) and <code>Pitchcraft.getDeck()</code> to understand the current state. If your tool mangles URLs or equals signs in long output, use the plain-text copies named at the top of this guide.</li>
+<li>Make the smallest change that does what was asked. Prefer <code>updateObject</code>, <code>setPath</code>, <code>setCustom</code> and <code>setTweak</code> over replacing whole slides.</li>
+<li><code>await Pitchcraft.auditAll()</code> afterwards: every slide's <code>problems</code> list should be empty and <code>checked</code> should be <code>true</code>. Fix what it reports. <code>Pitchcraft.audit()</code> is the instant version and marks custom slides <code>checked: false</code>.</li>
 <li>Stop when the slide visibly updates. Do not reload the page (unsaved work lives in the tab and autosaves locally).</li>
 </ol>
 <p>Direct DOM route (read-only, useful for finding things): every slide is <code>&lt;section data-slide-id="s1" data-layout="title"&gt;</code>; every editable text has <code>data-path</code>; free-form objects are <code>.ob[data-obj="&lt;id&gt;"]</code>. Custom slides render in a sandboxed iframe, so edit their <code>custom.html</code>/<code>custom.css</code>/<code>custom.js</code> strings instead.</p>
@@ -322,7 +355,9 @@ Pitchcraft.setPath("s3", "items.0.value", "42");</code></pre>
 <li>Valid JSON, <code>format: "pitchcraft"</code>, <code>version: 3</code>, unique slide ids.</li>
 <li>Every <code>layout</code> is one of: <code>blank</code>, <code>title</code>, <code>statement</code>, <code>section</code>, <code>quote</code>, <code>closing</code>, <code>metrics</code>, <code>chart</code>, <code>demo</code>, <code>table</code>, <code>split</code>, <code>cards</code>, <code>comparison</code>, <code>bullets</code>, <code>process</code>, <code>timeline</code>, <code>flow</code>, <code>bento</code>, <code>anatomy</code>, <code>themes</code>, <code>code</code>, <code>custom</code>, <code>image</code>.</li>
 <li>Every icon name is from the list; every object has a <code>type</code>; image objects have <code>alt</code>.</li>
-<li>Nothing invented; headings short; contrast good; safe area respected.</li>
+<li>Nothing invented; headings short; contrast good; safe area respected; text sized for the theme's font width (section 9).</li>
+<li>Writing follows the style notes in section 8: plain words, the point first, no slogans.</li>
+<li>Browser AIs: <code>await Pitchcraft.auditAll()</code> shows no problems and every slide <code>checked: true</code>.</li>
 <li>Delivered as a <code>.pitchcraft</code> file, or one JSON code block if files are impossible.</li>
 </ul>
 </body></html>

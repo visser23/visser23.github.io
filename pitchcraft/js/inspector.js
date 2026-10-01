@@ -101,7 +101,33 @@ function listEditor(s, spec) {
     <button class="btn sm" data-add="${L.key}"${L.max && arr.length >= L.max ? ' disabled' : ''}>${icon('plus', 14)} Add ${esc(L.noun)}</button></div>`;
 }
 
-function panelData(s) {
+/* ── how a slide is built: template, blank, or HTML/CSS/JS. Lives at the top of the Slide tab and in the Format tab's empty state, so the
+   full-capability route is always one click away, for people and for the AI prompts that describe it. ── */
+const buildMode = s => (s.layout === 'custom' ? 'custom' : s.layout === 'blank' ? 'blank' : 'template');
+function panelBuild(s) {
+  const mode = buildMode(s), spec = PC.LAYOUTS[s.layout] || {};
+  const card = (k, ic, title, desc) => `<button class="mode${mode === k ? ' on' : ''}" type="button" data-build="${k}" aria-pressed="${mode === k}">${icon(ic, 18)}<span><b>${title}</b><small>${desc}</small></span></button>`;
+  const note = mode === 'custom' ? 'This slide is code: edit the HTML, CSS and JavaScript below (or in the Code tab), or ask an AI to rewrite it. The Template and Blank buttons replace the code, and Ctrl+Z brings it back.'
+    : mode === 'blank' ? 'Every element on this slide is an object you place. Choose HTML, CSS and JS to turn it into code instead.'
+      : 'Choose <b>HTML, CSS and JS</b> to turn this slide into code you can change freely. It keeps its current look, and Ctrl+Z reverses it.';
+  return `<div class="ins-sec" data-build-sec><h4>How this slide is built</h4><div class="modes" role="group" aria-label="How this slide is built">`
+    + card('template', 'layers', 'Template' + (mode === 'template' ? ` <span class="hint">${esc(spec.name || '')}</span>` : ''), 'Pick a layout, fill in the fields. Quickest for plain content.')
+    + card('blank', 'edit', 'Blank', 'Place text, shapes, images and icons yourself.')
+    + card('custom', 'code', 'HTML, CSS and JS', 'Write the slide as code. No limits on layout, brand or animation.')
+    + `</div><p class="note">${note}</p></div>`;
+}
+Ins.panelBuild = panelBuild;
+
+function customEditors(s) {
+  const c = s.custom || {}, ed = (l, p, v, r) => fArea(l, p, v, r).replace('class="txt"', 'class="txt mono code-ed" spellcheck="false"');
+  return `<div class="ins-sec" data-custom-sec><h4>HTML, CSS and JavaScript <span class="hint">the whole 1280 x 720 slide</span></h4>${ed('HTML', 'custom.html', c.html, 12)}${ed('CSS', 'custom.css', c.css, 8)}${ed('JavaScript', 'custom.js', c.js, 8)}<div class="err" data-custom-err role="alert">${esc(Ins.errors[s.id] || '')}</div>
+      <label class="switch"><span>Interactive when presenting <small class="hint">clicks go to the slide</small></span><input type="checkbox" data-cflag="interactive" ${c.interactive ? 'checked' : ''}></label>
+      <div class="row wrap" style="margin-top:10px"><button class="btn sm" data-act="audit-slide">${icon('check', 14)} Check layout</button><button class="btn sm" data-act="ai-copy-custom">${icon('wand', 14)} Copy custom-slide prompt</button></div>
+      <div class="audit-out" id="audit-out" role="status" aria-live="polite"></div>
+      <p class="note" style="margin-top:10px">Your own JavaScript runs in a sandbox. Blocked: external scripts, network calls, storage, and anything outside the slide. Theme variables such as <code>var(--acc)</code> and <code>var(--fg)</code> work. Thumbnails and PDF draw the slide <b>before</b> its JavaScript runs. Shared brand CSS goes in the <b>Deck</b> tab.</p></div>`;
+}
+
+function panelData(s, opts) {
   const spec = PC.LAYOUTS[s.layout]; let h = '';
   const t = spec.text || {};
   if (spec.special !== 'custom' && (t.kicker !== undefined || t.headline !== undefined || t.body !== undefined)) h += `<div class="ins-sec"><h4>Text <span class="hint">**bold** *italic* ==accent==</span></h4>${t.kicker !== undefined ? fText(t.kicker, 'kicker', s.kicker) : ''}${t.headline !== undefined ? fArea(t.headline, 'headline', s.headline, 2) : ''}${t.body !== undefined ? fArea(t.body, 'body', s.body, 3) : ''}<p class="note">You can also click any text on the slide and type.</p></div>`;
@@ -113,13 +139,7 @@ function panelData(s) {
   }
   if (spec.special === 'table') h += `<div class="ins-sec"><h4>Table</h4>${(() => { const id = fid(); const td = s.tableData || {}; return `<div class="field"><label for="${id}">Rows <span style="font-weight:400">(first row is the header)</span></label><textarea class="txt mono" id="${id}" data-csv="table" rows="9" spellcheck="false">${esc(toCsv([td.headers || [], ...(td.rows || [])]))}</textarea><div class="err" data-csv-err="table" role="alert"></div></div>`; })()}</div>`;
   if (spec.special === 'code') { const c = s.code || {}; h += `<div class="ins-sec"><h4>Code</h4>${fSelect('Language', 'code.language', c.language, { json: 'JSON', js: 'JavaScript', html: 'HTML', css: 'CSS', bash: 'Shell', yaml: 'YAML', python: 'Python', text: 'Plain text' })}${fText('File name', 'code.filename', c.filename, 'deck.json')}${fArea('Source', 'code.source', c.source, 10)}</div>`; }
-  if (spec.special === 'custom') {
-    const c = s.custom || {};
-    h += `<div class="ins-sec"><h4>HTML <span class="hint">the whole 1280 x 720 slide</span></h4>${fArea('HTML', 'custom.html', c.html, 12).replace('class="txt"', 'class="txt mono code-ed" spellcheck="false"')}${fArea('CSS', 'custom.css', c.css, 8).replace('class="txt"', 'class="txt mono code-ed" spellcheck="false"')}${fArea('JavaScript', 'custom.js', c.js, 8).replace('class="txt"', 'class="txt mono code-ed" spellcheck="false"')}<div class="err" data-custom-err role="alert">${esc(Ins.errors[s.id] || '')}</div>
-      <label class="switch"><span>Interactive when presenting <small class="hint">clicks go to the slide</small></span><input type="checkbox" data-cflag="interactive" ${c.interactive ? 'checked' : ''}></label>
-      <div class="row wrap" style="margin-top:10px"><button class="btn sm" data-act="ai-copy-custom">${icon('wand', 14)} Copy custom-slide prompt</button></div>
-      <p class="note" style="margin-top:10px">Runs in a sandbox: it cannot reach the editor, storage or the network. Theme variables such as <code>var(--acc)</code> and <code>var(--fg)</code> are available. Shared brand CSS goes in the <b>Deck</b> tab.</p></div>`;
-  }
+  if (spec.special === 'custom' && !(opts && opts.noCustom)) h += customEditors(s);
   if (spec.special === 'image') { const im = s.image || {}; h += `<div class="ins-sec"><h4>Image</h4>${fText('Image URL (https)', 'image.src', im.src && im.src.startsWith('data:') ? '' : im.src, 'https://…')}<div class="row" style="margin-bottom:10px"><button class="btn sm" data-act="image-upload">${icon('upload', 14)} Upload file</button>${im.src ? `<button class="btn sm" data-act="image-clear">Remove</button>` : ''}<input type="file" id="image-file" accept="image/png,image/jpeg,image/gif,image/webp" hidden></div>${fText('Alt text', 'image.alt', im.alt, 'Describe the picture')}<div class="err" data-csv-err="image" role="alert"></div></div>`; }
   if (spec.list) h += listEditor(s, spec);
   return h;
@@ -148,9 +168,11 @@ const renderedHtml = s => (s.layout === 'custom' ? customSource(s) : prettyHtml(
 const slideJson = s => JSON.stringify(s, null, 2);
 
 function panelCode(s) {
-  const fr = E.frameEl(S.sel), fields = fr ? $$('[data-path]', fr) : [];
-  return `<div class="ins-sec"><h4>Slide JSON <span class="hint">what an AI writes</span></h4><textarea class="txt mono" id="code-json" rows="12" spellcheck="false" aria-label="Slide JSON">${esc(slideJson(s))}</textarea><div class="row wrap" style="margin-top:8px"><button class="btn sm primary" data-act="json-apply">Apply changes</button><button class="btn sm" data-act="json-copy">${icon('copy', 14)} Copy</button><button class="btn sm" data-act="json-reset">Reset</button></div><div class="err" id="json-err" role="alert"></div></div>
-    <div class="ins-sec"><h4>Rendered HTML <span class="hint">what the slide is</span></h4><pre class="code-box" id="code-html" aria-label="Rendered HTML"><code>${esc(renderedHtml(s))}</code></pre><div class="row" style="margin-top:8px"><button class="btn sm" data-act="html-copy">${icon('copy', 14)} Copy HTML</button></div></div>
+  const fr = E.frameEl(S.sel), fields = fr ? $$('[data-path]', fr) : [], custom = s.layout === 'custom';
+  const lead = custom ? customEditors(s)
+    : `<div class="ins-sec"><h4>Edit as HTML, CSS and JS</h4><p class="note" style="margin:0 0 10px">The JSON below is the quick way to change a template slide. For full control, convert the slide to code: it keeps its current look and you can then change anything.</p><div class="row wrap"><button class="btn sm primary" data-build="custom">${icon('code', 14)} Convert to HTML, CSS and JS</button></div></div>`;
+  return lead + `<div class="ins-sec"><h4>Slide JSON <span class="hint">what an AI writes</span></h4><textarea class="txt mono" id="code-json" rows="12" spellcheck="false" aria-label="Slide JSON">${esc(slideJson(s))}</textarea><div class="row wrap" style="margin-top:8px"><button class="btn sm primary" data-act="json-apply">Apply changes</button><button class="btn sm" data-act="json-copy">${icon('copy', 14)} Copy</button><button class="btn sm" data-act="json-reset">Reset</button></div><div class="err" id="json-err" role="alert"></div></div>
+    ${custom ? '' : `<div class="ins-sec"><h4>Rendered HTML <span class="hint">what the slide is</span></h4><pre class="code-box" id="code-html" aria-label="Rendered HTML"><code>${esc(renderedHtml(s))}</code></pre><div class="row" style="margin-top:8px"><button class="btn sm" data-act="html-copy">${icon('copy', 14)} Copy HTML</button></div></div>`}
     <div class="ins-sec"><h4>Editable fields <span class="hint">${fields.length}</span></h4><div class="sel-list" id="code-fields">${fields.map(el => `<button class="sel-item" data-path-jump="${esc(el.dataset.path)}"><code>${esc(el.dataset.path)}</code><span>${esc(PC.plain(PC.getPath(s, el.dataset.path) ?? '').slice(0, 60))}</span></button>`).join('')}</div></div>
     <div class="ins-sec"><h4>AI helpers</h4><div class="row wrap"><button class="btn sm primary" data-act="ai">${icon('sparkles', 14)} Open AI assistant</button><button class="btn sm" data-act="ai-copy-slide">${icon('wand', 14)} Copy slide prompt</button></div><label class="switch"><span>Show field paths on the canvas</span><input type="checkbox" id="chk-inspect" ${E.inspect ? 'checked' : ''}></label><p class="note">Every slide is <code>&lt;section data-slide-id&gt;</code>. Each text has a <code>data-path</code> that matches the JSON above. Try <code>Pitchcraft.getDeck()</code> in the console.</p></div>`;
 }
@@ -161,7 +183,7 @@ function panelDeck() {
     <div class="ins-sec"><h4>Theme</h4><div class="theme-list">${Object.entries(PC.THEMES).map(([k, t]) => `<button class="theme-opt${m.theme === k ? ' on' : ''}" data-theme-pick="${k}" aria-pressed="${m.theme === k}"><span class="sw">${t.swatch.map(c => `<i style="background:${c}"></i>`).join('')}</span><span><b>${esc(t.name)}</b><span class="d">${esc(t.desc)}</span></span></button>`).join('')}</div></div>
     <div class="ins-sec"><h4>Defaults</h4>${fSelect('Transition', 'meta.transition', m.transition, PC.TRANSITIONS)}<label class="switch"><span>Show slide numbers</span><input type="checkbox" data-meta="numbers" ${m.numbers ? 'checked' : ''}></label><p class="note">Numbers appear in a footer strip at the bottom of each slide, so they never fight your content.</p></div>
     <div class="ins-sec"><h4>Brand CSS <span class="hint">custom slides</span></h4>${fArea('Shared CSS for every custom slide', 'meta.css', m.css || '', 6, '.logo { … }  @font-face { … }').replace('class="txt"', 'class="txt mono code-ed" spellcheck="false"')}<p class="note">Colours, fonts (<code>@font-face</code> with <code>data:</code> URIs) and logo classes that all your custom slides share. This is where corporate branding lives.</p></div>
-    <div class="ins-sec"><h4>Share and export</h4><div class="row wrap"><button class="btn sm" data-act="export">${icon('download', 14)} Export</button><button class="btn sm" data-act="import">${icon('upload', 14)} Import</button><button class="btn sm" data-act="print">${icon('printer', 14)} PDF</button><button class="btn sm" data-act="templates">${icon('layers', 14)} Templates</button></div></div>
+    <div class="ins-sec"><h4>Share and export</h4><div class="row wrap"><button class="btn sm" data-act="newdeck">${icon('file', 14)} New deck</button><button class="btn sm" data-act="export">${icon('download', 14)} Export</button><button class="btn sm" data-act="import">${icon('upload', 14)} Import</button><button class="btn sm" data-act="print">${icon('printer', 14)} PDF</button><button class="btn sm" data-act="templates">${icon('layers', 14)} Templates</button></div></div>
     <div class="ins-sec"><h4>AI</h4><button class="btn sm primary" data-act="ai">${icon('sparkles', 14)} Open AI assistant</button><p class="note" style="margin-top:8px">Build a whole deck with any AI chat, or let an AI that lives in your browser edit this deck directly.</p></div>`;
 }
 
@@ -170,7 +192,7 @@ Ins.render = function () {
   const s = S.slide(); if (!s) return;
   const panel = $('#panel'), top = panel.scrollTop, same = panel.dataset.sid === s.id + Ins.tab, fs = panel.contains(document.activeElement) && document.activeElement.dataset ? document.activeElement.dataset.fs : '';
   $('#tabs').innerHTML = TABS.map(([k, l, ic]) => `<button class="tab${Ins.tab === k ? ' on' : ''}" role="tab" id="tab-${k}" aria-selected="${Ins.tab === k}" aria-controls="panel" data-tab="${k}">${icon(ic, 15)}<span>${l}</span></button>`).join('');
-  panel.innerHTML = Ins.tab === 'format' ? PC.format.html() : Ins.tab === 'slide' ? panelSlide(s) + panelData(s) + panelLayers(s) : Ins.tab === 'code' ? panelCode(s) : panelDeck();
+  panel.innerHTML = Ins.tab === 'format' ? PC.format.html() : Ins.tab === 'slide' ? (s.layout === 'custom' ? panelBuild(s) + customEditors(s) + panelSlide(s) + panelData(s, { noCustom: true }) : panelBuild(s) + panelSlide(s) + panelData(s)) + panelLayers(s) : Ins.tab === 'code' ? panelCode(s) : panelDeck();
   panel.setAttribute('aria-labelledby', 'tab-' + Ins.tab); panel.dataset.sid = s.id + Ins.tab; if (same) panel.scrollTop = top;
   if (fs) { const el = Array.from($$('[data-fs]', panel)).find(x => x.dataset.fs === fs); if (el) el.focus({ preventScroll: true }); }   // keep keyboard focus on the control that was just used
 };
@@ -320,9 +342,24 @@ function bind() {
     const ct = t.closest('[data-ctype]'); if (ct) { structural(s => convertChart(s, ct.dataset.ctype), ''); Ins.render(); return; }
     const th = t.closest('[data-theme-pick]'); if (th) { S.setMeta({ theme: th.dataset.themePick }); return; }
     const pj = t.closest('[data-path-jump]'); if (pj) { E.focusField(pj.dataset.pathJump); return; }
+    const bm = t.closest('[data-build]'); if (bm) { Ins.build(bm.dataset.build); return; }
     const a = t.closest('[data-act]'); if (a) Ins.act(a.dataset.act);
   });
 }
+
+/** Switch how the selected slide is built. Template opens the layout picker; Blank and HTML/CSS/JS convert the slide (undoable). */
+Ins.build = function (mode) {
+  const s = S.slide(), now = buildMode(s);
+  if (mode === 'template') return PC.act('layout');
+  if (mode === now) { if (mode === 'custom') Ins.focusCode(); return; }
+  S.setLayout(S.sel, mode);
+  UI.toast(mode === 'custom' ? 'This slide is now HTML, CSS and JS. Ctrl+Z reverses it.' : 'This slide is now blank. Ctrl+Z reverses it.');
+  if (mode === 'custom') { Ins.tab = 'slide'; Ins.render(); Ins.focusCode(); }
+};
+Ins.focusCode = function () {
+  if (Ins.tab !== 'slide' && Ins.tab !== 'code') { Ins.tab = 'slide'; Ins.render(); }
+  const ta = $('[data-f="custom.html"]', $('#panel')); if (ta) { ta.scrollIntoView({ block: 'center' }); ta.focus({ preventScroll: true }); }
+};
 
 Ins.act = function (act) {
   const s = S.slide();
@@ -341,6 +378,16 @@ Ins.act = function (act) {
       if (raw.layout && !PC.LAYOUTS[raw.layout]) throw new Error(`Unknown layout "${raw.layout}". Try one of: ${Object.keys(PC.LAYOUTS).join(', ')}.`);
       S.replaceSlide(S.sel, raw); err.textContent = ''; UI.toast('Slide updated');
     } catch (ex) { err.textContent = ex.message; }
+    return;
+  }
+  if (act === 'audit-slide') {
+    const out = $('#audit-out'); if (!out) return; out.textContent = 'Checking…';
+    PC.auditAll({ meta: S.deck.meta, slides: [PC.clone(s)] }).then(r => {
+      const e = r[0], list = e.problems || [];
+      out.innerHTML = !e.checked ? `<p class="note">${esc(e.note || 'Could not check this slide.')}</p>`
+        : list.length ? `<ul class="audit-list">${list.map(p => `<li><b>${esc(p.type)}</b> ${esc(p.text ? '"' + p.text + '" ' : '')}${esc(p.detail || '')}</li>`).join('')}</ul>`
+          : `<p class="note ok">No problems found in ${e.texts || 0} piece(s) of text. This checks text only, so look at colour and images yourself.</p>`;
+    });
     return;
   }
   if (act === 'ai-copy-custom') return PC.ai.copy('custom');

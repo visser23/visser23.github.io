@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    PITCHCRAFT templates — every deck is real, valid deck JSON.
-   The first one doubles as the product tour: it is built from the same layouts it explains.
+   The first one doubles as the product tour: it is built from the same layouts it explains, and written plainly:
+   what each part does and where to find it, with no selling. The last one ("blank") is the one-slide starter that "New deck" loads.
    Anything with made-up numbers is labelled "Sample data".
    ═══════════════════════════════════════════════════════════════ */
 (function () {
@@ -12,99 +13,75 @@ const LAYOUT_N = N(PC.LAYOUTS), CHART_N = N(PC.CHART_TYPES), THEME_N = N(PC.THEM
 const tour = {
   meta: { name: 'How Pitchcraft works', theme: 'studio', numbers: true, transition: 'slide' },
   slides: [
-    { id: 'tour-title', layout: 'title', bg: 'grad', kicker: 'Pitchcraft', headline: 'Decks that are just ==data==.', body: 'Write a deck as JSON, or ask an AI to. Edit it visually, present it fullscreen, share it as one file.', transition: 'zoom',
-      notes: 'This deck is the product tour. Every slide is built from the same layouts you get in the editor. Scroll down, or press Present.' },
-    { id: 'tour-idea', layout: 'statement', kicker: 'The idea', headline: 'A presentation is a ==document==, not a drawing.', body: 'Pitchcraft stores every slide as plain, readable JSON, so people and AI can both write them.',
-      notes: 'Most slide tools make you push pixels. Here you describe the content and the layout does the rest.' },
-    { id: 'tour-flow', layout: 'flow', bg: 'tint', kicker: 'How it works', headline: 'From ==brief== to stage in one file',
+    { id: 'tour-title', layout: 'title', bg: 'grad', kicker: 'Pitchcraft', headline: 'A slide editor that an ==AI== can use too', body: 'This deck is the manual. Every slide is editable, so change anything as you read.', transition: 'zoom',
+      notes: 'This deck is the manual for Pitchcraft. It is built with the same layouts you get in the editor, so you can click any text and change it. Press P to present.' },
+    { id: 'tour-idea', layout: 'statement', kicker: 'What it is', headline: 'A deck is one ==file==.', body: 'Pitchcraft runs in your browser and needs no account. You export a deck as a .pitchcraft file (plain JSON), which an AI can write and you can edit.',
+      notes: 'The deck is saved in this browser as you work. The .pitchcraft file is the same data, for keeping, sharing and handing to an AI.' },
+    { id: 'tour-flow', layout: 'flow', bg: 'tint', kicker: 'How it works', headline: 'How a deck ==gets made==',
       items: [
-        { col: 'in', icon: 'edit', title: 'Your brief', body: 'Notes, data, half-formed ideas' },
-        { col: 'in', icon: 'wand', title: 'An AI', body: 'Writes a .pitchcraft file for you' },
-        { col: 'in', icon: 'layers', title: 'A template', body: 'Or a blank slide' },
-        { col: 'hub', icon: 'file', title: 'deck.pitchcraft', body: 'One portable JSON file' },
-        { col: 'out', icon: 'presentation', title: 'Present', body: 'Fullscreen with transitions' },
-        { col: 'out', icon: 'download', title: 'Export', body: 'File or PDF. PowerPoint next' },
-        { col: 'out', icon: 'link', title: 'Share', body: 'Send a file, not an account' }
+        { col: 'in', icon: 'edit', title: 'Your brief', body: 'Topic, notes and data' },
+        { col: 'in', icon: 'wand', title: 'An AI', body: 'Optional. Writes the file for you' },
+        { col: 'in', icon: 'layers', title: 'A template', body: 'Or a single blank slide' },
+        { col: 'hub', icon: 'file', title: 'deck.pitchcraft', body: 'One JSON file' },
+        { col: 'out', icon: 'presentation', title: 'Present', body: 'Fullscreen in the browser' },
+        { col: 'out', icon: 'download', title: 'Export', body: 'A file, or a PDF' },
+        { col: 'out', icon: 'link', title: 'Share', body: 'Send the file to someone' }
       ] },
-    { id: 'tour-steps', layout: 'process', kicker: 'Get started', headline: 'Ship a deck in ==four== steps',
+    { id: 'tour-steps', layout: 'process', kicker: 'Fastest start', headline: 'Build a deck with an ==AI chat==',
       items: [
-        { step: '01', icon: 'copy', title: 'Build with AI', body: 'Click AI in the top bar. Describe your deck, copy the prompt.' },
-        { step: '02', icon: 'sparkles', title: 'Paste into any AI', body: 'ChatGPT, Claude, Gemini. It replies with a .pitchcraft file.' },
-        { step: '03', icon: 'upload', title: 'Import', body: 'Drop the file on this page. Fix anything visually.' },
-        { step: '04', icon: 'play', title: 'Present', body: 'Press P, or download the file and share it.' }
+        { step: '01', icon: 'sparkles', title: 'Click AI', body: 'Top bar, then Build with AI.' },
+        { step: '02', icon: 'edit', title: 'Describe it', body: 'Topic, audience, slide count. Then copy the prompt.' },
+        { step: '03', icon: 'wand', title: 'Paste into a chat', body: 'ChatGPT, Claude or Gemini replies with a .pitchcraft file.' },
+        { step: '04', icon: 'upload', title: 'Import', body: 'Drop the file on this page, then fix details by hand.' }
       ] },
-    { id: 'tour-anatomy', layout: 'anatomy', kicker: 'The editor', headline: 'Everything is ==where you expect== it',
+    { id: 'tour-ai', layout: 'split', kicker: 'Two routes', headline: 'Which AI are you ==using==?',
+      columns: [
+        { icon: 'sparkles', headline: 'A chat window', body: 'ChatGPT, Claude, Gemini. The AI cannot see this page, so the prompt carries the full guide. It replies with a file and you import it.' },
+        { icon: 'globe', headline: 'An AI in your browser', body: 'Comet, Atlas, Claude for Chrome, Cursor. Open this page and let the agent use the tab. It edits the deck directly, and Ctrl+Z undoes it.' }],
+      notes: 'The chat route works with any AI. The browser route is quicker for small edits because the agent changes the live deck.' },
+    { id: 'tour-prompt', layout: 'bullets', kicker: 'The prompt', headline: 'Where the ==prompt== is', body: 'Click AI in the top bar. The dialog holds everything an AI needs.',
       items: [
-        { title: 'Slides', body: 'Live thumbnails on the left. Drag to reorder.' },
-        { title: 'Ribbon', body: 'Insert text, images, shapes and icons. Restyle the deck.' },
-        { title: 'Canvas', body: 'Click text to edit it. Drag, resize and rotate anything.' },
+        { title: 'Choose how it builds', body: 'Let the AI choose, custom HTML, CSS and JS slides, or templates only.' },
+        { title: 'Chat tab', body: 'A complete prompt, or a short one with a link for AIs that can open web pages.' },
+        { title: 'Browser tab', body: 'A prompt for agents, and one for the current slide only.' },
+        { title: 'The web address', body: 'Every prompt names this site and its guide, so the AI does not have to search for them.' }
+      ] },
+    { id: 'tour-anatomy', layout: 'anatomy', kicker: 'The editor', headline: 'Five parts of the ==editor==',
+      items: [
+        { title: 'Slides', body: 'Thumbnails on the left. Drag to reorder.' },
+        { title: 'Ribbon', body: 'Insert text, shapes, images and icons. Change the theme.' },
+        { title: 'Canvas', body: 'Click text to edit it. Drag to move, resize or rotate.' },
         { title: 'Inspector', body: 'Format, Slide, Code and Deck tabs.' },
-        { title: 'Present', body: 'Fullscreen with transitions, notes and touch.' }
+        { title: 'Present', body: 'Fullscreen, with notes and touch support.' }
       ] },
+    { id: 'tour-modes', layout: 'cards', bg: 'tint', kicker: 'Building slides', headline: 'Each slide uses one of ==three== methods',
+      items: [
+        { icon: 'layers', title: 'Template', body: 'Pick a layout and fill in the fields. Quickest for text, lists and charts.' },
+        { icon: 'edit', title: 'Blank', body: 'Place text, shapes, images and icons wherever you want them.' },
+        { icon: 'code', title: 'HTML, CSS and JS', body: 'Write the slide as code. No limit on layout, brand styling or animation.' }
+      ],
+      notes: 'Switch between them in the Slide tab, under How this slide is built. Converting a template slide to HTML keeps what it looks like and turns it into code you can edit. Undo reverses it.' },
     { id: 'tour-free', layout: 'blank', bg: 'tint', transition: 'rise',
       notes: 'This slide is a blank slide: no template, every element is a free-form object. Click any of them to drag, resize, rotate or restyle it. Insert more from the Insert tab in the ribbon.',
       objects: [
         { id: 'fk', type: 'text', x: 80, y: 84, w: 640, text: 'Blank slides', size: 26, weight: 700, caps: true, ls: 0.1, color: 'var(--shape)' },
-        { id: 'fh', type: 'text', x: 80, y: 130, w: 680, text: 'Place **anything**, anywhere.', size: 72, weight: 800, font: 'display', lh: 1.04 },
-        { id: 'fb', type: 'text', x: 80, y: 360, w: 620, text: 'Start from nothing, or drag any text or card on a template to a new spot. Add text, images, shapes and icons from the Insert tab, then choose fonts and sizes in Format.', size: 28, color: 'var(--muted)', lh: 1.4 },
+        { id: 'fh', type: 'text', x: 80, y: 130, w: 680, text: 'Put things **where you want** them.', size: 64, weight: 800, font: 'display', lh: 1.06 },
+        { id: 'fb', type: 'text', x: 80, y: 360, w: 620, text: 'Add text, images, shapes and icons from the Insert tab. Drag to move, drag a corner to resize, and use the Format tab for fonts and colours. Text and cards on template slides can be dragged too.', size: 28, color: 'var(--muted)', lh: 1.4 },
         { id: 'fc', type: 'shape', shape: 'round', x: 820, y: 120, w: 360, h: 240, fill: 'var(--shape)', text: 'Drag me', size: 44, weight: 700, color: 'var(--on-shape)', align: 'center', valign: 'middle', rot: -4, shadow: true },
         { id: 'fe', type: 'shape', shape: 'ellipse', x: 1010, y: 410, w: 170, h: 170, fill: 'var(--shape)' },
         { id: 'fs', type: 'shape', shape: 'star', x: 830, y: 430, w: 130, h: 130, fill: 'var(--c3)', rot: 12 },
         { id: 'fi', type: 'icon', icon: 'sparkles', x: 1050, y: 450, w: 90, h: 90, color: 'var(--on-shape)' },
         { id: 'fl', type: 'shape', shape: 'line', x: 80, y: 600, w: 620, h: 14, stroke: 'var(--muted)', strokeW: 3 }
       ] },
-    { id: 'tour-ai', layout: 'split', kicker: 'Working with an AI', headline: 'Two ways to ==use== an AI',
-      columns: [
-        { icon: 'sparkles', headline: 'In a chat window', body: 'Click AI, then Build with AI. Paste the prompt into ChatGPT, Claude or Gemini. It returns a .pitchcraft file: drop it on the page.' },
-        { icon: 'globe', headline: 'In your browser', body: 'Agents such as Comet, Atlas or Cursor edit this deck in place through the Pitchcraft object. The prompt points them at a published guide.' }] },
-    { id: 'tour-box', layout: 'section', bg: 'dark', kicker: '02', headline: 'Everything in the box', body: 'Layouts, charts, themes, transitions and free-form objects. All named, all documented, all available to an AI.' },
-    { id: 'tour-bento', layout: 'bento', bg: 'tint', kicker: 'The toolbox', headline: 'A ==toolbox== that fits in one file',
-      items: [
-        { size: 'l', tone: '', icon: 'layers', title: 'Layouts', value: String(LAYOUT_N), body: 'Templates for stories, data and code, plus blank and custom HTML.' },
-        { size: 's', tone: '', icon: '', title: 'Chart types', value: String(CHART_N), body: '' },
-        { size: 's', tone: 'coral', icon: 'chart', title: 'Animated charts', value: '', body: '' },
-        { size: 's', tone: '', icon: '', title: 'Themes', value: String(THEME_N), body: '' },
-        { size: 's', tone: '', icon: 'shield', title: 'Private', value: '', body: '' },
-        { size: 'w', tone: 'teal', icon: 'globe', title: 'Runs anywhere', value: '', body: 'One static site. Works offline, from a file, or on any host.' },
-        { size: 's', tone: '', icon: '', title: 'Transitions', value: String(TRANS_N), body: '' },
-        { size: 's', tone: '', icon: 'heart', title: 'Free', value: '', body: '' }
-      ] },
-    { id: 'tour-zero', layout: 'metrics', bg: 'accent', kicker: 'The footprint', headline: '==Nothing== to install, nothing to sign up for',
-      items: [
-        { value: '0', label: 'Dependencies', trend: '', note: 'Plain HTML, CSS and JS' },
-        { value: '0', label: 'Accounts', trend: '', note: 'Your deck stays in your browser' },
-        { value: '1', label: 'File', trend: '', note: 'Your whole deck, portable' }
-      ] },
-    { id: 'tour-demo', layout: 'demo', kicker: 'Sample data', headline: 'Data in, ==slide== out', body: 'This is the JSON behind the chart. Change a number and the chart follows.', chartType: 'line',
-      chartData: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], series: [{ name: 'Visits', values: [12, 19, 15, 28, 34] }] } },
-    { id: 'tour-bar', layout: 'chart', kicker: 'Sample data', headline: 'Compare things with ==bars==', body: 'Bar, horizontal bar, line, area and donut. Each one animates in when you present.', chartType: 'bar',
-      chartData: { labels: ['Q1', 'Q2', 'Q3', 'Q4'], series: [{ name: 'Free', values: [12, 19, 27, 41] }, { name: 'Paid', values: [4, 9, 18, 33] }] },
-      items: [{ value: '+242%', label: 'Free, year on year' }, { value: '8x', label: 'Paid, year on year' }] },
-    { id: 'tour-donut', layout: 'chart', bg: 'dark', kicker: 'Sample data', headline: 'Show a ==share== of the whole', body: '', chartType: 'donut',
-      chartData: { segments: [{ label: 'Presenting', value: 46 }, { label: 'Editing', value: 31 }, { label: 'Exporting', value: 23 }], centerLabel: '100%', centerSub: 'Of sessions' } },
-    { id: 'tour-table', layout: 'table', kicker: 'Reference', headline: 'Keys worth ==knowing==',
-      tableData: { headers: ['Key', 'Where', 'What it does'], rows: [
-        ['Ctrl / Cmd + Z', 'Editor', 'Undo (add Shift to redo)'], ['P', 'Editor', 'Present from this slide'], ['Arrow keys', 'Editor', 'Nudge the selected object (Shift for 10 px)'],
-        ['Arrows, Space', 'Presenter', 'Previous and next slide'], ['N', 'Presenter', 'Show speaker notes'], ['Esc', 'Anywhere', 'Deselect, finish editing or exit'], ['?', 'Anywhere', 'Open help']] } },
-    { id: 'tour-themes', layout: 'themes', bg: 'tint', kicker: 'Look and feel', headline: 'Same deck, five ==personalities==',
-      items: [
-        { theme: 'studio', title: 'Studio', body: 'Clean and confident.' }, { theme: 'editorial', title: 'Editorial', body: 'Serif on warm paper.' },
-        { theme: 'contrast', title: 'Contrast', body: 'Loud, dark, uppercase.' }, { theme: 'aurora', title: 'Aurora', body: 'Gradients and glass.' }, { theme: 'brutal', title: 'Brutalist', body: 'Hard edges only.' }] },
-    { id: 'tour-motion', layout: 'bullets', kicker: 'Motion', headline: 'Move between ideas ==with intent==', body: 'Set a default for the deck, then override it per slide in the Slide tab.',
-      items: [
-        { title: 'Fade', body: 'Calm and safe. Works everywhere.' }, { title: 'Slide', body: 'Direction that matches the story.' },
-        { title: 'Zoom', body: 'Emphasis for the big reveal.' }, { title: 'Rise and blur', body: 'Soft, modern entrances.' }] },
-    { id: 'tour-code', layout: 'code', bg: 'dark', kicker: 'Under the hood', headline: 'Every slide is ==readable JSON==', body: 'Diffable, versionable and easy for an AI to write. The Code tab shows this for any slide.',
-      code: { language: 'json', filename: 'slide.json', source: '{\n  "layout": "metrics",\n  "headline": "Key numbers",\n  "items": [\n    { "value": "42%", "label": "Conversion", "trend": "up" },\n    { "value": "1.8s", "label": "Load time", "trend": "down" }\n  ]\n}' } },
-    { id: 'tour-custom', layout: 'custom', bg: 'dark', headline: 'No walls: any HTML, CSS and JS',
-      notes: 'Templates are the fast path. But any slide can be free-form HTML, CSS and JavaScript, so an AI (or you) can build anything, or match a corporate brand exactly. This slide is one: the code on the right is typing itself out, and the shape is a live animation.',
+    { id: 'tour-custom', layout: 'custom', bg: 'dark', headline: 'HTML, CSS and JS slide',
+      notes: 'Templates are the quick route. Any slide can instead be HTML, CSS and JavaScript, so you or an AI can build any layout, or match a company brand exactly. This slide is one: the box on the right types itself out, and the shape is a live animation. Thumbnails show the slide before its JavaScript runs.',
       custom: {
         html: `<div class="nw">
   <div class="nw-l">
-    <div class="kicker rv">No walls</div>
-    <h2 class="nw-h rv">Templates are a start.<br>Never a <span class="nw-w" id="w">wall</span>.</h2>
-    <p class="nw-p rv">Any slide can be plain HTML, CSS and JavaScript. Ask an AI for any style, or keep your corporate brand exactly.</p>
-    <div class="nw-chips rv"><span>HTML</span><span>CSS</span><span>JS</span><span>Your brand</span></div>
+    <div class="kicker rv">Custom slides</div>
+    <h2 class="nw-h rv">Write a slide as <span class="nw-w">code</span>.</h2>
+    <p class="nw-p rv">Open the Slide tab and choose HTML, CSS and JS, or ask an AI to write one. Colours and fonts shared by every custom slide go in the Deck tab, under Brand CSS.</p>
+    <div class="nw-chips rv"><span>HTML</span><span>CSS</span><span>JS</span><span>Sandboxed</span></div>
   </div>
   <div class="nw-r rv">
     <div class="nw-blob" aria-hidden="true"></div>
@@ -119,7 +96,7 @@ const tour = {
 </div>`,
         css: `.nw { position: absolute; inset: 0; display: grid; grid-template-columns: 1.08fr .92fr; gap: 40px; padding: 0 80px; align-items: center; }
 .nw-h { font-family: var(--font-d); font-weight: var(--d-weight); font-size: 62px; line-height: 1.04; letter-spacing: -.03em; margin: 0; text-transform: var(--d-case); }
-.nw-w { color: var(--ink-acc, var(--acc)); display: inline-block; transition: transform .4s; }
+.nw-w { color: var(--ink-acc, var(--acc)); }
 .nw-p { font-size: 24px; line-height: 1.45; color: var(--muted); margin: 24px 0 0; max-width: 560px; }
 .nw-chips { display: flex; gap: 10px; margin-top: 28px; }
 .nw-chips span { padding: 8px 16px; border-radius: 999px; border: 1.5px solid var(--line); font-size: 17px; font-weight: 600; color: var(--fg); background: var(--card); }
@@ -132,25 +109,62 @@ const tour = {
 #code .k { color: #9fb0ff; } #code .s { color: #7cf5d4; } #code .c { color: #ff9db0; } #code .caret { display: inline-block; width: 9px; height: 1.1em; vertical-align: text-bottom; background: #ece9ff; animation: nwc 1s steps(1) infinite; }
 @keyframes nwc { 50% { opacity: 0; } }`,
         js: `const src = '<section class="slide">\\n  <h1 style="font: 800 84px Syne">\\n    Your <em>brand</em>.\\n    Your rules.\\n  </h1>\\n  <canvas id="anything"></canvas>\\n</section>';
-const out = document.getElementById('code'), words = ['wall', 'limit', 'cage', 'box'], w = document.getElementById('w');
+const out = document.getElementById('code');
 const tint = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/&lt;\\/?\\w+|"[^"]*"|\\b(?:class|style|id)\\b/g, m => '<span class="' + (m[0] === '&' ? 'k' : m[0] === '"' ? 's' : 'c') + '">' + m + '</span>');   // one pass, so a match is never re-matched inside an earlier span
 let i = 0;
 (function type() { i = Math.min(src.length, i + 2); out.innerHTML = tint(src.slice(0, i)) + '<span class="caret"></span>'; if (i < src.length) setTimeout(type, 38); })();
-let n = 0; setInterval(() => { w.style.transform = 'translateY(-6px)'; setTimeout(() => { n = (n + 1) % words.length; w.textContent = words[n]; w.style.transform = ''; }, 200); }, 2200);
 document.querySelector('.nw-blob').animate([{ borderRadius: '42% 58% 60% 40% / 48% 42% 58% 52%', transform: 'rotate(0deg)' }, { borderRadius: '58% 42% 38% 62% / 55% 60% 40% 45%', transform: 'rotate(18deg)' }], { duration: 4200, direction: 'alternate', iterations: Infinity, easing: 'ease-in-out' });`
       } },
-    { id: 'tour-compare', layout: 'comparison', kicker: 'Why', headline: 'Slides, ==without== the ceremony',
-      columns: [
-        { headline: 'Design-first tools', body: 'Every slide is drawn by hand.', items: ['Hours of alignment', 'Layouts drift apart', 'Locked inside an app'] },
-        { headline: 'Pitchcraft', body: 'Structure first, and drag anything when you want to.', items: ['Layouts fit themselves', 'Move and restyle any element', 'One file you own'] }] },
-    { id: 'tour-roadmap', layout: 'timeline', bg: 'tint', kicker: 'Roadmap', headline: 'The ==roadmap== is short',
+    { id: 'tour-bento', layout: 'bento', bg: 'tint', kicker: 'Built in', headline: 'What is ==included==',
       items: [
-        { date: 'Shipped', title: 'The toolkit', body: 'Free-form objects, AI guide, presenter and PDF.', status: 'done' },
+        { size: 'l', tone: '', icon: 'layers', title: 'Layouts', value: String(LAYOUT_N), body: 'Templates for stories, data and structure, plus blank and custom HTML.' },
+        { size: 's', tone: '', icon: '', title: 'Chart types', value: String(CHART_N), body: '' },
+        { size: 's', tone: 'coral', icon: 'chart', title: 'Animated charts', value: '', body: '' },
+        { size: 's', tone: '', icon: '', title: 'Themes', value: String(THEME_N), body: '' },
+        { size: 's', tone: '', icon: 'shield', title: 'Local storage', value: '', body: '' },
+        { size: 'w', tone: 'teal', icon: 'globe', title: 'Static site', value: '', body: 'No server. It works offline, from a file, or on any web host.' },
+        { size: 's', tone: '', icon: '', title: 'Transitions', value: String(TRANS_N), body: '' },
+        { size: 's', tone: '', icon: 'heart', title: 'No account', value: '', body: '' }
+      ] },
+    { id: 'tour-saving', layout: 'bullets', kicker: 'Saving', headline: 'Where your ==deck== is kept', body: 'Nothing is uploaded to a server.',
+      items: [
+        { title: 'Autosave', body: 'Every change is saved in this browser.' },
+        { title: 'Export', body: 'Ctrl+S downloads a .pitchcraft file. That file is your real copy.' },
+        { title: 'Clearing browser data', body: 'This deletes the autosave. Export first.' },
+        { title: 'PDF', body: 'The PDF button prints one page per slide.' }
+      ] },
+    { id: 'tour-demo', layout: 'demo', kicker: 'Sample data', headline: 'Charts are drawn from ==data==', body: 'This is the JSON behind the chart. Change a number and the chart follows.', chartType: 'line',
+      chartData: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], series: [{ name: 'Visits', values: [12, 19, 15, 28, 34] }] } },
+    { id: 'tour-bar', layout: 'chart', kicker: 'Sample data', headline: 'Bars compare ==categories==', body: 'Bar, horizontal bar, line, area and donut charts all animate when you present.', chartType: 'bar',
+      chartData: { labels: ['Q1', 'Q2', 'Q3', 'Q4'], series: [{ name: 'Free', values: [12, 19, 27, 41] }, { name: 'Paid', values: [4, 9, 18, 33] }] },
+      items: [{ value: '+242%', label: 'Free, year on year' }, { value: '8x', label: 'Paid, year on year' }] },
+    { id: 'tour-table', layout: 'table', kicker: 'Reference', headline: 'Keys worth ==knowing==',
+      tableData: { headers: ['Key', 'Where', 'What it does'], rows: [
+        ['Ctrl / Cmd + Z', 'Editor', 'Undo (add Shift to redo)'], ['P', 'Editor', 'Present from this slide'], ['Arrow keys', 'Editor', 'Nudge the selected object (Shift for 10 px)'],
+        ['Arrows, Space', 'Presenter', 'Previous and next slide'], ['N', 'Presenter', 'Show speaker notes'], ['Esc', 'Anywhere', 'Deselect, finish editing or exit'], ['?', 'Anywhere', 'Open help']] } },
+    { id: 'tour-themes', layout: 'themes', bg: 'tint', kicker: 'Themes', headline: 'Five themes, one ==deck==',
+      items: [
+        { theme: 'studio', title: 'Studio', body: 'Clean sans-serif.' }, { theme: 'editorial', title: 'Editorial', body: 'Serif on warm paper.' },
+        { theme: 'contrast', title: 'Contrast', body: 'Dark, with wide uppercase headings.' }, { theme: 'aurora', title: 'Aurora', body: 'Gradients and glass.' }, { theme: 'brutal', title: 'Brutalist', body: 'Hard edges.' }],
+      notes: 'Change the theme in the Deck tab. Headings in Contrast are about twice as wide as Editorial, so long headlines wrap sooner.' },
+    { id: 'tour-motion', layout: 'bullets', kicker: 'Transitions', headline: 'Choose how slides ==change==', body: 'Set a default in the Deck tab, then override it per slide in the Slide tab.',
+      items: [
+        { title: 'Fade', body: 'Plain, and works everywhere.' }, { title: 'Slide', body: 'Moves in the direction of the story.' },
+        { title: 'Zoom', body: 'Use it once, for the big reveal.' }, { title: 'Rise and blur', body: 'A softer entrance.' }] },
+    { id: 'tour-code', layout: 'code', bg: 'dark', kicker: 'Under the hood', headline: 'Every slide is ==JSON==', body: 'Open the Code tab to read or paste the JSON for the selected slide. This is what an AI writes.',
+      code: { language: 'json', filename: 'slide.json', source: '{\n  "layout": "metrics",\n  "headline": "Key numbers",\n  "items": [\n    { "value": "42%", "label": "Conversion", "trend": "up" },\n    { "value": "1.8s", "label": "Load time", "trend": "down" }\n  ]\n}' } },
+    { id: 'tour-limits', layout: 'comparison', kicker: 'Limits', headline: 'What it ==does not== do yet',
+      columns: [
+        { headline: 'Not available', body: 'Deliberately or not yet.', items: ['PowerPoint export (planned)', 'Several people editing at once', 'Accounts or cloud storage'] },
+        { headline: 'Works today', body: 'In any current browser.', items: ['Present fullscreen', 'Export a file or a PDF', 'Custom HTML, CSS and JS slides'] }] },
+    { id: 'tour-roadmap', layout: 'timeline', bg: 'tint', kicker: 'Roadmap', headline: 'What is ==next==',
+      items: [
+        { date: 'Shipped', title: 'The toolkit', body: 'Blank and custom slides, AI guide, presenter, PDF.', status: 'done' },
         { date: 'Now', title: 'Templates', body: 'More decks and more chart types.', status: 'now' },
-        { date: 'Next', title: 'PowerPoint export', body: 'Planned. Your JSON maps cleanly to .pptx.', status: 'next' },
-        { date: 'Later', title: 'Teamwork', body: 'Shared decks and comments.', status: 'next' }] },
-    { id: 'tour-end', layout: 'closing', bg: 'grad', kicker: 'Your turn', headline: 'Make something ==worth presenting==.', body: 'Press Present, or open Templates to start from another deck.',
-      items: [{ icon: 'play', label: 'Present', value: 'P' }, { icon: 'layers', label: 'Templates', value: 'Deck tab' }, { icon: 'wand', label: 'Build with AI', value: 'Top bar' }] }
+        { date: 'Next', title: 'PowerPoint export', body: 'Planned. The JSON maps cleanly to .pptx.', status: 'next' },
+        { date: 'Later', title: 'Shared decks', body: 'Sharing and comments.', status: 'next' }] },
+    { id: 'tour-end', layout: 'closing', bg: 'grad', kicker: 'Next', headline: 'Try it on ==this deck==.', body: 'Click any text to edit it, press P to present, or start a new deck from the Deck tab.',
+      items: [{ icon: 'play', label: 'Present', value: 'P' }, { icon: 'file', label: 'New deck', value: 'Deck tab' }, { icon: 'wand', label: 'Build with AI', value: 'Top bar' }] }
   ]
 };
 
@@ -211,9 +225,19 @@ const pitch = {
   ]
 };
 
+/* The deck "New deck" starts from: one slide that explains how to have an AI build the rest. */
 const blank = {
-  meta: { name: 'Untitled deck', theme: 'studio', numbers: false, transition: 'fade' },
-  slides: [{ id: 'b-title', layout: 'title', kicker: 'Presentation', headline: 'Click here to add your ==title==', body: 'Then add slides from the ribbon.' }]
+  meta: { name: 'New deck', theme: 'studio', numbers: false, transition: 'fade' },
+  slides: [
+    { id: 'new-start', layout: 'split', kicker: 'New deck', headline: 'Ask an ==AI== to build this deck',
+      columns: [
+        { icon: 'sparkles', headline: 'AI in a chat window', body: 'Click AI in the top bar, then Build with AI. Describe the deck, copy the prompt, paste it into ChatGPT, Claude or Gemini, then import the .pitchcraft file it sends back.' },
+        { icon: 'globe', headline: 'AI in your browser', body: 'Open this page in Comet, Atlas, Claude for Chrome or Cursor. Click AI, switch to the browser tab, copy the agent prompt and paste it into the agent. It edits this deck directly.' }],
+      objects: [
+        { id: 'where', type: 'text', x: 80, y: 626, w: 1120, text: 'The stock prompt is under **AI** in the top bar. It names this site and carries the full guide. Replace this slide when you are done.', size: 24, color: 'var(--muted)' }
+      ],
+      notes: 'The prompt is under the AI button in the top bar (Build with AI). It includes this site\'s web address and the whole guide, so you can paste it into any AI as it is. Delete or replace this slide when the real deck is ready.' }
+  ]
 };
 
 PC.TEMPLATES = [
@@ -221,6 +245,6 @@ PC.TEMPLATES = [
   { id: 'memo', name: 'Quarterly signal', tag: 'Editorial memo', blurb: 'A calm, serif strategy memo with metrics, an area chart and recommendations.', deck: memo },
   { id: 'launch', name: 'Product launch', tag: 'Aurora glow', blurb: 'Gradients, glass and a bento overview for a product announcement.', deck: launch },
   { id: 'pitch', name: 'Investor pitch', tag: 'Brutalist', blurb: 'Hard edges and big type: problem, traction, market and the ask.', deck: pitch },
-  { id: 'blank', name: 'Blank deck', tag: 'One slide', blurb: 'Start from nothing. Add slides from the ribbon.', deck: blank }
+  { id: 'blank', name: 'New deck', tag: 'One slide', blurb: 'A single slide that explains how to have an AI build the deck. Add slides from the ribbon.', deck: blank }
 ];
 })();

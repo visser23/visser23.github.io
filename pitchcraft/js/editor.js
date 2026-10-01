@@ -168,7 +168,7 @@ E.buildRibbon = function () {
        <label class="rsel">Background<select id="rb-bg" aria-label="Slide background">${opts(PC.BGS, '')}</select></label>
        <div class="rsel acc">Accent<div class="tone-row" id="rb-tones" role="group" aria-label="Accent colour">${Object.keys(PC.TONES).map(k => `<button class="tone-dot${k === '' ? ' none' : ''}" data-tone="${k}" title="${esc(PC.TONES[k])}" aria-label="Accent ${esc(PC.TONES[k])}" style="--c:${PC.TONE_HEX[k] || '#ddd'}"></button>`).join('')}</div></div>
        <label class="rsel">Transition<select id="rb-tr" aria-label="Slide transition"><option value="">Deck default</option>${opts(PC.TRANSITIONS, '')}</select></label></div>
-     <div class="rg" data-g="deck" role="group" aria-label="Deck">${rb('templates', 'layers', 'Templates')}${rb('import', 'upload', 'Import')}${rb('export', 'download', 'Export')}${rb('print', 'printer', 'PDF')}</div>
+     <div class="rg" data-g="deck" role="group" aria-label="Deck">${rb('newdeck', 'file', 'New deck')}${rb('templates', 'layers', 'Templates')}${rb('import', 'upload', 'Import')}${rb('export', 'download', 'Export')}${rb('print', 'printer', 'PDF')}</div>
      <div class="rg" data-g="view" role="group" aria-label="View">${rb('inspect', 'eye', 'Inspect')}${rb('numbers', 'type', 'Numbers')}${rb('toggle-side', 'sidebar', 'Slides', 'no-mobile')}${rb('toggle-insp', 'panel', 'Panel')}</div>`;
   $('#ribbon').dataset.rtab = E.rtab;
 };
@@ -187,11 +187,11 @@ E.syncRibbon = function () {
 /* ── layout picker ── */
 E.layoutPicker = function (mode) {
   const cur = S.slide().layout, deckWrap = { meta: S.deck.meta };
-  const groups = PC.LAYOUT_GROUPS.map(g => `<div class="lp-group">${g}</div><div class="lp-grid">${Object.entries(PC.LAYOUTS).filter(([, l]) => l.group === g).map(([k, l]) => {
+  const groups = ['Custom', ...PC.LAYOUT_GROUPS.filter(g => g !== 'Custom')].map(g => `<div class="lp-group">${g}</div><div class="lp-grid">${Object.entries(PC.LAYOUTS).filter(([, l]) => l.group === g).map(([k, l]) => {
     const seed = PC.newSlide(k, 'pv-' + k);
     return `<button class="lp-card${mode === 'change' && k === cur ? ' cur' : ''}" data-layout="${k}"><div class="pv" aria-hidden="true"><div class="stage">${PC.renderSlide(seed, { editable: false, index: 0, total: 1, deck: deckWrap })}</div></div><div><b>${esc(l.name)}</b><span class="d">${esc(l.desc)}</span></div></button>`;
   }).join('')}</div>`).join('');
-  const m = UI.modal({ title: mode === 'add' ? 'Add a slide' : 'Change layout', body: `<p>${mode === 'add' ? 'Pick a layout. It arrives filled with sample content you can edit.' : 'Your text is kept where the new layout has a matching field.'}</p>${groups}`, size: '' });
+  const m = UI.modal({ title: mode === 'add' ? 'Add a slide' : 'Change layout', body: `<p>${mode === 'add' ? 'Pick a layout and it arrives with sample content you can edit. For full control choose HTML, CSS and JS, or Blank.' : 'Your text is kept where the new layout has a matching field.'}</p>${groups}`, size: '' });
   m.el.addEventListener('click', e => {
     const c = e.target.closest('[data-layout]'); if (!c) return; const layout = c.dataset.layout; m.close();
     if (mode === 'add') { S.addSlide(layout); E.scrollToFrame(S.sel); } else S.setLayout(S.sel, layout);

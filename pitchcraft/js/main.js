@@ -9,7 +9,32 @@ const log = (...a) => console.info('[pitchcraft]', ...a);
 /* ── deck IO ── */
 const stripFences = t => String(t).trim().replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, '').trim();
 const deckJson = () => JSON.stringify(S.deck, null, 2);
-PC.exportDeck = () => UI.download(PC.slug(S.deck.meta.name) + '.pitchcraft', deckJson(), 'application/json');
+let exportedSnap = '';   // the deck as it was when the user last downloaded a file: anything after that counts as unsaved
+PC.exportDeck = () => { UI.download(PC.slug(S.deck.meta.name) + '.pitchcraft', deckJson(), 'application/json'); exportedSnap = JSON.stringify(S.deck); };
+/** True when there is nothing worth saving: the deck is one of the shipped decks exactly as shipped, or it matches the last downloaded file. */
+let shippedSet = null;
+PC.isPristine = function () {
+  const now = JSON.stringify(S.deck);
+  if (now === exportedSnap) return true;
+  if (!shippedSet) shippedSet = new Set(PC.TEMPLATES.map(t => JSON.stringify(PC.parseDeck(PC.clone(t.deck)).deck)));
+  return shippedSet.has(now);
+};
+/** The one-slide starter deck. Undoable, so no confirmation is needed from code; the UI asks first (PC.newDeckFlow). */
+PC.newDeck = function () {
+  const t = PC.TEMPLATES.find(x => x.id === 'blank'); S.load(PC.parseDeck(PC.clone(t.deck)).deck); log('new deck started'); return { slides: S.count() };
+};
+/** The "New deck" button: if there are unsaved changes, offer to download the file first. */
+PC.newDeckFlow = function () {
+  if (PC.isPristine()) { PC.newDeck(); UI.toast('New deck started'); return null; }
+  const body = document.createElement('div');
+  body.innerHTML = `<p>This deck has changes that are not saved to a file. Download it first?</p><p class="hint">Your work is autosaved in this browser, but starting a new deck replaces it. Ctrl+Z brings it back until you close the page.</p>`;
+  const foot = document.createElement('div'); foot.style.display = 'contents';
+  foot.innerHTML = `<button class="btn" data-close>Cancel</button><button class="btn" id="nd-skip">Start new without saving</button><button class="btn primary" id="nd-save">${icon('download', 16)} Download file, then start new</button>`;
+  const m = UI.modal({ title: 'Start a new deck?', body, footer: foot });
+  $('#nd-save', m.el).addEventListener('click', () => { PC.exportDeck(); m.close(); PC.newDeck(); UI.toast('File downloaded. New deck started.'); });
+  $('#nd-skip', m.el).addEventListener('click', () => { m.close(); PC.newDeck(); UI.toast('New deck started. Ctrl+Z brings the old one back.'); });
+  return m;
+};
 PC.importText = function (text, mode) {
   const { deck, warnings } = PC.parseDeck(stripFences(text));
   if (mode === 'append') {
@@ -81,6 +106,7 @@ PC.helpDialog = function () {
       <div class="help-grid">
         <div class="help-card"><b>Start from a layout</b><p>Templates such as Title, Metrics or Chart arrange your content for you. You can still drag any text or card to a new spot, and change its font and size in the Format tab. <i>Reset</i> puts it back.</p></div>
         <div class="help-card"><b>Or start from blank</b><p>Pick the <b>Blank</b> layout (Add slide, then Free-form) for an empty canvas. Use <b>Insert</b> to add text boxes, pictures, shapes and icons anywhere. Drop a picture file straight onto the slide.</p></div>
+        <div class="help-card"><b>Or write it as code</b><p>In the Slide tab, under <i>How this slide is built</i>, choose <b>HTML, CSS and JS</b>. A template slide keeps its look and becomes code you can change freely. This route has no limits on layout, brand or animation, and it is where an AI is most useful for design.</p></div>
       </div>
       <div class="lp-group">Working with an AI</div>
       <div class="help-grid">
@@ -93,7 +119,8 @@ PC.helpDialog = function () {
       ${faq('Where is my work saved?', 'Automatically, in this browser only (local storage). Nothing is uploaded. Download a <code>.pitchcraft</code> file to back it up or share it. Clearing your browser data removes the autosave.')}
       ${faq('Where did the Content tab go?', 'Text is edited straight on the slide now. Click a card or text to see its fields and formatting in the <b>Format</b> tab. Charts, tables, lists, code and custom HTML are in the <b>Slide</b> tab.')}
       ${faq('Can I move things on a templated slide?', 'Yes. Click a text or card, then drag it (the coral grip beside it, or the dashed box). The move is stored on the slide as a small <i>tweak</i>, so the layout keeps working. Use <i>Reset position</i> to undo it.')}
-      ${faq('What is the difference between Blank, free-form objects and Custom HTML?', 'Blank slides and objects are drag-and-drop: text boxes, shapes, pictures and icons that follow the theme. <b>Custom</b> is for code: a slide written in HTML, CSS and JavaScript inside a sandbox, for animation or anything unusual.')}
+      ${faq('What is the difference between Blank, free-form objects and HTML, CSS and JS?', 'Blank slides and objects are drag-and-drop: text boxes, shapes, pictures and icons that follow the theme. <b>HTML, CSS and JS</b> is the full-capability route: the slide is code that runs in a sandbox, so any layout, brand style, diagram or animation is possible. Templates are the quick route for plain content. Switch between them under <i>How this slide is built</i> in the Slide tab.')}
+      ${faq('How do I start a new deck?', 'Click <b>New deck</b> in the ribbon (or the Deck tab). If the current deck has changes you have not downloaded, you are asked whether to download the file first. The new deck is one slide that explains how to have an AI build the rest.')}
       ${faq('Why does an AI need the guide?', 'Pitchcraft only accepts decks in its own format. The guide lists every layout, field and limit, so the AI writes a deck that imports cleanly. Anything invalid is dropped or corrected on import, and you get a warning.')}
       ${faq('Can I export to PowerPoint?', 'Not yet. You can export a PDF (one slide per page) and the <code>.pitchcraft</code> file. PowerPoint export is planned.')}
       <div class="lp-group">Keyboard</div>
@@ -150,6 +177,10 @@ PC.audit = function (deck) {
   const out = [];
   try {
     deck.slides.forEach((s, i) => {
+      if (s.layout === 'custom') {   // the slide is a sandboxed iframe: nothing in here can see inside it, so say so rather than report a clean bill of health
+        out.push({ index: i, id: s.id, layout: s.layout, theme: deck.meta.theme, bg: s.bg || '', problems: [], checked: false, note: 'Custom slide: not inspected. Run await Pitchcraft.auditAll() to measure it in a sandbox.' });
+        return;
+      }
       host.innerHTML = PC.renderSlide(s, { editable: false, index: i, total: deck.slides.length, deck });
       const slide = host.firstElementChild, sr = slide.getBoundingClientRect(), problems = [];
       const flag = (type, el, detail) => problems.push({ type, el: (el.dataset && el.dataset.path) || String(el.className || el.tagName).split(' ').slice(0, 2).join('.'), detail });
@@ -174,10 +205,70 @@ PC.audit = function (deck) {
         const tx = el.querySelector('.ob-t'); if (tx && el.style.height && (el.scrollHeight > el.clientHeight + 2 || tx.scrollHeight > el.clientHeight + 2)) flag('object-text-clipped', el, `${id}: text is taller than its box (${tx.scrollHeight} > ${el.clientHeight})`);
         if (type === 'text' && el.querySelector('.ob-t') && el.querySelector('.ob-t').scrollWidth > el.clientWidth + 2) flag('text-wider-than-box', el, `${id}: a word is wider than the box`);
       });
-      out.push({ index: i, id: s.id, layout: s.layout, theme: deck.meta.theme, bg: s.bg || '', problems });
+      out.push({ index: i, id: s.id, layout: s.layout, theme: deck.meta.theme, bg: s.bg || '', problems, checked: true });
     });
   } finally { host.remove(); }
+  out.unchecked = out.filter(e => !e.checked).map(e => e.id);
   return out;
+};
+
+/** Run one custom slide in a hidden, sandboxed copy of itself and ask its kit script to measure the rendered text. */
+function auditCustom(s, deck) {
+  return new Promise(resolve => {
+    const f = document.createElement('iframe'), id = 'a' + Math.random().toString(36).slice(2), errors = [];
+    f.setAttribute('sandbox', 'allow-scripts'); f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
+    f.style.cssText = 'position:fixed;left:-20000px;top:0;width:1280px;height:720px;border:0;pointer-events:none';
+    let done = false;
+    const finish = r => { if (done) return; done = true; window.removeEventListener('message', onMsg); clearTimeout(to); f.remove(); resolve(r); };
+    const onMsg = e => {
+      if (e.source !== f.contentWindow || !e.data) return;
+      if (e.data.pc === 'error') errors.push(e.data.msg);
+      if (e.data.pc === 'audit-result' && e.data.id === id) {
+        const r = e.data.result || { error: 'no result' };
+        if (r.problems) errors.slice(0, 5).forEach(m => r.problems.push({ type: 'script-error', el: 'script', text: '', detail: String(m).slice(0, 200) }));
+        finish(r);
+      }
+    };
+    const to = setTimeout(() => finish({ error: 'timed out after 6s (does the slide js loop forever?)' }), 6000);
+    window.addEventListener('message', onMsg);
+    f.addEventListener('load', () => setTimeout(() => { try { f.contentWindow.postMessage({ pc: 'audit', id }, '*'); } catch (x) { finish({ error: String(x) }); } }, 450));
+    f.srcdoc = PC.customDoc(s, deck.meta, 'live');
+    document.body.appendChild(f);
+  });
+}
+/** audit() plus the custom slides, measured in hidden sandboxes. Async. */
+PC.auditAll = async function (deck) {
+  deck = deck || S.deck; const base = PC.audit(deck);
+  for (const e of base) {
+    if (e.layout !== 'custom') continue;
+    const r = await auditCustom(deck.slides[e.index], deck);
+    if (r.error) { e.checked = false; e.note = 'Could not measure this custom slide: ' + r.error; continue; }
+    e.checked = true; e.problems = r.problems; e.texts = r.texts; delete e.note;
+    if (!r.texts) e.note = 'No visible text found. Nothing to measure.';
+  }
+  base.unchecked = base.filter(e => !e.checked).map(e => e.id);
+  return base;
+};
+
+/** How big will this text be? Measured in a hidden slide with the deck's theme, so fonts and case match what the audience sees. */
+PC.measureText = function (text, o) {
+  o = o || {}; const theme = (S.deck.meta && S.deck.meta.theme) || 'studio', th = PC.THEMES[theme] || PC.THEMES.studio;
+  const font = o.font || 'body', size = Math.max(6, Math.min(600, +o.size || 28)), key = String(font);
+  const isHeading = key === 'display';
+  const fam = Object.prototype.hasOwnProperty.call(PC.FONTS, key) ? PC.fontCss(key) : /^[\w ,'"-]{1,80}$/.test(key) ? key : PC.fontCss('body');
+  const weight = o.weight != null ? +o.weight : isHeading ? 'var(--d-weight)' : 400;
+  const caps = o.caps != null ? !!o.caps : null, ls = o.ls != null ? +o.ls + 'em' : isHeading ? 'var(--d-ls)' : 'normal';
+  const host = document.createElement('div'); host.className = 'slide'; host.dataset.theme = theme;
+  host.style.cssText = 'position:fixed;left:-20000px;top:0;width:1280px;height:720px;padding:0;pointer-events:none;overflow:visible';
+  const box = document.createElement('div');
+  box.style.cssText = `position:absolute;left:0;top:0;margin:0;padding:0;white-space:pre-wrap;word-break:normal;overflow-wrap:normal;font-family:${fam};font-size:${size}px;font-weight:${weight};letter-spacing:${ls};line-height:${o.lh != null ? +o.lh : 1.25};`
+    + (caps === null ? (isHeading ? 'text-transform:var(--d-case);' : '') : `text-transform:${caps ? 'uppercase' : 'none'};`) + (o.w ? `width:${Math.max(10, +o.w)}px;` : 'width:max-content;');
+  box.textContent = String(text == null ? '' : text); host.appendChild(box); document.body.appendChild(host);
+  try {
+    const r = box.getBoundingClientRect(), lh = parseFloat(getComputedStyle(box).lineHeight) || size * 1.25, rg = document.createRange(); rg.selectNodeContents(box);
+    const rects = Array.from(rg.getClientRects()), width = rects.length ? Math.max(...rects.map(x => x.right)) - Math.min(...rects.map(x => x.left)) : 0;
+    return { width: Math.round(width), height: Math.round(r.height), lines: Math.max(1, Math.round(r.height / lh)), em: th.em[isHeading ? 'display' : 'body'], theme, font: key, size };
+  } finally { host.remove(); }
 };
 
 /* ── actions ── */
@@ -190,6 +281,7 @@ PC.act = function (act, btn) {
     case 'del': return S.remove(S.sel);
     case 'bold': return E.format('**'); case 'italic': return E.format('*'); case 'hl': return E.format('=='); case 'code': return E.format('`'); case 'clearfmt': return E.clearFormat();
     case 'templates': return PC.templatesDialog();
+    case 'newdeck': return PC.newDeckFlow();
     case 'import': return PC.importDialog();
     case 'export': return PC.exportMenu(btn || $('.rb[data-act="export"]'));
     case 'print': return PC.print();
@@ -254,7 +346,7 @@ function slideRef(ref) { const i = S.indexOf(ref); if (i < 0 || !S.deck.slides[i
 const objIndex = (i, id) => { const k = (S.slide(i).objects || []).findIndex(o => o.id === id); if (k < 0) throw new Error(`No object "${id}" on slide "${S.slide(i).id}". Existing ids: ${(S.slide(i).objects || []).map(o => o.id).join(', ') || '(none)'}`); return k; };
 window.Pitchcraft = {
   version: PC.VERSION,
-  guide: () => PC.ai.guide(), manifest: () => PC.ai.manifest(), schema: () => PC.buildSchema((PC.GUIDE && PC.GUIDE.url ? PC.GUIDE.url.replace(/ai-guide\.md$/, '') : 'https://visser23.github.io/pitchcraft/')),
+  guide: section => PC.ai.guide(section), manifest: () => PC.ai.manifest(), schema: () => PC.buildSchema((PC.GUIDE && PC.GUIDE.url ? PC.GUIDE.url.replace(/ai-guide\.md$/, '') : 'https://visser23.github.io/pitchcraft/')),
   layouts: PC.LAYOUTS, themes: PC.THEMES, transitions: PC.TRANSITIONS, chartTypes: PC.CHART_TYPES, icons: PC.ICON_NAMES,
   getDeck: () => PC.clone(S.deck),
   setDeck(d, opts) { const r = PC.parseDeck(typeof d === 'string' ? stripFences(d) : PC.clone(d)); S.load(r.deck, opts); return { slides: r.deck.slides.length, warnings: r.warnings }; },
@@ -284,7 +376,7 @@ window.Pitchcraft = {
   current: () => S.sel, count: () => S.count(),
   html: ref => PC.renderSlide(S.slide(slideRef(ref)), { editable: false, index: slideRef(ref), total: S.count(), deck: S.deck }),
   prettyHtml: ref => Ins.prettyHtml(window.Pitchcraft.html(ref)),
-  exportJSON: deckJson, audit: PC.audit, preparePrint: PC.preparePrint,
+  exportJSON: deckJson, newDeck: PC.newDeck, audit: PC.audit, auditAll: PC.auditAll, measureText: PC.measureText, preparePrint: PC.preparePrint,
   present: from => P.open(from), closePresent: () => P.close(), isPresenting: () => P.isOpen(),
   undo: () => S.undo(), redo: () => S.redo(), loadTemplate: PC.loadTemplate, importText: PC.importText,
   getObjects: ref => PC.clone(S.slide(slideRef(ref)).objects || []),

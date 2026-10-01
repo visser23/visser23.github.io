@@ -5,7 +5,7 @@
 (function () {
 'use strict';
 const PC = window.PC = window.PC || {};
-PC.VERSION = '3.2.1';
+PC.VERSION = '3.3.0';
 PC.STAGE = { w: 1280, h: 720 };
 
 /* ── utilities ─────────────────────────────────────────────── */
@@ -87,11 +87,11 @@ PC.logoMark = (size = 28) => `<svg class="logo-mark" width="${size}" height="${s
 
 /* ── themes, tones, backgrounds, transitions ───────────────── */
 PC.THEMES = {
-  studio: { name: 'Studio', desc: 'Clean and confident. Bricolage Grotesque headlines.', swatch: ['#5b4bff', '#ff6b57', '#12b5a5'] },
-  editorial: { name: 'Editorial', desc: 'Instrument Serif on warm paper. Reads like a magazine.', swatch: ['#b3432b', '#1d2433', '#c99a3c'] },
-  contrast: { name: 'Contrast', dark: true, desc: 'Loud, dark and uppercase. Syne headlines.', swatch: ['#ff5d73', '#c8ff3d', '#0c0b12'] },
-  aurora: { name: 'Aurora', dark: true, desc: 'Deep gradients and glass cards.', swatch: ['#7cf5d4', '#9b7bff', '#ff8ad8'] },
-  brutal: { name: 'Brutalist', desc: 'Hard borders, hard shadows, no apologies.', swatch: ['#ffd93d', '#ff4d2e', '#111111'] }
+  studio: { name: 'Studio', desc: 'Clean and confident. Bricolage Grotesque headlines.', font: 'Bricolage Grotesque', em: { display: 0.47, body: 0.48 }, swatch: ['#5b4bff', '#ff6b57', '#12b5a5'] },
+  editorial: { name: 'Editorial', desc: 'Instrument Serif on warm paper. Reads like a magazine.', font: 'Instrument Serif', em: { display: 0.33, body: 0.48 }, swatch: ['#b3432b', '#1d2433', '#c99a3c'] },
+  contrast: { name: 'Contrast', dark: true, desc: 'Loud, dark and uppercase. Syne headlines.', font: 'Syne', em: { display: 1.01, body: 0.48 }, swatch: ['#ff5d73', '#c8ff3d', '#0c0b12'] },
+  aurora: { name: 'Aurora', dark: true, desc: 'Deep gradients and glass cards.', font: 'Bricolage Grotesque', em: { display: 0.47, body: 0.48 }, swatch: ['#7cf5d4', '#9b7bff', '#ff8ad8'] },
+  brutal: { name: 'Brutalist', desc: 'Hard borders, hard shadows, no apologies.', font: 'Syne', em: { display: 0.77, body: 0.48 }, swatch: ['#ffd93d', '#ff4d2e', '#111111'] }
 };
 PC.TONES = { '': 'Theme', coral: 'Coral', amber: 'Amber', teal: 'Teal', green: 'Green', blue: 'Blue', violet: 'Violet', pink: 'Pink' };
 PC.TONE_HEX = { '': '', coral: '#ff6b57', amber: '#f5a524', teal: '#12b5a5', green: '#22b55e', blue: '#2f80ff', violet: '#9b5cff', pink: '#ff4fa3' };
@@ -139,7 +139,7 @@ PC.LAYOUTS = {
   themes: { name: 'Themes', group: 'Visual', desc: 'Live previews of the built-in themes', text: { kicker: 'Kicker', headline: 'Headline' }, doc: 'kicker, headline, items:[{theme:"studio"|"editorial"|"contrast"|"aurora"|"brutal",title,body}]',
     list: { key: 'items', noun: 'theme card', min: 1, max: 5, fields: [{ k: 'theme', label: 'Theme', t: 'select', opts: Object.fromEntries(Object.entries(PC.THEMES).map(([k, v]) => [k, v.name])) }, { k: 'title', label: 'Title' }, { k: 'body', label: 'Body', t: 'area' }], blank: { theme: 'studio', title: 'Theme', body: 'Description' } } },
   code: { name: 'Code', group: 'Visual', desc: 'Syntax-highlighted window', text: TXT, special: 'code', doc: 'kicker, headline, body, code:{language:"json"|"js"|"html"|"css"|"bash",filename?,source}' },
-  custom: { name: 'Custom HTML', group: 'Custom', desc: 'Any HTML, CSS and JavaScript. No walls.', text: { headline: 'Slide name (only used in menus)' }, special: 'custom',
+  custom: { name: 'HTML, CSS and JS', group: 'Custom', desc: 'Write the slide as code: any layout, brand style or animation.', text: { headline: 'Slide name (only used in menus)' }, special: 'custom',
     doc: 'headline (a NAME only, not drawn), custom:{html,css?,js?,base?,interactive?}. html is the whole 1280x720 slide: write anything. See "Custom layout" in the AI guide.' },
   image: { name: 'Image', group: 'Visual', desc: 'Picture beside text', text: TXT, special: 'image', doc: 'kicker, headline, body, image:{src (https URL or data URI),alt}' }
 };
@@ -279,7 +279,7 @@ PC.parseDeck = function (input) {
 
 /* ── the in-browser API, documented once: feeds the AI guide, Pitchcraft.manifest() and the tests that keep it honest ── */
 PC.API_DOCS = [
-  ['Read', 'guide()', 'The complete AI guide as markdown (this document). Read it before editing.'],
+  ['Read', 'guide(section?)', 'The complete AI guide as markdown (this document). Pass a section number such as 9, or a word from its heading, to get just that part. Read it before editing.'],
   ['Read', 'manifest()', 'JSON: version, guide URL, every method below, layouts, themes, object types, limits.'],
   ['Read', 'getDeck()', 'Copy of the whole deck JSON.'],
   ['Read', 'getSlide(ref)', 'Copy of one slide. ref = slide id ("s3") or 0-based index.'],
@@ -287,7 +287,9 @@ PC.API_DOCS = [
   ['Read', 'html(ref)', 'The rendered HTML of one slide (what the DOM contains).'],
   ['Read', 'prettyHtml(ref)', 'The same, indented for reading.'],
   ['Read', 'exportJSON()', 'The deck as a JSON string, exactly what a .pitchcraft file contains.'],
-  ['Read', 'audit(deck?)', 'Layout audit: finds text that clips or leaves the safe area. Returns one entry per slide with a problems list.'],
+  ['Read', 'audit(deck?)', 'Fast layout audit of templated and blank slides: finds text that clips or leaves the safe area. Returns one entry per slide with a problems list. It cannot see inside custom slides: those come back with checked:false. Use auditAll() for them.'],
+  ['Read', 'auditAll(deck?)', 'Async. Everything audit() does, plus it runs each custom slide in a hidden sandbox and measures the rendered text: text off the slide, outside the safe area, clipped by its container, or overlapping other text. Entries have checked:true. Await it.'],
+  ['Read', 'measureText(text, opts?)', 'Measure text before you place it. opts {font "display"|"body"|"mono"|a CSS family, size (px, default 28), weight, caps, ls, lh, w (box width px)}. Returns {width, height, lines, em}: width of the longest line, height at the wrapped width, and the average em per character in this theme.'],
   ['Read', 'current()', 'Index of the selected slide.'],
   ['Read', 'count()', 'Number of slides.'],
   ['Read', 'schema()', 'JSON Schema (draft 2020-12) of a deck, including slide custom {html, css, js}, objects and tweaks. Also published as pitchcraft.schema.json.'],
@@ -295,6 +297,7 @@ PC.API_DOCS = [
   ['Deck', 'importText(text, mode?)', 'Import deck JSON text. mode "replace" (default) or "append". Returns {deck, warnings}.'],
   ['Deck', 'setMeta(patch)', 'Patch deck meta: {name, theme, numbers, transition, css}.'],
   ['Deck', 'setTheme(theme)', 'Set the deck theme key.'],
+  ['Deck', 'newDeck()', 'Replace the deck with a fresh one-slide deck (the starter). Undoable. The New deck button asks the user to save first; this call does not.'],
   ['Deck', 'loadTemplate(id)', 'Load a built-in template deck (for example "tour").'],
   ['Slides', 'addSlide(layout, at?)', 'Insert a slide with a layout key at an index. Returns its index. Use "blank" for a free-form slide.'],
   ['Slides', 'removeSlide(ref)', 'Delete a slide.'],

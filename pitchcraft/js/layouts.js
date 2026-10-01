@@ -222,7 +222,25 @@ window.pc={next:function(){P({pc:'nav',d:1})},prev:function(){P({pc:'nav',d:-1})
 addEventListener('error',function(e){P({pc:'error',msg:String(e.message||e)+(e.lineno?' (line '+e.lineno+')':'')})});
 addEventListener('unhandledrejection',function(e){P({pc:'error',msg:String((e.reason&&e.reason.message)||e.reason)})});
 addEventListener('keydown',function(e){if(e.ctrlKey||e.metaKey||e.altKey)return;var t=e.target,g=t&&t.tagName;if(e.key!=='Escape'&&((/^(INPUT|TEXTAREA|SELECT)$/.test(g))||(t&&t.isContentEditable)||(/^(BUTTON|A)$/.test(g)&&(e.key===' '||e.key==='Enter'))))return;if(['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','PageDown','PageUp',' ','Enter','Escape','Home','End','Backspace','f','F','n','N'].indexOf(e.key)>-1)P({pc:'key',key:e.key})});
-document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('.rv').forEach(function(e,k){e.style.setProperty('--i',k)})});})();`;
+document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('.rv').forEach(function(e,k){e.style.setProperty('--i',k)})});
+/* layout check: the editor asks, we measure the rendered text and answer. Nothing here can read the editor. */
+addEventListener('message',function(ev){var d=ev.data;if(ev.source!==parent||!d||d.pc!=='audit')return;var go=function(){var r;try{r=pcAudit()}catch(x){r={error:String(x&&x.message||x)}}P({pc:'audit-result',id:d.id,result:r})};if(document.fonts&&document.fonts.ready)document.fonts.ready.then(go,go);else go()});
+function pcAudit(){var W=1280,H=720,out=[],items=[],tw=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),n;
+var name=function(el){var c=typeof el.className==='string'?el.className.trim().split(' ')[0]:'';return el.tagName.toLowerCase()+(c?'.'+c:'')};
+var flag=function(type,el,detail,text){if(out.length<40)out.push({type:type,el:name(el),text:(text||'').slice(0,40),detail:detail})};
+var blockOf=function(el){while(el&&el.parentElement&&getComputedStyle(el).display==='inline')el=el.parentElement;return el};
+while((n=tw.nextNode())){var t=n.nodeValue.trim();if(!t)continue;var el=n.parentElement;if(!el||el.tagName==='SCRIPT'||el.tagName==='STYLE')continue;
+var cs=getComputedStyle(el);if(cs.visibility==='hidden'||cs.display==='none'||parseFloat(cs.opacity)===0)continue;
+var rg=document.createRange();rg.selectNodeContents(n);var b=rg.getBoundingClientRect();if(b.width<1||b.height<1)continue;
+var a={el:el,b:b,t:t,blk:blockOf(el)};items.push(a);
+if(b.right>W+1||b.bottom>H+1||b.left<-1||b.top<-1)flag('text-off-slide',el,'text spans x '+Math.round(b.left)+'-'+Math.round(b.right)+', y '+Math.round(b.top)+'-'+Math.round(b.bottom)+' on a 1280x720 slide',t);
+else if(b.left<48||b.right>W-48||b.top<36||b.bottom>H-36)flag('outside-safe-area',el,'text reaches x '+Math.round(b.left)+'-'+Math.round(b.right)+', y '+Math.round(b.top)+'-'+Math.round(b.bottom)+' (keep 48px side and 36px top/bottom margins)',t);
+for(var p=el;p&&p!==document.body;p=p.parentElement){var pc=getComputedStyle(p);if(pc.overflowX!=='visible'||pc.overflowY!=='visible'){var pr=p.getBoundingClientRect();if(b.right>pr.right+2||b.bottom>pr.bottom+2||b.left<pr.left-2||b.top<pr.top-2){flag('clipped',el,'text extends past its container '+name(p)+' ('+Math.round(pr.width)+'x'+Math.round(pr.height)+') which hides overflow',t);break}}}
+if(el.scrollWidth>el.clientWidth+2&&cs.display!=='inline'&&cs.overflowX==='visible')flag('text-wider-than-box',el,'content is '+el.scrollWidth+'px wide in a '+el.clientWidth+'px box',t)}
+for(var i=0;i<items.length;i++)for(var j=i+1;j<items.length;j++){var p1=items[i],p2=items[j];if(p1.blk===p2.blk)continue;var x=Math.min(p1.b.right,p2.b.right)-Math.max(p1.b.left,p2.b.left),y=Math.min(p1.b.bottom,p2.b.bottom)-Math.max(p1.b.top,p2.b.top);
+if(x>3&&y>3&&x*y>0.25*Math.min(p1.b.width*p1.b.height,p2.b.width*p2.b.height))flag('text-overlap',p1.el,'overlaps "'+p2.t.slice(0,30)+'" ('+name(p2.el)+') by '+Math.round(x)+'x'+Math.round(y)+'px',p1.t)}
+return {problems:out,texts:items.length}}
+})();`;
 const inStyle = t => String(t || '').replace(/<\/style/gi, '<\\/style');
 const inScript = t => String(t || '').replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');
 

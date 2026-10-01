@@ -15,8 +15,36 @@
 const PC = window.PC, S = PC.store, UI = PC.ui, { $, $$ } = UI, esc = PC.esc, icon = PC.icon;
 const AI = PC.ai = {};
 const G = () => PC.GUIDE || { version: PC.VERSION, md: '(guide missing: run node scripts/build-guide.js)', url: 'https://visser23.github.io/pitchcraft/ai-guide.md', rawUrl: '', pageUrl: '' };
-AI.guide = () => G().md;
+/** The guide as markdown. With a section (a number such as 9, or a word from a heading) only that part, so an agent can fetch it in small pieces. */
+AI.guide = function (section) {
+  const md = G().md; if (section == null || section === '') return md;
+  const parts = md.split(/^(?=## )/m).slice(1), key = String(section).trim().toLowerCase().replace(/^§\s*/, '');
+  const num = /^\d+$/.test(key), hit = parts.find(p => { const h = p.split('\n', 1)[0].replace(/^##\s*/, '').toLowerCase(); return num ? h.startsWith(key + '.') : h.includes(key); });
+  if (!hit) throw new Error(`No guide section matches "${section}". Sections: ${parts.map(p => p.split('\n', 1)[0].replace(/^##\s*/, '')).join(' | ')}`);
+  return hit.trim();
+};
 AI.guideUrl = () => G().url;
+
+/** Web addresses for the prompts. An AI that pastes a prompt into a chat cannot guess where Pitchcraft lives (it is not in search results),
+ *  so every prompt names it. Prefer the address the user is actually on (if it is a real http(s) site), else the published one. */
+AI.urls = function () {
+  const g = G(), canonical = g.url.replace(/ai-guide\.md$/, '');
+  let here = '';
+  try { const l = window.location; if (/^https?:$/.test(l.protocol) && !/^(localhost|127\.|\[::1\]|0\.0\.0\.0)/.test(l.hostname)) here = l.origin + l.pathname.replace(/[^/]*$/, ''); } catch (e) { /* no location: use the published address */ }
+  const site = here || canonical;
+  return { site, canonical, here, guide: site + 'ai-guide.md', full: site + 'llms-full.txt', schema: site + 'pitchcraft.schema.json', differs: !!here && here !== canonical };
+};
+/** One line naming the app, for the top of every prompt. */
+const siteLine = () => { const u = AI.urls(); return `PITCHCRAFT WEB ADDRESS: ${u.site}${u.differs ? `  (also published at ${u.canonical})` : ''}\nThis is the app the deck is for. It is a small open tool, so do not search for it: use this address.`; };
+
+/** How the AI should build slides. The default leaves the choice to the AI but points it at the full-capability route. */
+const APPROACHES = {
+  auto: 'Choose per slide. Slides can be built three ways: (1) template layouts, fast and consistent, for plain text, lists and simple charts; (2) the "blank" layout with free-form objects; (3) "custom" slides written as HTML, CSS and JavaScript, which can do anything (any layout, brand styling, diagrams, animation, canvas). Use custom slides wherever the design matters. Use templates for the plain slides.',
+  templates: 'Use the built-in template layouts only (no custom slides), so the user can edit every slide field by field.',
+  custom: 'Build every slide as a custom slide (layout "custom": HTML, CSS and JavaScript), with shared brand CSS in meta.css. The user wants full design control.'
+};
+AI.APPROACHES = Object.keys(APPROACHES);
+const approachLine = o => `HOW TO BUILD THE SLIDES\n${APPROACHES[(o && APPROACHES[o.approach]) ? o.approach : 'auto']}`;
 
 const REPLY = `HOW TO REPLY
 - Create a downloadable file named <short-deck-name>.pitchcraft whose entire content is the deck JSON (format "pitchcraft", version 3).
@@ -27,8 +55,12 @@ const REPLY = `HOW TO REPLY
 const taskLine = (t, ph) => (t && t.trim() ? t.trim() : ph);
 
 /** A prompt for a chat window that can't open links: the whole guide travels inside it. */
-AI.promptChat = function (brief) {
-  return `You are building a presentation deck for Pitchcraft, a browser presentation studio. Follow the guide at the end of this message exactly: it is the complete specification (deck format, layouts, free-form objects, design rules).
+AI.promptChat = function (brief, opts) {
+  return `You are building a presentation deck for Pitchcraft, a browser presentation studio. Follow the guide at the end of this message exactly: it is the complete specification (deck format, layouts, free-form objects, custom HTML/CSS/JS slides, design rules, writing style).
+
+${siteLine()}
+
+${approachLine(opts)}
 
 YOUR TASK
 ${taskLine(brief, '[DESCRIBE THE DECK: topic, audience, tone, how many slides, any facts and numbers to use]')}
@@ -41,13 +73,17 @@ ${G().md}`;
 };
 
 /** A short prompt for assistants that can open web pages: they read the published guide themselves. */
-AI.promptLink = function (brief) {
-  const g = G();
+AI.promptLink = function (brief, opts) {
+  const g = G(), u = AI.urls();
   return `You are building a presentation deck for Pitchcraft, a browser presentation studio.
 
-FIRST read the Pitchcraft guide (it is the complete specification: deck format, layouts, free-form objects, design rules):
-${g.url}
-${g.rawUrl ? `(same file on GitHub: ${g.rawUrl})\n` : ''}If you cannot open that link, say so and stop. Do not guess the format.
+${siteLine()}
+
+FIRST read the Pitchcraft guide (it is the complete specification: deck format, layouts, free-form objects, custom HTML/CSS/JS slides, design rules, writing style):
+${u.guide}
+${u.differs ? `(published copy: ${g.url})\n` : ''}${g.rawUrl ? `(same file on GitHub: ${g.rawUrl})\n` : ''}If you cannot open that link, say so and stop. Do not guess the format.
+
+${approachLine(opts)}
 
 YOUR TASK
 ${taskLine(brief, '[DESCRIBE THE DECK: topic, audience, tone, how many slides, any facts and numbers to use]')}
@@ -56,23 +92,28 @@ ${REPLY}`;
 };
 
 /** For an AI that can run JavaScript in the open Pitchcraft tab. */
-AI.promptAgent = function (task) {
-  const g = G(), api = PC.API_DOCS.map(([, sig, doc]) => `  Pitchcraft.${sig}  // ${doc}`).join('\n');
+AI.promptAgent = function (task, opts) {
+  const g = G(), u = AI.urls(), api = PC.API_DOCS.map(([, sig, doc]) => `  Pitchcraft.${sig}  // ${doc}`).join('\n');
   return `Pitchcraft (a browser presentation studio) is open in the browser tab you control. You can read and edit the live deck with its JavaScript API, \`window.Pitchcraft\`. Every call is validated and undoable (the user can press Ctrl+Z).
 
+${siteLine()}
+
 START HERE
-1. Run \`Pitchcraft.guide()\` and read the result. It is the complete specification (deck format, layouts, free-form objects, design rules). Online copy: ${g.url}
+1. Run \`Pitchcraft.guide()\` and read the result. It is the complete specification (deck format, layouts, free-form objects, custom HTML/CSS/JS slides, design rules, writing style). \`Pitchcraft.guide(9)\` returns just section 9. If your tool mangles URLs or equals signs in long output, fetch the plain text copy instead: ${u.guide}
 2. Run \`Pitchcraft.getDeck()\` to see the current deck, or \`Pitchcraft.getSlide("s1")\` for one slide.
 3. \`Pitchcraft.schema()\` is the JSON Schema of a deck and \`Pitchcraft.manifest()\` lists the API with quickstart recipes. There is no separate import button to find: \`Pitchcraft.importText(json)\` loads a whole deck.
 
 THE API
 ${api}
 
+${approachLine(opts)}
+
 HOW TO WORK
-- Make the smallest change that does what was asked. Prefer updateObject, setPath and setTweak over replacing whole slides.
-- For precise layouts use the "blank" layout and add free-form objects (text, shape, image, icon) at x/y/w/h positions on the 1280 x 720 stage.
-- For a fully custom look (your own HTML, CSS and JavaScript, a brand style, animation, canvas) use \`Pitchcraft.addCustomSlide({ html, css, js, interactive })\` and later \`Pitchcraft.setCustom(ref, { css })\`. Shared brand CSS goes in \`Pitchcraft.setMeta({ css })\`. Custom slides run in a sandbox: no network, no storage.
-- Afterwards run \`Pitchcraft.audit()\`: every slide's problems list should be empty; fix anything it reports.
+- A slide can be built three ways, and you can mix them in one deck. (1) Template layout: set fields like headline and items. Quick and consistent. (2) "blank" layout with free-form objects (text, shape, image, icon) placed at x/y/w/h on the 1280 x 720 stage. (3) Custom slide: your own HTML, CSS and JavaScript, with no limits on layout or styling. Route 3 is the full-capability route: use \`Pitchcraft.addCustomSlide({ html, css, js, interactive })\`, then \`Pitchcraft.setCustom(ref, { css })\` to refine. Shared brand CSS goes in \`Pitchcraft.setMeta({ css })\`.
+- Custom slides run in a sandbox: no network, no storage, no external scripts. Your own js runs. Thumbnails do not run js, so the html and css must look complete without it.
+- Theme fonts can be much wider than you expect (Contrast is about twice the width of Editorial). Call \`Pitchcraft.measureText(text, { font: "display", size: 64, w: 900 })\` before placing text.
+- Make the smallest change that does what was asked. Prefer updateObject, setPath, setCustom and setTweak over replacing whole slides.
+- Afterwards run \`await Pitchcraft.auditAll()\`. It measures custom slides too. Every slide's problems list should be empty; fix anything it reports. \`Pitchcraft.audit()\` is the quick version and marks custom slides unchecked.
 - Never invent facts or numbers; label sample data. Do not reload or navigate away from the page.
 - Stop when the slide visibly updates, then tell me in one or two lines what you changed.
 
@@ -83,7 +124,9 @@ ${taskLine(task, '[DESCRIBE WHAT TO BUILD OR CHANGE]')}`;
 /** Edit one slide (chat or browser): includes the slide as it is now. */
 AI.promptSlide = function (slide, task) {
   slide = slide || S.slide(); const id = slide.id, json = JSON.stringify(slide, null, 2), g = G();
-  return `You are editing ONE slide of a Pitchcraft deck. The full specification is at ${g.url} (or \`Pitchcraft.guide()\` in the page).
+  return `You are editing ONE slide of a Pitchcraft deck. The full specification is at ${AI.urls().guide} (or \`Pitchcraft.guide()\` in the page).
+
+${siteLine()}
 
 THE SLIDE NOW (id "${id}")
 ${json.length > 9000 ? json.slice(0, 9000) + '\n… (truncated; use Pitchcraft.getSlide("' + id + '") for all of it)' : json}
@@ -99,6 +142,7 @@ ${slide.layout === 'custom' ? '  Pitchcraft.setPath("' + id + '", "custom.html",
 Reply with ONLY the complete corrected slide as one JSON object (same shape as above) in a \`\`\`json block. I will paste it into Pitchcraft's Code tab and press Apply changes.
 
 Change only what was asked. Never invent facts. Keep text readable (contrast, at least 22 px) and inside the safe area.
+If the look matters more than field-by-field editing, you may rewrite the slide as a custom slide ("layout": "custom" with custom.html, custom.css and custom.js): it can do anything. Say so when you do.
 
 TASK
 ${taskLine(task, '[DESCRIBE THE EDIT]')}`;
@@ -111,7 +155,9 @@ AI.promptCustom = function () {
 { "id": "s1", "layout": "custom", "headline": "short slide name", "notes": "speaker notes",
   "custom": { "html": "…", "css": "…", "js": "…", "interactive": false } }
 
-Only use a custom slide when the built-in layouts AND free-form objects (layout "blank") cannot do it: animation, canvas, interactive demos, unusual graphics. The full specification is at ${G().url}.
+Custom slides are Pitchcraft's full-capability route: any layout, any styling, diagrams, animation, canvas, interactive demos. Use them wherever the design matters. The full specification is at ${AI.urls().guide}.
+
+${siteLine()}
 
 THE CANVAS
 - The slide is exactly 1280 x 720 px. html, css and js are three separate strings. html is the body content only (no <html>, <head> or <script>). The slide is scaled to fit any screen, so use px and design for 1280x720.
@@ -130,13 +176,15 @@ BRANDING
 BEHAVIOUR
 - js runs when the slide is shown, inside a sandbox: no access to the editor, storage, cookies or the network.
 - Set "interactive": true only if the slide has buttons or inputs people should click while presenting. Call pc.next() or pc.prev() from your js to move the deck.
-- Thumbnails and PDF export draw the slide from html+css, so it must look complete before js runs.
+- Thumbnails and PDF export draw the slide from html+css without running js, so it must look complete before js runs.
+- Theme fonts differ a lot in width (Contrast's display font is about twice as wide as Editorial's). Size headlines for the widest font you might meet, or call Pitchcraft.measureText in the page.
 - Respect @media (prefers-reduced-motion: reduce).
 
 RULES
 - Never invent facts or numbers; label sample data "Sample data".
 - One idea per slide. Text must be readable on its background (4.5:1).
-- No external scripts, iframes, forms or fetch: the sandbox blocks them.
+- Your own inline js runs. What the sandbox blocks: external scripts (<script src>), iframes, forms, fetch and other network calls, and storage.
+- When you can run JavaScript in the page, finish with await Pitchcraft.auditAll(): it measures overflow, clipping and text overlap inside custom slides.
 
 BRIEF:
 [DESCRIBE THE SLIDE, OR PASTE THE BRAND GUIDE]`;
@@ -149,14 +197,19 @@ AI.manifest = function () {
     name: 'Pitchcraft', version: PC.VERSION, guideVersion: g.version,
     guide: { url: g.url, rawUrl: g.rawUrl, page: g.pageUrl, inPage: 'Pitchcraft.guide()' },
     file: { extension: '.pitchcraft', format: 'pitchcraft', version: 3, how: 'JSON. Import with the Import dialog, drop the file on the page, or call Pitchcraft.importText(json).' },
-    schema: { url: g.url.replace(/ai-guide\.md$/, 'pitchcraft.schema.json'), inPage: 'Pitchcraft.schema()' },
+    schema: { url: AI.urls().schema, inPage: 'Pitchcraft.schema()' },
+    site: AI.urls().site,
+    plainText: { guideMarkdown: AI.urls().guide, guideAndApiOneFile: AI.urls().full, oneSection: 'Pitchcraft.guide(9)   // or a word from a heading, e.g. Pitchcraft.guide("custom")', why: 'Plain files with no scripts. Use them if your browser tool rewrites URLs or equals signs in long output.' },
+    approaches: { templates: 'quick, consistent, editable field by field', blank: 'free-form objects at x/y/w/h', custom: 'FULL CAPABILITY: your own HTML, CSS and JavaScript for any layout, brand styling, diagrams and animation' },
+    themeFontWidth: Object.fromEntries(Object.entries(PC.THEMES).map(([k, t]) => [k, t.em])),
     quickstart: {
       importWholeDeck: 'Pitchcraft.importText(jsonString)   // or Pitchcraft.setDeck(objectOrJson); both validate and report warnings; undoable',
       customHtmlCssJs: 'Pitchcraft.addCustomSlide({ html: "<h1>Hi</h1>", css: "h1{font-size:96px}", js: "", interactive: false }, undefined, "Name")   // sandboxed 1280x720 slide; edit later with Pitchcraft.setCustom(ref, { css })',
       brandCss: 'Pitchcraft.setMeta({ css: ".logo{...}" })   // shared CSS for every custom slide',
       freeFormObjects: 'Pitchcraft.addSlide("blank"); Pitchcraft.addObject(ref, { type: "text", text: "Hi", x: 80, y: 80, w: 600, size: 64 })',
       templateSlide: 'Pitchcraft.addSlide("metrics"); Pitchcraft.updateSlide(ref, { headline: "...", items: [...] })',
-      check: 'Pitchcraft.audit()   // every slide problems list should be empty'
+      measure: 'Pitchcraft.measureText("Quarterly results", { font: "display", size: 72, w: 800 })   // {width, height, lines, em}',
+      check: 'await Pitchcraft.auditAll()   // measures custom slides too; every problems list should be empty. audit() is the fast version and marks custom slides checked:false'
     },
     custom: { layout: 'custom', fields: ['html', 'css', 'js', 'interactive'], sandbox: 'iframe sandbox="allow-scripts", opaque origin, CSP: no network, no frames, no forms', maxCharsPerField: PC.LIMITS.custom, sharedCss: 'meta.css' },
     stage: { width: PC.STAGE.w, height: PC.STAGE.h, unit: 'px' },
@@ -170,22 +223,28 @@ AI.manifest = function () {
 
 /* ── copy helpers ── */
 const KINDS = {
-  chat: { fn: b => AI.promptChat(b), msg: 'Prompt copied. Paste it into your chat, then import the .pitchcraft file it returns.' },
-  link: { fn: b => AI.promptLink(b), msg: 'Short prompt copied. Paste it into an AI that can open web pages.' },
-  agent: { fn: b => AI.promptAgent(b), msg: 'Prompt copied. Paste it into the AI that lives in your browser.' },
+  chat: { fn: (b, o) => AI.promptChat(b, o), msg: 'Prompt copied. Paste it into your chat, then import the .pitchcraft file it returns.' },
+  link: { fn: (b, o) => AI.promptLink(b, o), msg: 'Short prompt copied. Paste it into an AI that can open web pages.' },
+  agent: { fn: (b, o) => AI.promptAgent(b, o), msg: 'Prompt copied. Paste it into the AI that lives in your browser.' },
   slide: { fn: b => AI.promptSlide(null, b), msg: 'Slide prompt copied. Paste it into your AI.' },
   custom: { fn: () => AI.promptCustom(), msg: 'Custom-slide prompt copied. Paste it into your AI with your brief.' },
   guide: { fn: () => AI.guide(), msg: 'Full guide copied' }
 };
-AI.prompt = (kind, arg) => KINDS[kind].fn(arg);
-AI.copy = (kind, arg) => UI.copy(KINDS[kind].fn(arg), KINDS[kind].msg);
+AI.prompt = (kind, arg, opts) => KINDS[kind].fn(arg, opts);
+AI.copy = (kind, arg, opts) => UI.copy(KINDS[kind].fn(arg, opts), KINDS[kind].msg);
 
 /* ── the dialog ── */
 AI.dialog = function (tab) {
   const body = document.createElement('div'), g = G();
   body.className = 'ai-dlg';
   body.innerHTML = `
-    <p class="ai-lead">Pitchcraft decks are plain JSON, so any AI can write them. Pick how you are using your AI:</p>
+    <p class="ai-lead">Pitchcraft decks are plain JSON, so any AI can write them. Every prompt below includes this site's web address and a full guide, so the AI does not have to find them.</p>
+    <fieldset class="ai-approach"><legend>How should the AI build the slides?</legend>
+      <label><input type="radio" name="ai-approach" value="auto" checked> <span><b>Let the AI choose</b> custom HTML, CSS and JavaScript where design matters, templates for plain slides</span></label>
+      <label><input type="radio" name="ai-approach" value="custom"> <span><b>Custom design</b> every slide is HTML, CSS and JS: full control of the look</span></label>
+      <label><input type="radio" name="ai-approach" value="templates"> <span><b>Templates only</b> quick, consistent, editable field by field</span></label>
+    </fieldset>
+    <p class="ai-lead">Now pick how you are using your AI:</p>
     <div class="ai-tabs" role="tablist" aria-label="Where is your AI?">
       <button role="tab" id="ai-tab-chat" aria-selected="true" aria-controls="ai-pane-chat" data-aitab="chat">${icon('sparkles', 18)}<span><b>In a chat window</b><small>ChatGPT, Claude, Gemini, Copilot…</small></span></button>
       <button role="tab" id="ai-tab-browser" aria-selected="false" aria-controls="ai-pane-browser" data-aitab="browser" tabindex="-1">${icon('globe', 18)}<span><b>AI in your browser</b><small>Comet, Atlas, Claude for Chrome, Cursor…</small></span></button>
@@ -214,10 +273,11 @@ AI.dialog = function (tab) {
           <div class="row wrap"><button class="btn primary" id="ai-copy-agent">${icon('copy', 16)} Copy agent prompt</button><button class="btn" id="ai-copy-slide">${icon('wand', 16)} Copy prompt for the current slide</button></div></li>
       </ol>
       <div class="ai-can"><b>What the agent can do</b><ul>
+        <li>Write whole slides as your own HTML, CSS and JavaScript (any layout, brand styling, animation), and check them with a layout audit that measures the rendered result.</li>
         <li>Edit any text, chart, table or card field on any slide.</li>
         <li>Add, move, resize, rotate and restyle free-form text boxes, shapes, images and icons (the same objects you can drag on the canvas).</li>
         <li>Move and restyle a template slide's own headline, text and cards.</li>
-        <li>Add, reorder and delete slides, switch theme, and check the result with a built-in layout audit.</li></ul>
+        <li>Add, reorder and delete slides, and switch theme.</li></ul>
         <p class="hint">Agents find everything through <code>Pitchcraft.guide()</code> and <code>Pitchcraft.manifest()</code> in the page. The prompt tells them to.</p></div>
       <details class="ai-prev"><summary>Preview the prompt</summary><textarea class="txt mono" id="ai-preview-agent" rows="9" readonly spellcheck="false" aria-label="Agent prompt preview"></textarea></details>
     </div>
@@ -225,19 +285,20 @@ AI.dialog = function (tab) {
   const foot = document.createElement('div'); foot.style.display = 'contents'; foot.innerHTML = '<button class="btn" data-close>Close</button>';
   const m = UI.modal({ title: 'Build with AI', body, footer: foot, size: 'mid', cls: 'ai-modal' });
   const el = m.el, mode = () => ($('input[name="ai-mode"]:checked', el) || {}).value || 'chat';
+  const opts = () => ({ approach: ($('input[name="ai-approach"]:checked', el) || {}).value || 'auto' });
   const setTab = t => {
     $$('[data-aitab]', el).forEach(b => { const on = b.dataset.aitab === t; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
     $('#ai-pane-chat', el).hidden = t !== 'chat'; $('#ai-pane-browser', el).hidden = t !== 'browser';
   };
   const refresh = () => {
-    const p = AI.prompt(mode(), $('#ai-brief', el).value); $('#ai-preview', el).value = p;
+    const p = AI.prompt(mode(), $('#ai-brief', el).value, opts()); $('#ai-preview', el).value = p;
     $('#ai-size', el).textContent = `${p.length.toLocaleString()} characters`;
-    $('#ai-preview-agent', el).value = AI.prompt('agent', $('#ai-task', el).value);
+    $('#ai-preview-agent', el).value = AI.prompt('agent', $('#ai-task', el).value, opts());
   };
   el.addEventListener('click', e => {
     const t = e.target, tab = t.closest('[data-aitab]'); if (tab) { setTab(tab.dataset.aitab); return; }
-    if (t.closest('#ai-copy')) AI.copy(mode(), $('#ai-brief', el).value);
-    else if (t.closest('#ai-copy-agent')) AI.copy('agent', $('#ai-task', el).value);
+    if (t.closest('#ai-copy')) AI.copy(mode(), $('#ai-brief', el).value, opts());
+    else if (t.closest('#ai-copy-agent')) AI.copy('agent', $('#ai-task', el).value, opts());
     else if (t.closest('#ai-copy-slide')) AI.copy('slide', $('#ai-task', el).value);
     else if (t.closest('#ai-copy-guide')) AI.copy('guide');
     else if (t.closest('#ai-copy-custom')) AI.copy('custom');
