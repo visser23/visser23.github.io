@@ -1,0 +1,14 @@
+# Pitchcraft
+
+> Pitchcraft is a free browser presentation studio. A deck is plain JSON (a .pitchcraft file). AI assistants write or edit that JSON; the user imports it and presents.
+
+## For AI assistants
+
+- [AI guide (markdown)](https://visser23.github.io/pitchcraft/ai-guide.md): the complete, always-current guide to the deck format, layouts, free-form objects and the in-browser API. Read this first.
+- [AI guide (web page)](https://visser23.github.io/pitchcraft/ai-guide.html): the same guide as a web page.
+- [JSON Schema](https://visser23.github.io/pitchcraft/pitchcraft.schema.json): machine-readable deck schema (layouts, free-form objects, custom HTML/CSS/JS slides).
+- [Raw fallback](https://raw.githubusercontent.com/visser23/pitchcraft/main/ai-guide.md): the same markdown from GitHub.
+
+## App
+
+- [Pitchcraft](https://visser23.github.io/pitchcraft/): the studio itself. Version 3.2.1.

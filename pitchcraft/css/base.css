@@ -1,0 +1,178 @@
+/* ═══════════════════════════════════════════════════════════════
+   PITCHCRAFT base — bundled fonts + theme tokens (no external requests)
+   Fonts are SIL OFL (see fonts/LICENSES.md).
+   ═══════════════════════════════════════════════════════════════ */
+@font-face { font-family: 'Inter'; src: url('../fonts/inter.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Bricolage Grotesque'; src: url('../fonts/bricolage.woff2') format('woff2'); font-weight: 200 800; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Instrument Serif'; src: url('../fonts/instrument-serif.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Instrument Serif'; src: url('../fonts/instrument-serif-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Syne'; src: url('../fonts/syne.woff2') format('woff2'); font-weight: 400 800; font-style: normal; font-display: swap; }
+@font-face { font-family: 'JetBrains Mono'; src: url('../fonts/jetbrains-mono.woff2') format('woff2'); font-weight: 100 800; font-style: normal; font-display: swap; }
+
+:root {
+  --f-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --f-brand: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+  --f-serif: 'Instrument Serif', Georgia, serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+
+/* ── Theme tokens (also applied to .th-card previews, so they live on [data-theme]) ── */
+[data-theme] {
+  --font-b: var(--f-ui);
+  --font-d: var(--f-brand);
+  --d-weight: 700; --d-case: none; --d-ls: -.035em; --d-lh: 1.03; --d-scale: 1;
+  --bw: 1px; --radius: 26px;
+  --c1: #5b4bff; --c2: #ff6b57; --c3: #12b5a5; --c4: #f5a524; --c5: #9b5cff; --c6: #2f80ff;
+}
+
+[data-theme='studio'] {
+  --slide-bg: #f7f6ff; --tint-bg: #ebe9ff; --fg: #14122b; --muted: #5f5c7d;
+  --acc: #5b4bff; --acc-base: #5b4bff; --acc-bg: #5b4bff; --on-acc: #fff;
+  --card: #fff; --line: rgba(20,18,43,.09); --rule: rgba(20,18,43,.2);
+  --shadow: 0 1px 2px rgba(20,18,43,.05), 0 18px 40px -18px rgba(70,50,220,.28);
+  --tile: rgba(91,75,255,.12); --tile-fg: #5b4bff;
+  --d-bg: #0f0d24; --d-fg: #f4f2ff; --d-muted: #a9a6cf; --d-card: rgba(255,255,255,.07); --d-line: rgba(255,255,255,.12); --d-rule: rgba(255,255,255,.28);
+  --g1: #4a3bff; --g2: #ff6b57;
+}
+[data-theme='editorial'] {
+  --font-d: var(--f-serif); --d-weight: 400; --d-ls: -.02em; --d-lh: 1.0; --d-scale: 1.16;
+  --radius: 8px;
+  --c1: #b3432b; --c2: #1d2433; --c3: #c99a3c; --c4: #5b7f6a; --c5: #8a5a44; --c6: #4a6a8a;
+  --slide-bg: #f4efe6; --tint-bg: #e9e1d0; --fg: #1d2433; --muted: #5f6675;
+  --acc: #b3432b; --acc-base: #b3432b; --acc-bg: #b3432b; --on-acc: #fff;
+  --card: #fbf8f2; --line: rgba(29,36,51,.14); --rule: rgba(29,36,51,.3);
+  --shadow: 0 1px 0 rgba(29,36,51,.06);
+  --tile: rgba(179,67,43,.1); --tile-fg: #b3432b;
+  --d-bg: #1d2433; --d-fg: #f4efe6; --d-muted: #b3b6c0; --d-card: rgba(255,255,255,.06); --d-line: rgba(255,255,255,.16); --d-rule: rgba(255,255,255,.35);
+  --g1: #b3432b; --g2: #6d2115;
+}
+[data-theme='contrast'] {
+  --font-d: 'Syne', var(--f-brand); --d-weight: 800; --d-case: uppercase; --d-ls: -.02em; --d-lh: .98; --d-scale: .84;
+  --radius: 18px;
+  --c1: #c8ff3d; --c2: #ff5d73; --c3: #5de0ff; --c4: #ffb13d; --c5: #b48bff; --c6: #ffffff;
+  --slide-bg: #0c0b12; --tint-bg: #17151f; --fg: #fff; --muted: #a9a6bd;
+  --acc: #c8ff3d; --acc-base: #c8ff3d; --acc-bg: #c8ff3d; --on-acc: #0c0b12;
+  --card: #17151f; --line: rgba(255,255,255,.12); --rule: rgba(255,255,255,.3);
+  --shadow: none;
+  --tile: rgba(200,255,61,.14); --tile-fg: #c8ff3d;
+  --d-bg: #000; --d-fg: #fff; --d-muted: #9c99b3; --d-card: #12101a; --d-line: rgba(255,255,255,.14); --d-rule: rgba(255,255,255,.3);
+  --g1: #ff5d73; --g2: #6a3cff;
+}
+[data-theme='aurora'] {
+  --d-weight: 600; --d-ls: -.03em; --radius: 24px;
+  --c1: #7cf5d4; --c2: #9b7bff; --c3: #ff8ad8; --c4: #ffd166; --c5: #5de0ff; --c6: #ffffff;
+  --slide-bg: radial-gradient(1100px 640px at 8% -12%, rgba(124,245,212,.24), transparent 62%), radial-gradient(900px 700px at 104% 112%, rgba(155,123,255,.34), transparent 60%), #0a0f24;
+  --tint-bg: radial-gradient(1000px 640px at 100% 0%, rgba(255,138,216,.2), transparent 60%), radial-gradient(900px 640px at 0% 110%, rgba(124,245,212,.16), transparent 60%), #0d1230;
+  --fg: #eef2ff; --muted: #a5b0d6;
+  --acc: #7cf5d4; --acc-base: #7cf5d4; --acc-bg: linear-gradient(135deg, #7cf5d4, #9b7bff); --on-acc: #06131f;
+  --card: rgba(255,255,255,.06); --line: rgba(255,255,255,.14); --rule: rgba(255,255,255,.3);
+  --shadow: 0 20px 50px -24px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.08);
+  --tile: rgba(124,245,212,.14); --tile-fg: #7cf5d4;
+  --d-bg: #05081a; --d-fg: #eef2ff; --d-muted: #93a0cc; --d-card: rgba(255,255,255,.05); --d-line: rgba(255,255,255,.12); --d-rule: rgba(255,255,255,.28);
+  --g1: #2b5cff; --g2: #b04bff;
+}
+[data-theme='brutal'] {
+  --font-d: 'Syne', var(--f-brand); --d-weight: 800; --d-ls: -.03em; --d-lh: 1.0; --d-scale: .9;
+  --bw: 3px; --radius: 0px;
+  --c1: #ff4d2e; --c2: #111111; --c3: #2f80ff; --c4: #22b55e; --c5: #9b5cff; --c6: #ffd93d;
+  --slide-bg: #fffbea; --tint-bg: #ffe27a; --fg: #111; --muted: #4a4a4a;
+  --acc: #ff4d2e; --acc-base: #ff4d2e; --acc-bg: #ffd93d; --on-acc: #111;
+  --card: #fff; --line: #111; --rule: #111;
+  --shadow: 6px 6px 0 #111;
+  --tile: #ffd93d; --tile-fg: #111;
+  --d-bg: #111; --d-fg: #fffbea; --d-muted: #bdbdbd; --d-card: #1c1c1c; --d-line: #fffbea; --d-rule: #fffbea;
+  --g1: #ffd93d; --g2: #ff4d2e;
+}
+
+/* ── Slide background modes (must come after the theme blocks) ── */
+.slide[data-bg='tint'] { --slide-bg: var(--tint-bg); }
+.slide[data-bg='dark'] { --slide-bg: var(--d-bg); --fg: var(--d-fg); --muted: var(--d-muted); --card: var(--d-card); --line: var(--d-line); --rule: var(--d-rule); --shadow: none; }
+.slide[data-bg='dark'][data-theme='brutal'] { --shadow: 6px 6px 0 var(--acc); --acc: #ffd93d; --tile-fg: #111; }
+.slide[data-bg='accent'], .slide[data-bg='grad'] {
+  --fg: var(--on-acc); --muted: color-mix(in srgb, var(--on-acc) 74%, transparent); --acc: var(--on-acc);
+  --card: rgba(255,255,255,.16); --line: color-mix(in srgb, var(--on-acc) 22%, transparent); --rule: color-mix(in srgb, var(--on-acc) 45%, transparent);
+  --shadow: none; --tile: rgba(255,255,255,.2); --tile-fg: var(--on-acc);
+  --c1: var(--on-acc); --c2: color-mix(in srgb, var(--on-acc) 62%, transparent); --c3: color-mix(in srgb, var(--on-acc) 38%, transparent); --c4: #ffd93d; --c5: color-mix(in srgb, var(--on-acc) 24%, transparent); --c6: #111;
+}
+.slide[data-bg='accent'] { --slide-bg: var(--acc-bg); }
+.slide[data-bg='grad'] { --slide-bg: linear-gradient(135deg, var(--g1), var(--g2)); --on-acc: #fff; }
+.slide[data-bg='accent'][data-theme='brutal'] { --card: #fff; --line: #111; --shadow: 6px 6px 0 #111; --tile: #fff; --muted: #222; --c1: #ff4d2e; --c2: #111; --c3: #2f80ff; --c4: #22b55e; --c5: #9b5cff; --c6: #fff; }
+
+/* ── Accent tone overrides (per slide) ── */
+.slide[data-tone='coral']  { --acc: #ff6b57; --acc-base: #ff6b57; --acc-bg: #ff6b57; --on-acc: #fff; --tile: rgba(255,107,87,.14); --tile-fg: #ff6b57; }
+.slide[data-tone='amber']  { --acc: #f5a524; --acc-base: #f5a524; --acc-bg: #f5a524; --on-acc: #1a1206; --tile: rgba(245,165,36,.16); --tile-fg: #f5a524; }
+.slide[data-tone='teal']   { --acc: #12b5a5; --acc-base: #12b5a5; --acc-bg: #12b5a5; --on-acc: #04211e; --tile: rgba(18,181,165,.15); --tile-fg: #12b5a5; }
+.slide[data-tone='green']  { --acc: #22b55e; --acc-base: #22b55e; --acc-bg: #22b55e; --on-acc: #04200f; --tile: rgba(34,181,94,.15); --tile-fg: #22b55e; }
+.slide[data-tone='blue']   { --acc: #2f80ff; --acc-base: #2f80ff; --acc-bg: #2f80ff; --on-acc: #fff; --tile: rgba(47,128,255,.14); --tile-fg: #2f80ff; }
+.slide[data-tone='violet'] { --acc: #9b5cff; --acc-base: #9b5cff; --acc-bg: #9b5cff; --on-acc: #fff; --tile: rgba(155,92,255,.15); --tile-fg: #9b5cff; }
+.slide[data-tone='pink']   { --acc: #ff4fa3; --acc-base: #ff4fa3; --acc-bg: #ff4fa3; --on-acc: #fff; --tile: rgba(255,79,163,.14); --tile-fg: #ff4fa3; }
+/* accent-on-accent slides: the tone colour becomes the background, text flips */
+.slide[data-bg='accent'][data-tone], .slide[data-bg='grad'][data-tone] { --acc: var(--on-acc); --tile: rgba(255,255,255,.2); --tile-fg: var(--on-acc); }
+.slide[data-bg='grad'][data-tone='coral'] { --g1: #ff6b57; --g2: #ff4fa3; }
+.slide[data-bg='grad'][data-tone='amber'] { --g1: #f5a524; --g2: #ff6b57; }
+.slide[data-bg='grad'][data-tone='teal'] { --g1: #12b5a5; --g2: #2f80ff; }
+.slide[data-bg='grad'][data-tone='green'] { --g1: #22b55e; --g2: #12b5a5; }
+.slide[data-bg='grad'][data-tone='blue'] { --g1: #2f80ff; --g2: #9b5cff; }
+.slide[data-bg='grad'][data-tone='violet'] { --g1: #9b5cff; --g2: #ff4fa3; }
+.slide[data-bg='grad'][data-tone='pink'] { --g1: #ff4fa3; --g2: #ff6b57; }
+
+/* ═══ CONTRAST CONTRACT ═════════════════════════════════════════════════════════
+   Every text/background pair must reach WCAG AA (4.5:1 small, 3:1 large). This block
+   is measured from real pixels by tests/e2e/templates.spec.js — change it only with
+   that test running. Later rules intentionally override the theme defaults above.  */
+
+/* gradient end-points dark enough for white text */
+[data-theme='studio']   { --g2: #d13b57; }
+[data-theme='contrast'] { --g1: #c2185b; --g2: #5b2bd9; }
+[data-theme='aurora']   { --g2: #9a3cf2; }
+/* brutal keeps its yellow→red gradient, with black ink (like its accent background) */
+.slide[data-bg='grad'][data-theme='brutal'] { --on-acc: #111; --card: #fff; --line: #111; --shadow: 6px 6px 0 #111; --tile: #fff; --muted: #222; --c1: #ff4d2e; --c2: #111; --c3: #2f80ff; --c4: #22b55e; --c5: #9b5cff; --c6: #fff; }
+/* secondary text on accent / gradient surfaces needs more than 74% */
+.slide[data-bg='accent'], .slide[data-bg='grad'] { --muted: color-mix(in srgb, var(--on-acc) 90%, transparent); }
+.slide[data-bg='accent'][data-theme='brutal'] { --muted: #222; }
+.slide[data-bg='grad'][data-theme='brutal'] { --muted: #222; }
+
+/* "ink" = the accent colour made safe for small text on the current surface */
+.slide { --ink-k: 100%; --ink-acc: color-mix(in srgb, var(--acc) var(--ink-k), #000); --good: #0f7a42; --bad: #c4262d; }
+.slide[data-theme='editorial'] { --ink-k: 86%; }
+.slide[data-theme='brutal'] { --ink-k: 62%; --good: #0b5f33; }
+.slide[data-tone='coral'] { --ink-k: 78%; } .slide[data-tone='amber'] { --ink-k: 52%; } .slide[data-tone='teal'] { --ink-k: 60%; }
+.slide[data-tone='green'] { --ink-k: 58%; } .slide[data-tone='blue'] { --ink-k: 90%; } .slide[data-tone='violet'] { --ink-k: 80%; } .slide[data-tone='pink'] { --ink-k: 78%; }
+.slide[data-bg='dark'] { --ink-acc: color-mix(in srgb, var(--acc) 62%, #fff); }
+.slide[data-theme='aurora'], .slide[data-theme='contrast'], .slide[data-bg='dark'] { --good: #4de08b; --bad: #ff8a8f; }
+.slide[data-bg='accent'], .slide[data-bg='grad'] { --ink-acc: var(--on-acc); }
+
+/* deeper tone fills so white text passes; light tones take dark ink */
+.slide[data-tone='coral']  { --on-acc: #2a0a05; }
+.slide[data-tone='blue']   { --acc-bg: #1f66e5; }
+.slide[data-tone='violet'] { --acc-bg: #7d45e6; }
+.slide[data-tone='pink']   { --acc-bg: #d6338a; }
+.slide[data-bg='grad'][data-tone='blue']   { --g1: #1f66e5; --g2: #7d45e6; }
+.slide[data-bg='grad'][data-tone='violet'] { --g1: #7d45e6; --g2: #c9307f; }
+.slide[data-bg='grad'][data-tone='pink']   { --g1: #d6338a; --g2: #cc3a2b; }
+
+/* glass cards on coloured surfaces: darken behind white ink (lightening would lower contrast), lighten behind dark ink */
+.slide[data-bg='accent'], .slide[data-bg='grad'] { --card: rgba(0,0,0,.16); }
+.slide[data-bg='accent'][data-theme='contrast'], .slide[data-bg='accent'][data-theme='aurora'],
+.slide[data-bg='accent'][data-tone='coral'], .slide[data-bg='accent'][data-tone='amber'], .slide[data-bg='accent'][data-tone='teal'], .slide[data-bg='accent'][data-tone='green'],
+.slide[data-bg='grad'][data-tone='coral'], .slide[data-bg='grad'][data-tone='amber'], .slide[data-bg='grad'][data-tone='teal'], .slide[data-bg='grad'][data-tone='green'] { --card: rgba(255,255,255,.3); }
+.slide[data-bg='accent'][data-theme='brutal'], .slide[data-bg='grad'][data-theme='brutal'] { --card: #fff; }
+[data-theme='editorial'] { --muted: #525a69; }
+.slide[data-bg='accent'], .slide[data-bg='grad'] { --muted: color-mix(in srgb, var(--on-acc) 94%, transparent); }
+.slide[data-bg='accent'][data-theme='brutal'], .slide[data-bg='grad'][data-theme='brutal'] { --muted: #222; }
+[data-theme='aurora'] { --g1: #1f49e0; --g2: #8230de; }
+
+/* ═══ free-form objects: shape colours that stay readable on every slide background ═══
+   --shape is the accent fill for shapes/icons, --on-shape the text drawn on it. On accent/gradient slides the roles flip
+   (as they do for .pr-badge). bg="light" is only emitted for a custom light fill on a dark theme (see PC.fillMode). */
+.slide { --shape: var(--acc); --on-shape: var(--on-acc); }
+.slide[data-bg='accent'] { --shape: var(--on-acc); --on-shape: var(--acc-base); }
+.slide[data-bg='grad'] { --shape: var(--on-acc); --on-shape: var(--g1, var(--acc-base)); }
+.slide[data-bg='light'] {
+  --fg: #14122b; --muted: #55526e; --card: #fff; --line: rgba(20,18,43,.12); --rule: rgba(20,18,43,.25); --shadow: none;
+  --acc: #5b4bff; --acc-base: #5b4bff; --acc-bg: #5b4bff; --on-acc: #fff; --ink-acc: #4636e6; --tile: rgba(91,75,255,.12); --tile-fg: #5b4bff;
+  --shape: #5b4bff; --on-shape: #fff; --good: #0f7a42; --bad: #c4262d;
+  --c1: #5b4bff; --c2: #ff6b57; --c3: #12b5a5; --c4: #f5a524; --c5: #9b5cff; --c6: #2f80ff;
+}
+/* muted text on a gradient slide: the gradient's light end needs full-strength ink to clear 3:1 at large sizes */
+.slide[data-bg='grad']:not([data-theme='brutal']) { --muted: var(--on-acc); }

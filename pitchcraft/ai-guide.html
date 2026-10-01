@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pitchcraft: guide for AI assistants</title>
+<meta name="description" content="How an AI assistant writes or edits a Pitchcraft deck: format, layouts, free-form objects and the browser API.">
+<link rel="alternate" type="text/markdown" href="ai-guide.md">
+<style>body{font:16px/1.6 system-ui,sans-serif;max-width:860px;margin:40px auto;padding:0 20px;color:#16161d}code{background:#f0eee8;padding:1px 5px;border-radius:4px;font-size:.92em}pre{background:#16161d;color:#f4f1ea;padding:16px;border-radius:10px;overflow:auto}pre code{background:none;padding:0;color:inherit}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:6px 10px;text-align:left;vertical-align:top}h1,h2,h3{line-height:1.2}a{color:#4b3bff}</style></head>
+<body><p><a href="./">Open Pitchcraft</a> · <a href="ai-guide.md">Raw markdown</a></p>
+<h1>Pitchcraft: guide for AI assistants</h1>
+<p>Version 3.2.1 · canonical copy: https://visser23.github.io/pitchcraft/ai-guide.md · also inside the app: <code>Pitchcraft.guide()</code></p>
+<p>Pitchcraft is a browser presentation studio. A deck is <strong>plain JSON</strong>. You write or edit that JSON, the user opens it in Pitchcraft, edits it visually and presents it. There is no server: everything is validated and rendered in the user's browser. This guide is generated from the same specs the app runs on, so it is always accurate for version 3.2.1.</p>
+<h2>1. Which job are you doing?</h2>
+<ol>
+<li><strong>You are a chat window</strong> (ChatGPT, Claude, Gemini, Copilot, etc.) and you cannot touch the user's open Pitchcraft. Produce a deck file (section 2) for the user to import. Follow sections 3 to 10.</li>
+<li><strong>You are an AI inside the user's browser</strong> (a browser agent or assistant with the Pitchcraft tab open). Edit the live deck with the <code>Pitchcraft</code> API (section 11). Read sections 3 to 10 first so your edits are valid.</li>
+</ol>
+<h2>2. Delivering a deck (chat windows)</h2>
+<ul>
+<li>Preferred: create a downloadable file named <code>&lt;deck-name&gt;.pitchcraft</code> whose entire content is the deck JSON. The user drops it onto Pitchcraft (Import, or drag it anywhere on the page).</li>
+<li>If you cannot create files: reply with the JSON alone in a single ```<code> </code>`<code>json </code>``` code block, with no commentary inside it. The user copies it and uses Import, then Paste.</li>
+<li>Output valid JSON only: double quotes, no comments, no trailing commas, no <code>...</code> placeholders.</li>
+<li>The importer sanitises everything (unknown layouts become "statement", bad colours and URLs are dropped, limits are enforced) and reports warnings. It never runs code from the deck outside a sandbox.</li>
+</ul>
+<h2>3. Deck format</h2>
+<pre><code>{ "format": "pitchcraft", "version": 3,
+  "meta": { "name": "Deck title", "theme": "studio", "numbers": false, "transition": "fade" },
+  "slides": [ { "id": "s1", "layout": "title", "...": "layout fields" } ] }</code></pre>
+<ul>
+<li><code>meta.theme</code>: one of <code>studio</code>, <code>editorial</code>, <code>contrast</code>, <code>aurora</code>, <code>brutal</code>. <code>meta.transition</code>: <code>none</code>, <code>fade</code>, <code>slide</code>, <code>zoom</code>, <code>rise</code>, <code>blur</code>. <code>meta.numbers</code>: show slide numbers. <code>meta.css</code>: optional shared CSS for custom slides (section 9).</li>
+<li>Slide fields that every layout accepts: <code>id</code> (unique, letters digits <code>-</code> <code>_</code>), <code>layout</code>, <code>bg</code> (<code>""</code>, <code>tint</code>, <code>dark</code>, <code>accent</code>, <code>grad</code>), <code>tone</code> (accent colour: <code>coral</code>, <code>amber</code>, <code>teal</code>, <code>green</code>, <code>blue</code>, <code>violet</code>, <code>pink</code>), <code>transition</code> (per-slide override), <code>notes</code> (speaker notes), <code>fill</code> (custom background colour), <code>bgImage</code> (https or <code>data:image/...</code> picture behind everything), <code>objects</code> (section 6), <code>tweaks</code> (section 7).</li>
+<li>Limits: 120 objects per slide, 200 slides per deck, 20000 characters per text object, 300000 characters per custom html/css/js field.</li>
+</ul>
+<h3>Themes</h3>
+<ul>
+<li><code>studio</code>: Studio. Clean and confident. Bricolage Grotesque headlines.</li>
+<li><code>editorial</code>: Editorial. Instrument Serif on warm paper. Reads like a magazine.</li>
+<li><code>contrast</code>: Contrast. Loud, dark and uppercase. Syne headlines. (dark theme)</li>
+<li><code>aurora</code>: Aurora. Deep gradients and glass cards. (dark theme)</li>
+<li><code>brutal</code>: Brutalist. Hard borders, hard shadows, no apologies.</li>
+</ul>
+<h2>4. Layouts</h2>
+<p>Every slide has exactly one <code>layout</code>. Pick the layout whose fields match your content. Fields not listed for a layout are ignored.</p>
+<h3>Free-form</h3>
+<ul>
+<li><code>blank</code>: Blank. An empty canvas. Add text, images and shapes anywhere. Fields: objects:[{id,type:"text"|"shape"|"image"|"icon",x,y,w,h?,...}] - the whole slide is free-form objects on the 1280x720 stage (see "Free-form objects" in the AI guide). No kicker/headline/body.</li>
+</ul>
+<h3>Story</h3>
+<ul>
+<li><code>title</code>: Title. Big opening statement. Fields: kicker, headline, body</li>
+<li><code>statement</code>: Statement. One idea, centred. Fields: kicker, headline, body</li>
+<li><code>section</code>: Section. Chapter divider with a huge number. Fields: kicker (the number, e.g. "02"), headline, body</li>
+<li><code>quote</code>: Quote. A pull quote with attribution. Fields: headline (the quote), body (who said it)</li>
+<li><code>closing</code>: Closing. Final call to action. Fields: kicker, headline, body, items:[{icon?,label,value}]</li>
+</ul>
+<h3>Data</h3>
+<ul>
+<li><code>metrics</code>: Metrics. Big-number KPI cards. Fields: kicker, headline, items:[{value,label,trend:"up"|"down"?,note?}] (2-4 items)</li>
+<li><code>chart</code>: Chart. Bar, line, area or donut with insight. Fields: kicker, headline, body (insight), chartType:"bar"|"hbar"|"line"|"area"|"donut", chartData:{labels:[],series:[{name,values:[]}]} or {segments:[{label,value}],centerLabel?,centerSub?}, items?:[{value,label}] callouts</li>
+<li><code>demo</code>: Data → slide. Shows the JSON next to what it renders. Fields: same fields as chart; the code panel is generated from chartData</li>
+<li><code>table</code>: Table. Reference table. Fields: kicker, headline, tableData:{headers:[],rows:[[]]}</li>
+</ul>
+<h3>Structure</h3>
+<ul>
+<li><code>split</code>: Split. Two big ideas side by side. Fields: kicker, headline, columns:[{icon?,headline,body}] (2-3)</li>
+<li><code>cards</code>: Cards. Three or four icon cards. Fields: kicker, headline, items:[{icon,title,body}] (3-4)</li>
+<li><code>comparison</code>: Comparison. Before / after, us / them. Fields: kicker, headline, columns:[{headline,body,items:["line",…]}] (exactly 2; first is the "old", second the "new")</li>
+<li><code>bullets</code>: Bullets. Numbered points beside a headline. Fields: kicker, headline, body, items:[{title,body}] (3-5)</li>
+<li><code>process</code>: Process. Steps left to right. Fields: kicker, headline, items:[{step?,icon?,title,body}] (3-5)</li>
+<li><code>timeline</code>: Timeline. Milestones along a line. Fields: kicker, headline, items:[{date,title,body,status:"done"|"now"|"next"?}] (3-5)</li>
+<li><code>flow</code>: Flow diagram. Inputs → hub → outputs. Fields: kicker, headline, items:[{col:"in"|"hub"|"out",icon,title,body}] (1-3 "in", exactly 1 "hub", 1-3 "out")</li>
+</ul>
+<h3>Visual</h3>
+<ul>
+<li><code>bento</code>: Bento. Mixed-size tile grid. Fields: kicker, headline, items:[{size:"s"|"w"|"t"|"l",tone?,icon?,title,value?,body?}] (aim for tiles that fill a 4x3 grid: e.g. one "l", one "w" and six "s")</li>
+<li><code>anatomy</code>: Editor anatomy. Annotated diagram of the editor. Fields: kicker, headline, body, items:[{title,body}] (up to 5; numbered hotspots on a drawing of the editor)</li>
+<li><code>themes</code>: Themes. Live previews of the built-in themes. Fields: kicker, headline, items:[{theme:"studio"|"editorial"|"contrast"|"aurora"|"brutal",title,body}]</li>
+<li><code>code</code>: Code. Syntax-highlighted window. Fields: kicker, headline, body, code:{language:"json"|"js"|"html"|"css"|"bash",filename?,source}</li>
+<li><code>image</code>: Image. Picture beside text. Fields: kicker, headline, body, image:{src (https URL or data URI),alt}</li>
+</ul>
+<h3>Custom</h3>
+<ul>
+<li><code>custom</code>: Custom HTML. Any HTML, CSS and JavaScript. No walls. Fields: headline (a NAME only, not drawn), custom:{html,css?,js?,base?,interactive?}. html is the whole 1280x720 slide: write anything. See "Custom layout" in the AI guide.</li>
+</ul>
+<p>Icon names (for <code>icon</code> fields and icon objects): <code>bolt</code>, <code>layers</code>, <code>sparkles</code>, <code>chart</code>, <code>lock</code>, <code>globe</code>, <code>wand</code>, <code>cursor</code>, <code>clock</code>, <code>check</code>, <code>users</code>, <code>user</code>, <code>target</code>, <code>rocket</code>, <code>shield</code>, <code>cpu</code>, <code>box</code>, <code>link</code>, <code>star</code>, <code>type</code>, <code>image</code>, <code>table</code>, <code>pie</code>, <code>terminal</code>, <code>flag</code>, <code>presentation</code>, <code>heart</code>, <code>key</code>, <code>puzzle</code>, <code>git</code>, <code>compass</code>, <code>mail</code>, <code>feather</code>, <code>gauge</code>, <code>edit</code>, <code>tag</code>, <code>map</code>, <code>file</code>, <code>code</code>, <code>download</code>, <code>upload</code>, <code>eye</code>, <code>palette</code>, <code>grid</code>, <code>play</code></p>
+<h3>Text markup (every text field, including text in objects)</h3>
+<p><code><strong>bold</strong></code>, <code><em>italic</em></code>, <code>==accent highlight==</code> and `<code> </code>code<code> </code><code>. Use </code>==highlight==` on one or two words of a headline. Line breaks inside free-form text objects are kept; generated fields are single-line.</p>
+<h2>5. Choosing between template, free-form and custom</h2>
+<ul>
+<li><strong>Template layouts</strong> (section 4) for normal slides. They adapt to any theme and are the most reliable.</li>
+<li><strong>Blank layout + objects</strong> (section 6) when the user wants precise placement: their own composition, diagrams from shapes, logos, photos, callouts. The slide is empty and every element is an object you position on the 1280 x 720 stage.</li>
+<li><strong>Objects on top of a template slide</strong>: any layout accepts <code>objects</code>; they float above the layout. Good for a logo, a sticker, an annotation.</li>
+<li><strong>Custom layout</strong> (section 9): full HTML, CSS and JavaScript for one slide. Use it only for things the above cannot do (animations, canvas, interactive demos).</li>
+</ul>
+<h2>6. Free-form objects</h2>
+<p><code>objects</code> is an array, drawn in order: later items are on top. The stage is <strong>1280 wide, 720 tall</strong>, origin top-left, all units are pixels, <code>rot</code> is degrees clockwise. Maximum 120 objects per slide.</p>
+<p>Common fields: <code>id</code> (unique on the slide; generated if you omit it), <code>type</code>, <code>x</code>, <code>y</code>, <code>w</code>, <code>h</code> (optional for text: it grows with its content), <code>rot</code>, <code>opacity</code> (0 to 1), <code>shadow</code> (true), <code>name</code> (label shown in the editor's layers list).</p>
+<table><thead><tr><th>type</th><th>extra fields</th></tr></thead><tbody><tr><td><code>text</code></td><td><code>text</code>, <code>font</code>, <code>size</code> (px), <code>weight</code> (100 to 900), <code>italic</code>, <code>underline</code>, <code>caps</code> (uppercase), <code>align</code> (left, center, right, justify), <code>valign</code> (top, middle, bottom; only when <code>h</code> is set), <code>color</code>, <code>lh</code> (line height multiple), <code>ls</code> (letter spacing in em)</td></tr><tr><td><code>shape</code></td><td><code>shape</code>, <code>fill</code>, <code>stroke</code>, <code>strokeW</code>, <code>dash</code> (solid, dashed, dotted), <code>radius</code> (rect only), and all the text fields above for text inside the shape</td></tr><tr><td><code>image</code></td><td><code>src</code> (https URL or <code>data:image/...</code>), <code>alt</code> (always write it), <code>fit</code> (cover, contain, fill), <code>radius</code>, <code>stroke</code>, <code>strokeW</code></td></tr><tr><td><code>icon</code></td><td><code>icon</code> (name from the list in section 4), <code>color</code></td></tr></tbody></table>
+<p>Shapes: <code>rect</code> (Rectangle), <code>round</code> (Rounded rectangle), <code>ellipse</code> (Ellipse), <code>triangle</code> (Triangle), <code>diamond</code> (Diamond), <code>hexagon</code> (Hexagon), <code>star</code> (Star), <code>arrow</code> (Block arrow), <code>chevron</code> (Chevron), <code>line</code> (Line), <code>connector</code> (Arrow line). Lines and arrow lines are drawn with <code>stroke</code> and <code>strokeW</code>; keep their <code>h</code> small (about 14).</p>
+<p>Fonts (<code>font</code>): <code>body</code> (Theme body), <code>display</code> (Theme heading), <code>inter</code> (Inter), <code>bricolage</code> (Bricolage Grotesque), <code>serif</code> (Instrument Serif), <code>syne</code> (Syne), <code>mono</code> (JetBrains Mono), <code>arial</code> (Arial), <code>georgia</code> (Georgia), <code>times</code> (Times New Roman), <code>verdana</code> (Verdana), <code>trebuchet</code> (Trebuchet MS), <code>courier</code> (Courier New). Any other plain family name (letters, digits, spaces, hyphens) also works but only renders if installed on the viewer's machine, so prefer the keys.</p>
+<p>Colours (<code>color</code>, <code>fill</code>, <code>stroke</code>): hex (<code>#1a1a2e</code>), <code>rgb()</code>/<code>rgba()</code>, a plain colour name, or a <strong>theme token</strong> that follows the deck theme and the slide background. Prefer tokens so the slide survives a theme change: <code>var(--fg)</code> text, <code>var(--muted)</code> muted text, <code>var(--shape)</code> accent, <code>var(--on-shape)</code> on accent, <code>var(--card)</code> card, <code>var(--slide-bg)</code> background, <code>#ffffff</code> white, <code>#000000</code> black, <code>var(--c1)</code> palette 1, <code>var(--c2)</code> palette 2, <code>var(--c3)</code> palette 3, <code>var(--c4)</code> palette 4, <code>var(--c5)</code> palette 5, <code>var(--c6)</code> palette 6.</p>
+<p>Defaults when a field is omitted:</p>
+<ul>
+<li><code>text</code>: w 520, size 36, weight 400, font "body", align "left", valign "top", color "var(--fg)", lh 1.25, ls 0</li>
+<li><code>shape</code>: w 260, h 160, shape "rect", fill "var(--shape)", stroke "", strokeW 0, radius 0, dash "solid", size 28, weight 600, font "body", align "center", valign "middle", color "var(--on-shape)", lh 1.2, ls 0</li>
+<li><code>image</code>: w 480, h 320, fit "cover", radius 0, stroke "", strokeW 0</li>
+<li><code>icon</code>: w 96, h 96, color "var(--shape)"</li>
+</ul>
+<p>Rules for good free-form slides:</p>
+<ul>
+<li>Keep everything inside the safe area: x from 74 to 1205, y from 40 to 668, unless it is a deliberate full-bleed shape or image.</li>
+<li>Body text at least 26 px; nothing under 22 px except small captions. Headlines 56 to 88 px, weight 700, <code>font: "display"</code>.</li>
+<li>Text needs contrast against what is behind it (4.5:1). On a coloured shape use <code>var(--on-shape)</code>; on the slide use <code>var(--fg)</code>.</li>
+<li>Align objects to a grid (multiples of 8) and reuse the same left margin. Give a text object enough <code>w</code> for its longest line; it wraps inside <code>w</code>.</li>
+<li>Do not stack text boxes on top of each other unless it is deliberate.</li>
+</ul>
+<h2>7. Tweaks: moving and restyling a template slide's own elements</h2>
+<p>Every editable text in a template slide has a path (<code>headline</code>, <code>body</code>, <code>kicker</code>, <code>items.1.title</code>) and every card or row has an item key (<code>items.1</code>). <code>tweaks</code> nudges or restyles them without leaving the layout:</p>
+<pre><code>"tweaks": { "headline": { "dx": 40, "dy": -20, "size": 96, "color": "var(--shape)" }, "items.1": { "dx": 0, "dy": 24 } }</code></pre>
+<p><code>dx</code> and <code>dy</code> are pixel offsets. Text fields also accept <code>font</code>, <code>size</code>, <code>weight</code>, <code>italic</code>, <code>underline</code>, <code>caps</code>, <code>align</code>, <code>color</code>, <code>lh</code>, <code>ls</code>. Tweaks are optional: do not add them unless the user asks for a specific move or restyle.</p>
+<h2>8. Design rules</h2>
+<ul>
+<li>8 to 14 slides for a full deck. Start with a <code>title</code> slide, end with a <code>closing</code> slide.</li>
+<li>One idea per slide. Headlines under 9 words. Body text under 30 words. Cards and rows: short phrases.</li>
+<li>Use varied layouts: never the same layout twice in a row. Alternate <code>bg</code> (<code>dark</code>, <code>accent</code>, <code>tint</code>) every few slides for rhythm.</li>
+<li>Never invent facts, numbers, quotes or logos. If data is unknown, write <code>[NEEDS EVIDENCE]</code> or label the kicker "Sample data".</li>
+<li>Choose a theme that fits the tone of the brief; do not mix <code>bg</code> and <code>fill</code> on the same slide (<code>bg</code> wins).</li>
+<li>Write speaker notes (<code>notes</code>) when the user will be presenting.</li>
+</ul>
+<h2>9. Custom layout (HTML, CSS, JavaScript)</h2>
+<pre><code>{ "id": "s5", "layout": "custom", "headline": "short name", "custom": { "html": "...", "css": "...", "js": "...", "interactive": false } }</code></pre>
+<ul>
+<li><code>custom.html</code> is the whole 1280 x 720 slide body (no <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code> or <code>&lt;script&gt;</code>). The root is an empty <code>position:relative; overflow:hidden</code> box: use absolute positioning, grid, flex, inline SVG or canvas.</li>
+<li>It runs in a sandboxed iframe with no access to the editor, storage or network. Embed brand images and fonts as <code>data:</code> URIs. Scripts, forms, iframes and <code>fetch</code> are blocked.</li>
+<li>Theme variables are available: <code>var(--fg)</code>, <code>var(--muted)</code>, <code>var(--acc)</code>, <code>var(--on-acc)</code>, <code>var(--slide-bg)</code>, <code>var(--card)</code>, <code>var(--line)</code>, <code>var(--radius)</code>, <code>var(--shadow)</code>, <code>var(--c1)</code> to <code>var(--c6)</code>, <code>var(--font-d)</code>, <code>var(--font-b)</code>, <code>var(--f-mono)</code>. Helper classes: <code>.kicker</code>, <code>.display</code>, <code>.h2</code>, <code>.lead</code>, <code>mark.hl</code>, <code>.rv</code> (fades up when presenting).</li>
+<li>Shared brand CSS (colours, <code>@font-face</code>, logo classes) belongs in <code>meta.css</code>, not in each slide.</li>
+<li>Set <code>interactive: true</code> only if the slide has buttons or inputs. Thumbnails and PDF export draw the slide from html + css, so it must look complete before <code>js</code> runs.</li>
+<li>Keep every important element 60 px from the edges, text at least 22 px, respect <code>prefers-reduced-motion</code>.</li>
+</ul>
+<h3>Writing a custom slide without a file (browser AIs)</h3>
+<pre><code>Pitchcraft.addCustomSlide({
+  html: '&lt;div class="wrap"&gt;&lt;h1&gt;Hello&lt;/h1&gt;&lt;canvas id="c" width="600" height="300"&gt;&lt;/canvas&gt;&lt;/div&gt;',
+  css: '.wrap{position:absolute;inset:0;padding:90px} h1{font:800 96px var(--font-d);margin:0}',
+  js: 'const c=document.getElementById("c").getContext("2d"); c.fillStyle="#5b4bff"; c.fillRect(0,0,300,150);',
+  interactive: false
+}, undefined, "Hello");                       // returns the slide index
+Pitchcraft.setCustom(2, { css: "h1{color:var(--acc)}" });   // patch one field later
+Pitchcraft.setMeta({ css: "@font-face{...} .logo{...}" });   // brand CSS shared by every custom slide</code></pre>
+<p>The machine-readable description of all of this is the JSON Schema: <code>Pitchcraft.schema()</code>, or https://visser23.github.io/pitchcraft/pitchcraft.schema.json.</p>
+<h2>10. Worked example</h2>
+<p>This deck is validated against the importer when the guide is built.</p>
+<pre><code>{
+  "format": "pitchcraft",
+  "version": 3,
+  "meta": {
+    "name": "Quarterly review",
+    "theme": "studio",
+    "numbers": false,
+    "transition": "fade"
+  },
+  "slides": [
+    {
+      "id": "s1",
+      "layout": "title",
+      "kicker": "Q3 review",
+      "headline": "Growth, **on purpose**",
+      "body": "What worked, what did not, and what we do next",
+      "notes": "Open with the headline number."
+    },
+    {
+      "id": "s2",
+      "layout": "blank",
+      "notes": "One big number, placed by hand.",
+      "objects": [
+        {
+          "id": "label",
+          "type": "text",
+          "x": 80,
+          "y": 90,
+          "w": 700,
+          "text": "Revenue growth",
+          "size": 28,
+          "weight": 700,
+          "caps": true,
+          "ls": 0.08,
+          "color": "var(--shape)"
+        },
+        {
+          "id": "big",
+          "type": "text",
+          "x": 80,
+          "y": 150,
+          "w": 720,
+          "text": "**42%**",
+          "size": 220,
+          "weight": 800,
+          "font": "display",
+          "lh": 1
+        },
+        {
+          "id": "card",
+          "type": "shape",
+          "shape": "round",
+          "x": 820,
+          "y": 150,
+          "w": 380,
+          "h": 300,
+          "fill": "var(--shape)",
+          "text": "Sample data: replace with your number",
+          "size": 30,
+          "color": "var(--on-shape)"
+        },
+        {
+          "id": "rule",
+          "type": "shape",
+          "shape": "line",
+          "x": 80,
+          "y": 520,
+          "w": 1120,
+          "h": 14,
+          "stroke": "var(--muted)",
+          "strokeW": 3
+        },
+        {
+          "id": "note",
+          "type": "text",
+          "x": 80,
+          "y": 560,
+          "w": 1000,
+          "text": "Quarter on quarter, all regions. Source: [NEEDS EVIDENCE]",
+          "size": 26,
+          "color": "var(--muted)"
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "layout": "closing",
+      "kicker": "Next",
+      "headline": "Three bets for Q4",
+      "body": "We will know by December.",
+      "tweaks": {
+        "headline": {
+          "dy": -10
+        }
+      }
+    }
+  ]
+}</code></pre>
+<h2>11. Editing the live deck in the browser (browser AIs)</h2>
+<p>When Pitchcraft is open in the tab you control, use the global <code>Pitchcraft</code> object (for example through the page's JavaScript console). There is no separate "AI import" button because you do not need one: <code>Pitchcraft.importText(json)</code> loads a whole deck, <code>Pitchcraft.addCustomSlide(...)</code> adds an HTML/CSS/JS slide, and <code>Pitchcraft.schema()</code> / <code>Pitchcraft.manifest()</code> describe everything. (Humans use the AI button, then Import.) Every call is validated and <strong>undoable</strong> (the user can press Ctrl+Z). <code>ref</code> is a slide id (<code>"s3"</code>) or a 0-based index.</p>
+<p><strong>Read</strong></p>
+<ul>
+<li><code>Pitchcraft.guide()</code>: The complete AI guide as markdown (this document). Read it before editing.</li>
+<li><code>Pitchcraft.manifest()</code>: JSON: version, guide URL, every method below, layouts, themes, object types, limits.</li>
+<li><code>Pitchcraft.getDeck()</code>: Copy of the whole deck JSON.</li>
+<li><code>Pitchcraft.getSlide(ref)</code>: Copy of one slide. ref = slide id ("s3") or 0-based index.</li>
+<li><code>Pitchcraft.getObjects(ref)</code>: Copy of the free-form objects on a slide.</li>
+<li><code>Pitchcraft.html(ref)</code>: The rendered HTML of one slide (what the DOM contains).</li>
+<li><code>Pitchcraft.prettyHtml(ref)</code>: The same, indented for reading.</li>
+<li><code>Pitchcraft.exportJSON()</code>: The deck as a JSON string, exactly what a .pitchcraft file contains.</li>
+<li><code>Pitchcraft.audit(deck?)</code>: Layout audit: finds text that clips or leaves the safe area. Returns one entry per slide with a problems list.</li>
+<li><code>Pitchcraft.current()</code>: Index of the selected slide.</li>
+<li><code>Pitchcraft.count()</code>: Number of slides.</li>
+<li><code>Pitchcraft.schema()</code>: JSON Schema (draft 2020-12) of a deck, including slide custom {html, css, js}, objects and tweaks. Also published as pitchcraft.schema.json.</li>
+</ul>
+<p><strong>Deck</strong></p>
+<ul>
+<li><code>Pitchcraft.setDeck(deckOrJson)</code>: Replace the whole deck (object or JSON string). Returns {slides, warnings}. Undoable.</li>
+<li><code>Pitchcraft.importText(text, mode?)</code>: Import deck JSON text. mode "replace" (default) or "append". Returns {deck, warnings}.</li>
+<li><code>Pitchcraft.setMeta(patch)</code>: Patch deck meta: {name, theme, numbers, transition, css}.</li>
+<li><code>Pitchcraft.setTheme(theme)</code>: Set the deck theme key.</li>
+<li><code>Pitchcraft.loadTemplate(id)</code>: Load a built-in template deck (for example "tour").</li>
+</ul>
+<p><strong>Slides</strong></p>
+<ul>
+<li><code>Pitchcraft.addSlide(layout, at?)</code>: Insert a slide with a layout key at an index. Returns its index. Use "blank" for a free-form slide.</li>
+<li><code>Pitchcraft.removeSlide(ref)</code>: Delete a slide.</li>
+<li><code>Pitchcraft.duplicateSlide(ref)</code>: Duplicate a slide.</li>
+<li><code>Pitchcraft.moveSlide(from, to)</code>: Reorder slides.</li>
+<li><code>Pitchcraft.updateSlide(ref, patch)</code>: Shallow-merge a patch into a slide (validated). Returns the slide.</li>
+<li><code>Pitchcraft.setPath(ref, path, value)</code>: Set one nested field, for example setPath("s2", "items.0.value", "42").</li>
+<li><code>Pitchcraft.setLayout(ref, layout)</code>: Change a slide layout, keeping compatible content. To blank converts the text to text boxes.</li>
+<li><code>Pitchcraft.addCustomSlide(custom, at?, name?)</code>: Add a free-form HTML/CSS/JS slide in one call. custom = {html, css, js, interactive}. Returns its index. See section 9 of the guide.</li>
+<li><code>Pitchcraft.setCustom(ref, patch)</code>: Patch the html, css, js or interactive flag of a custom slide (converts the slide to custom first if it is not one). Returns the slide.</li>
+<li><code>Pitchcraft.goTo(ref)</code>: Select and scroll to a slide.</li>
+</ul>
+<p><strong>Objects</strong></p>
+<ul>
+<li><code>Pitchcraft.addObject(ref, object)</code>: Add a free-form object (text, shape, image or icon) to any slide. Returns the cleaned object with its id. Sits on top of the stack.</li>
+<li><code>Pitchcraft.updateObject(ref, id, patch)</code>: Patch an object. A null value removes a property. Returns the cleaned object.</li>
+<li><code>Pitchcraft.removeObject(ref, id)</code>: Delete an object. Returns true. Throws (listing the existing ids) if the id is not on that slide.</li>
+<li><code>Pitchcraft.setTweak(ref, key, patch)</code>: Move or restyle a text field or card that a template layout generated. key = data-path ("headline") or list item ("items.1"). A patch of null resets it.</li>
+</ul>
+<p><strong>Present</strong></p>
+<ul>
+<li><code>Pitchcraft.preparePrint()</code>: Builds the print layout (one page per slide) that the PDF button uses. Rarely needed by an AI.</li>
+<li><code>Pitchcraft.present(from?)</code>: Start presenting from a slide index.</li>
+<li><code>Pitchcraft.closePresent()</code>: Stop presenting.</li>
+<li><code>Pitchcraft.isPresenting()</code>: True while presenting.</li>
+</ul>
+<p><strong>History</strong></p>
+<ul>
+<li><code>Pitchcraft.undo()</code>: Undo the last change.</li>
+<li><code>Pitchcraft.redo()</code>: Redo.</li>
+</ul>
+<p>Workflow:</p>
+<ol>
+<li><code>Pitchcraft.guide()</code> (this document) and <code>Pitchcraft.getDeck()</code> to understand the current state.</li>
+<li>Make the smallest change that does what was asked. Prefer <code>updateObject</code>, <code>setPath</code> and <code>setTweak</code> over replacing whole slides.</li>
+<li><code>Pitchcraft.audit()</code> afterwards: every slide's <code>problems</code> list should be empty. Fix what it reports.</li>
+<li>Stop when the slide visibly updates. Do not reload the page (unsaved work lives in the tab and autosaves locally).</li>
+</ol>
+<p>Direct DOM route (read-only, useful for finding things): every slide is <code>&lt;section data-slide-id="s1" data-layout="title"&gt;</code>; every editable text has <code>data-path</code>; free-form objects are <code>.ob[data-obj="&lt;id&gt;"]</code>. Custom slides render in a sandboxed iframe, so edit their <code>custom.html</code>/<code>custom.css</code>/<code>custom.js</code> strings instead.</p>
+<p>Examples:</p>
+<pre><code>Pitchcraft.addSlide("blank");                                    // returns the new index
+Pitchcraft.addObject(2, { type: "text", text: "Q3 results", x: 80, y: 80, w: 900, size: 72, weight: 700, font: "display" });
+Pitchcraft.addObject(2, { type: "shape", shape: "round", x: 80, y: 260, w: 360, h: 200, fill: "var(--shape)", text: "**42%** growth", color: "var(--on-shape)" });
+Pitchcraft.updateObject(2, "o1", { x: 120, size: 64 });
+Pitchcraft.setTweak("s1", "headline", { dx: 0, dy: -30, size: 88 });
+Pitchcraft.setPath("s3", "items.0.value", "42");</code></pre>
+<h2>12. Checklist before you answer</h2>
+<ul>
+<li>Valid JSON, <code>format: "pitchcraft"</code>, <code>version: 3</code>, unique slide ids.</li>
+<li>Every <code>layout</code> is one of: <code>blank</code>, <code>title</code>, <code>statement</code>, <code>section</code>, <code>quote</code>, <code>closing</code>, <code>metrics</code>, <code>chart</code>, <code>demo</code>, <code>table</code>, <code>split</code>, <code>cards</code>, <code>comparison</code>, <code>bullets</code>, <code>process</code>, <code>timeline</code>, <code>flow</code>, <code>bento</code>, <code>anatomy</code>, <code>themes</code>, <code>code</code>, <code>custom</code>, <code>image</code>.</li>
+<li>Every icon name is from the list; every object has a <code>type</code>; image objects have <code>alt</code>.</li>
+<li>Nothing invented; headings short; contrast good; safe area respected.</li>
+<li>Delivered as a <code>.pitchcraft</code> file, or one JSON code block if files are impossible.</li>
+</ul>
+</body></html>

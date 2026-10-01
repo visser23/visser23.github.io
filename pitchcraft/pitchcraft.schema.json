@@ -1,0 +1,581 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://visser23.github.io/pitchcraft/pitchcraft.schema.json",
+  "title": "Pitchcraft deck (.pitchcraft file)",
+  "description": "A Pitchcraft deck. Import it with the Import dialog, by dropping the file on the page, or with Pitchcraft.importText(json). Full guide: https://visser23.github.io/pitchcraft/ai-guide.md",
+  "type": "object",
+  "required": [
+    "format",
+    "version",
+    "slides"
+  ],
+  "properties": {
+    "format": {
+      "const": "pitchcraft"
+    },
+    "version": {
+      "const": 3
+    },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "theme": {
+          "enum": [
+            "studio",
+            "editorial",
+            "contrast",
+            "aurora",
+            "brutal"
+          ]
+        },
+        "numbers": {
+          "type": "boolean"
+        },
+        "transition": {
+          "enum": [
+            "none",
+            "fade",
+            "slide",
+            "zoom",
+            "rise",
+            "blur"
+          ]
+        },
+        "css": {
+          "type": "string",
+          "maxLength": 600000,
+          "description": "Shared brand CSS (colours, @font-face with data: URIs, logo classes) for every custom slide."
+        }
+      }
+    },
+    "slides": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 200,
+      "items": {
+        "$ref": "#/$defs/slide"
+      }
+    }
+  },
+  "$defs": {
+    "slide": {
+      "type": "object",
+      "required": [
+        "layout"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[\\w\\-]{1,40}$"
+        },
+        "layout": {
+          "enum": [
+            "blank",
+            "title",
+            "statement",
+            "section",
+            "quote",
+            "closing",
+            "metrics",
+            "chart",
+            "demo",
+            "table",
+            "split",
+            "cards",
+            "comparison",
+            "bullets",
+            "process",
+            "timeline",
+            "flow",
+            "bento",
+            "anatomy",
+            "themes",
+            "code",
+            "custom",
+            "image"
+          ]
+        },
+        "kicker": {
+          "type": "string"
+        },
+        "headline": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Speaker notes."
+        },
+        "bg": {
+          "enum": [
+            "",
+            "tint",
+            "dark",
+            "accent",
+            "grad"
+          ]
+        },
+        "tone": {
+          "enum": [
+            "",
+            "coral",
+            "amber",
+            "teal",
+            "green",
+            "blue",
+            "violet",
+            "pink"
+          ]
+        },
+        "transition": {
+          "enum": [
+            "",
+            "none",
+            "fade",
+            "slide",
+            "zoom",
+            "rise",
+            "blur"
+          ]
+        },
+        "fill": {
+          "type": "string",
+          "description": "Hex, rgb()/rgba(), a colour name, or a theme token such as var(--fg), var(--muted), var(--shape), var(--on-shape), var(--c1)..var(--c6)."
+        },
+        "bgImage": {
+          "type": "string",
+          "description": "https URL or data:image/... picture behind everything."
+        },
+        "items": {
+          "type": "array",
+          "description": "List layouts. Item fields depend on the layout: see x-layouts.",
+          "items": {
+            "type": "object"
+          }
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "chartType": {
+          "enum": [
+            "bar",
+            "hbar",
+            "line",
+            "area",
+            "donut"
+          ]
+        },
+        "chartData": {
+          "type": "object"
+        },
+        "tableData": {
+          "type": "object"
+        },
+        "code": {
+          "type": "object",
+          "properties": {
+            "language": {
+              "type": "string"
+            },
+            "filename": {
+              "type": "string"
+            },
+            "source": {
+              "type": "string"
+            }
+          }
+        },
+        "image": {
+          "type": "object",
+          "properties": {
+            "src": {
+              "type": "string"
+            },
+            "alt": {
+              "type": "string"
+            }
+          }
+        },
+        "custom": {
+          "type": "object",
+          "description": "Only for layout \"custom\": a free-form slide written in HTML, CSS and JavaScript, run in a sandboxed iframe (no network, no storage, no access to the editor).",
+          "properties": {
+            "html": {
+              "type": "string",
+              "maxLength": 300000,
+              "description": "The 1280x720 slide body. No html/head/script tags."
+            },
+            "css": {
+              "type": "string",
+              "maxLength": 300000
+            },
+            "js": {
+              "type": "string",
+              "maxLength": 300000
+            },
+            "interactive": {
+              "type": "boolean",
+              "description": "true only if the slide has buttons or inputs."
+            }
+          }
+        },
+        "objects": {
+          "type": "array",
+          "maxItems": 120,
+          "items": {
+            "$ref": "#/$defs/object"
+          },
+          "description": "Free-form text, shapes, images and icons on the 1280x720 stage. Layout \"blank\" is only objects."
+        },
+        "tweaks": {
+          "type": "object",
+          "description": "Move/restyle a template slide's own text or cards. Keys are data-paths (\"headline\") or list items (\"items.1\"); values have dx, dy and typography fields.",
+          "additionalProperties": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "object": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[\\w\\-]{1,40}$",
+          "description": "Unique on the slide. Generated if omitted."
+        },
+        "type": {
+          "enum": [
+            "text",
+            "shape",
+            "image",
+            "icon"
+          ]
+        },
+        "x": {
+          "type": "number",
+          "description": "Pixels from the left of the 1280x720 stage."
+        },
+        "y": {
+          "type": "number",
+          "description": "Pixels from the top."
+        },
+        "w": {
+          "type": "number",
+          "minimum": 2,
+          "maximum": 4000
+        },
+        "h": {
+          "type": "number",
+          "minimum": 2,
+          "maximum": 4000,
+          "description": "Optional for text (it grows with its content)."
+        },
+        "rot": {
+          "type": "number",
+          "description": "Degrees clockwise."
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "shadow": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 20000,
+          "description": "Text and shapes. Inline markup: **bold**, *italic*, ==highlight==, `code`."
+        },
+        "font": {
+          "type": "string",
+          "description": "One of body, display, inter, bricolage, serif, syne, mono, arial, georgia, times, verdana, trebuchet, courier, or a plain installed family name."
+        },
+        "size": {
+          "type": "number",
+          "description": "Font size in px."
+        },
+        "weight": {
+          "type": "number",
+          "minimum": 100,
+          "maximum": 900
+        },
+        "italic": {
+          "type": "boolean"
+        },
+        "underline": {
+          "type": "boolean"
+        },
+        "caps": {
+          "type": "boolean"
+        },
+        "align": {
+          "enum": [
+            "left",
+            "center",
+            "right",
+            "justify"
+          ]
+        },
+        "valign": {
+          "enum": [
+            "top",
+            "middle",
+            "bottom"
+          ]
+        },
+        "color": {
+          "type": "string",
+          "description": "Hex, rgb()/rgba(), a colour name, or a theme token such as var(--fg), var(--muted), var(--shape), var(--on-shape), var(--c1)..var(--c6)."
+        },
+        "lh": {
+          "type": "number",
+          "description": "Line height multiple."
+        },
+        "ls": {
+          "type": "number",
+          "description": "Letter spacing in em."
+        },
+        "shape": {
+          "enum": [
+            "rect",
+            "round",
+            "ellipse",
+            "triangle",
+            "diamond",
+            "hexagon",
+            "star",
+            "arrow",
+            "chevron",
+            "line",
+            "connector"
+          ]
+        },
+        "fill": {
+          "type": "string",
+          "description": "Hex, rgb()/rgba(), a colour name, or a theme token such as var(--fg), var(--muted), var(--shape), var(--on-shape), var(--c1)..var(--c6)."
+        },
+        "stroke": {
+          "type": "string",
+          "description": "Hex, rgb()/rgba(), a colour name, or a theme token such as var(--fg), var(--muted), var(--shape), var(--on-shape), var(--c1)..var(--c6)."
+        },
+        "strokeW": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 80
+        },
+        "dash": {
+          "enum": [
+            "solid",
+            "dashed",
+            "dotted"
+          ]
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2000
+        },
+        "src": {
+          "type": "string",
+          "description": "https URL or data:image/... URI."
+        },
+        "alt": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Always provide for images."
+        },
+        "fit": {
+          "enum": [
+            "cover",
+            "contain",
+            "fill"
+          ]
+        },
+        "icon": {
+          "enum": [
+            "bolt",
+            "layers",
+            "sparkles",
+            "chart",
+            "lock",
+            "globe",
+            "wand",
+            "cursor",
+            "clock",
+            "check",
+            "users",
+            "user",
+            "target",
+            "rocket",
+            "shield",
+            "cpu",
+            "box",
+            "link",
+            "star",
+            "type",
+            "image",
+            "table",
+            "pie",
+            "terminal",
+            "flag",
+            "presentation",
+            "heart",
+            "key",
+            "puzzle",
+            "git",
+            "compass",
+            "mail",
+            "feather",
+            "gauge",
+            "edit",
+            "tag",
+            "map",
+            "file",
+            "code",
+            "download",
+            "upload",
+            "eye",
+            "palette",
+            "grid",
+            "play"
+          ]
+        }
+      }
+    }
+  },
+  "x-layouts": {
+    "blank": {
+      "name": "Blank",
+      "group": "Free-form",
+      "fields": "objects:[{id,type:\"text\"|\"shape\"|\"image\"|\"icon\",x,y,w,h?,...}] - the whole slide is free-form objects on the 1280x720 stage (see \"Free-form objects\" in the AI guide). No kicker/headline/body."
+    },
+    "title": {
+      "name": "Title",
+      "group": "Story",
+      "fields": "kicker, headline, body"
+    },
+    "statement": {
+      "name": "Statement",
+      "group": "Story",
+      "fields": "kicker, headline, body"
+    },
+    "section": {
+      "name": "Section",
+      "group": "Story",
+      "fields": "kicker (the number, e.g. \"02\"), headline, body"
+    },
+    "quote": {
+      "name": "Quote",
+      "group": "Story",
+      "fields": "headline (the quote), body (who said it)"
+    },
+    "closing": {
+      "name": "Closing",
+      "group": "Story",
+      "fields": "kicker, headline, body, items:[{icon?,label,value}]"
+    },
+    "metrics": {
+      "name": "Metrics",
+      "group": "Data",
+      "fields": "kicker, headline, items:[{value,label,trend:\"up\"|\"down\"?,note?}] (2-4 items)"
+    },
+    "chart": {
+      "name": "Chart",
+      "group": "Data",
+      "fields": "kicker, headline, body (insight), chartType:\"bar\"|\"hbar\"|\"line\"|\"area\"|\"donut\", chartData:{labels:[],series:[{name,values:[]}]} or {segments:[{label,value}],centerLabel?,centerSub?}, items?:[{value,label}] callouts"
+    },
+    "demo": {
+      "name": "Data → slide",
+      "group": "Data",
+      "fields": "same fields as chart; the code panel is generated from chartData"
+    },
+    "table": {
+      "name": "Table",
+      "group": "Data",
+      "fields": "kicker, headline, tableData:{headers:[],rows:[[]]}"
+    },
+    "split": {
+      "name": "Split",
+      "group": "Structure",
+      "fields": "kicker, headline, columns:[{icon?,headline,body}] (2-3)"
+    },
+    "cards": {
+      "name": "Cards",
+      "group": "Structure",
+      "fields": "kicker, headline, items:[{icon,title,body}] (3-4)"
+    },
+    "comparison": {
+      "name": "Comparison",
+      "group": "Structure",
+      "fields": "kicker, headline, columns:[{headline,body,items:[\"line\",…]}] (exactly 2; first is the \"old\", second the \"new\")"
+    },
+    "bullets": {
+      "name": "Bullets",
+      "group": "Structure",
+      "fields": "kicker, headline, body, items:[{title,body}] (3-5)"
+    },
+    "process": {
+      "name": "Process",
+      "group": "Structure",
+      "fields": "kicker, headline, items:[{step?,icon?,title,body}] (3-5)"
+    },
+    "timeline": {
+      "name": "Timeline",
+      "group": "Structure",
+      "fields": "kicker, headline, items:[{date,title,body,status:\"done\"|\"now\"|\"next\"?}] (3-5)"
+    },
+    "flow": {
+      "name": "Flow diagram",
+      "group": "Structure",
+      "fields": "kicker, headline, items:[{col:\"in\"|\"hub\"|\"out\",icon,title,body}] (1-3 \"in\", exactly 1 \"hub\", 1-3 \"out\")"
+    },
+    "bento": {
+      "name": "Bento",
+      "group": "Visual",
+      "fields": "kicker, headline, items:[{size:\"s\"|\"w\"|\"t\"|\"l\",tone?,icon?,title,value?,body?}] (aim for tiles that fill a 4x3 grid: e.g. one \"l\", one \"w\" and six \"s\")"
+    },
+    "anatomy": {
+      "name": "Editor anatomy",
+      "group": "Visual",
+      "fields": "kicker, headline, body, items:[{title,body}] (up to 5; numbered hotspots on a drawing of the editor)"
+    },
+    "themes": {
+      "name": "Themes",
+      "group": "Visual",
+      "fields": "kicker, headline, items:[{theme:\"studio\"|\"editorial\"|\"contrast\"|\"aurora\"|\"brutal\",title,body}]"
+    },
+    "code": {
+      "name": "Code",
+      "group": "Visual",
+      "fields": "kicker, headline, body, code:{language:\"json\"|\"js\"|\"html\"|\"css\"|\"bash\",filename?,source}"
+    },
+    "custom": {
+      "name": "Custom HTML",
+      "group": "Custom",
+      "fields": "headline (a NAME only, not drawn), custom:{html,css?,js?,base?,interactive?}. html is the whole 1280x720 slide: write anything. See \"Custom layout\" in the AI guide."
+    },
+    "image": {
+      "name": "Image",
+      "group": "Visual",
+      "fields": "kicker, headline, body, image:{src (https URL or data URI),alt}"
+    }
+  }
+}
