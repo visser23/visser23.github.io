@@ -95,7 +95,7 @@ PC.exportPptx = async function (opt) {
   opt = opt || {};
   const note = UI.toast('Building the PowerPoint file…', 'ok');
   try {
-    const t0 = performance.now(), r = await PC.pptx(S.deck, { progress: m => log('pptx:', m) });
+    const t0 = performance.now(), r = await PC.pptx(S.deck, { progress: m => log('pptx:', m), fonts: opt.fonts });
     log('pptx built in', Math.round(performance.now() - t0), 'ms,', r.bytes.length, 'bytes,', r.report.warnings.length, 'warnings');
     if (opt.returnBytes) return r;
     const url = URL.createObjectURL(new Blob([r.bytes], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' })), a = document.createElement('a');
@@ -103,9 +103,12 @@ PC.exportPptx = async function (opt) {
     const m = UI.modal({ title: 'PowerPoint file ready', size: '',
       body: `<p><b>${esc(r.name)}</b> has been downloaded: ${r.report.slides} slide${r.report.slides === 1 ? '' : 's'}${r.report.pictures ? `, ${r.report.pictures} picture${r.report.pictures === 1 ? '' : 's'}` : ''}.</p>
         <p>Text, shapes, lines, speaker notes and links are real PowerPoint objects you can edit. Charts and icons arrive as pictures. Animations and some effects (blur, glows) are not carried over.</p>
-        ${r.report.fonts.length ? `<p><b>Fonts used:</b> ${r.report.fonts.map(esc).join(', ')}. PowerPoint swaps in a similar font for any it does not have installed, which can change how text wraps.</p>` : ''}
+        ${r.report.fontMap.length ? (r.report.fontMode === 'keep'
+          ? `<p><b>Original fonts kept:</b> ${r.report.fontMap.map(f => `<a href="https://fonts.google.com/specimen/${encodeURIComponent(f.from).replace(/%20/g, '+')}" target="_blank" rel="noopener">${esc(f.from)}</a>`).join(', ')}. Install any you do not have before opening the file, otherwise PowerPoint swaps in its own font and the text reflows. <button class="btn" type="button" data-fonts="similar">Use fonts PowerPoint already has</button></p>`
+          : `<p><b>Fonts:</b> ${r.report.fontMap.map(f => f.from === f.to ? esc(f.from) : `${esc(f.from)} → ${esc(f.to)}`).join(', ')}. Web fonts are swapped for the closest font that ships with PowerPoint, so the file looks the same on any computer. <button class="btn" type="button" data-fonts="keep">Keep the original fonts instead</button></p>`) : ''}
         ${r.report.warnings.length ? `<div class="lp-group">Needs a look</div><ul class="plain">${r.report.warnings.slice(0, 12).map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}`,
       footer: '<button class="btn primary" type="button" data-close>Done</button>' });
+    m.body.addEventListener('click', e => { const b = e.target.closest('[data-fonts]'); if (!b) return; m.close && m.close(); PC.exportPptx({ fonts: b.dataset.fonts }); });
     return r;
   } catch (e) {
     log('pptx failed', e); UI.toast('The PowerPoint export failed: ' + (e && e.message || e), 'err');

@@ -63,9 +63,10 @@
       <li><b>Fonts:</b> the menu groups about fifty bundled fonts (Sans, Serif, Display, Script, Mono) that work everywhere, plus your own.</li></ul>
       <h4>Using fonts from your computer</h4>
       <p>Open <b>Settings</b> (the gear) and press <b>Use my fonts</b> (Chrome and Edge). Your browser asks once, then every installed font appears under <i>On this computer</i> in the Font menu. In other browsers, type the font's name in the box under the Font menu instead.</p>
-      <p>A font only shows on computers that have it. Anywhere else the text falls back to the theme font. Bundled fonts are open-source and travel with the deck's look. PowerPoint will substitute any font it does not have: the export dialog lists which fonts to install.</p>`],
+      <p>A font only shows on computers that have it. Anywhere else the text falls back to the theme font. Bundled fonts are open-source and travel with the deck's look. In a PowerPoint export, web fonts become the closest font PowerPoint already has (Inter becomes Arial, Montserrat becomes Century Gothic, Lora becomes Georgia), so the file looks the same on any computer. The export dialog shows the swaps and has a button to keep the original fonts instead.</p>`],
 
     ['code', 'HTML, CSS and JS slides', 'code', () => `
+      <p><b>Edit text in place:</b> double-click any text in an HTML slide, type, and press Enter (Esc cancels). The change is written into the slide's HTML. Text that the slide's JavaScript makes has no place in the HTML, so double-clicking it opens the code instead. The <b>&lt;/&gt;</b> button on the slide's bar opens the code too.</p>
       <p>For full control, a slide can be code. Select the slide, open the <b>Code</b> tab, and you will find:</p>
       <ul><li><b>Slide HTML, CSS and JavaScript</b> editors. Each has <b>Format</b> (tidies minified or one-line code) and <b>Expand</b> (a large editor). Formatting also runs when code is pasted or applied.</li>
       <li><b>Brand CSS:</b> shared styles for every custom slide in the deck (colours, fonts, logos).</li>
@@ -83,7 +84,7 @@
 
     ['export', 'Export and share', 'download', () => `
       <p>Open <b>Export</b> in the ribbon.</p>
-      <ul><li><b>PowerPoint (.pptx):</b> a native file you can edit in PowerPoint, Keynote or Google Slides. Text stays text (a paragraph is one text box), a shape with text is one shape with the text inside it, lines are connectors, speaker notes, hidden slides and transitions carry across. Charts, icons and complex graphics become pictures. It will not be pixel-perfect: fonts PowerPoint lacks are substituted, so install the ones listed in the export summary for the closest match.</li>
+      <ul><li><b>PowerPoint (.pptx):</b> a native file you can edit in PowerPoint, Keynote or Google Slides. Text stays text (a paragraph is one text box), a shape with text is one shape with the text inside it, lines are connectors, speaker notes, hidden slides and transitions carry across. Charts, icons and complex graphics become pictures. It will not be pixel-perfect: web fonts are swapped for similar fonts PowerPoint has (or keep the originals from the export dialog and install them).</li>
       <li><b>PDF:</b> one slide per page (hidden slides skipped), through your browser's print dialog.</li>
       <li><b>.pitchcraft file</b> (<kbd>Ctrl</kbd> <kbd>S</kbd>) or <b>Copy deck JSON:</b> the whole deck as text. Keep it in git, email it, drop it on this page to reopen.</li></ul>`],
 
@@ -128,7 +129,7 @@
       faq('Can I move things on a templated slide?', 'Yes. Click a text or card, then drag it. The move is stored on the slide as a small <i>tweak</i>, so the layout keeps working. <i>Reset position</i> undoes it.'),
       faq('What is the difference between Blank, objects and HTML, CSS and JS?', 'Blank slides and objects are drag-and-drop shapes that follow the theme. <b>HTML, CSS and JS</b> is the full-capability route for any layout, brand style, diagram or animation. Templates are the quick route for plain content. You can switch a slide between them.'),
       faq('How do I start a new deck?', 'Click <b>New deck</b> in the ribbon (or the Deck tab). If the current deck has changes you have not downloaded, you are asked whether to download it first, and it is kept under <i>Recover</i>.'),
-      faq('Why does my PowerPoint look slightly different?', 'PowerPoint lays text out with its own fonts and spacing. Install the fonts listed after export (they are free Google Fonts) and it will be much closer. Everything stays editable, so a small nudge is usually all it needs.'),
+      faq('Why does my PowerPoint look slightly different?', 'PowerPoint lays text out with its own engine, and the export swaps web fonts for similar ones it has, so line breaks can move a little. If you would rather keep the exact fonts, choose "Keep the original fonts" in the export dialog and install them (they are free Google Fonts). Everything stays editable, so a small nudge is usually all it needs.'),
       faq('Does it work offline?', 'Yes, once loaded. Pictures from web addresses need a connection to show.'),
       faq('Why does an AI need the guide?', 'Pitchcraft only accepts decks in its own format. The guide lists every layout, field and limit, so the AI writes a deck that imports cleanly.')].join('')],
 

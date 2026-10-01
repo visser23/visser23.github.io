@@ -14,6 +14,7 @@
 .slide.layout-custom { padding: 0; display: block; }
 .slide.layout-custom > iframe.cs-frame { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; border: 0; display: block; background: transparent; pointer-events: none; color-scheme: normal; }
 .pres .slide.layout-custom > iframe.cs-frame[data-interactive='1'] { pointer-events: auto; }
+.stage.editing .slide.layout-custom > iframe.cs-frame { pointer-events: auto; }   /* the editor canvas: double-click text in the frame to edit it */
 .slide > .s-foot { position: absolute; }
 .slide h1, .slide h2, .slide h3, .slide p, .slide ul, .slide ol, .slide blockquote { margin: 0; padding: 0; }
 .slide ul, .slide ol { list-style: none; }

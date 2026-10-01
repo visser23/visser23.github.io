@@ -55,7 +55,7 @@ const clr = (c, a) => `<a:srgbClr val="${(c || '000000').toUpperCase()}">${alpha
 const solid = (c, a) => `<a:solidFill>${clr(c, a)}</a:solidFill>`;
 function gradFill(g, op) {
   const stops = g.stops.map(s => `<a:gs pos="${Math.round(s.p * 1000)}">${clr(s.c, (s.a == null ? 1 : s.a) * (op == null ? 1 : op))}</a:gs>`).join('');
-  if (g.radial) { const l = Math.round((g.at ? g.at[0] : 50) * 1000), t = Math.round((g.at ? g.at[1] : 50) * 1000); return `<a:gradFill rotWithShape="1"><a:gsLst>${stops}</a:gsLst><a:path path="circle"><a:fillToRect l="${l}" t="${t}" r="${100000 - l}" b="${100000 - t}"/></a:path></a:gradFill>`; }
+  if (g.radial) { const l = Math.round(clampN(g.at ? g.at[0] : 50, 0, 100) * 1000), t = Math.round(clampN(g.at ? g.at[1] : 50, 0, 100) * 1000); return `<a:gradFill rotWithShape="1"><a:gsLst>${stops}</a:gsLst><a:path path="circle"><a:fillToRect l="${l}" t="${t}" r="${100000 - l}" b="${100000 - t}"/></a:path></a:gradFill>`; }
   return `<a:gradFill rotWithShape="1"><a:gsLst>${stops}</a:gsLst><a:lin ang="${Math.round(g.ang * 60000)}" scaled="0"/></a:gradFill>`;
 }
 const fillX = (it, op) => it.grad ? gradFill(it.grad, op) : it.fill ? solid(it.fill.c, it.fill.a * (op == null ? 1 : op)) : '<a:noFill/>';
@@ -67,14 +67,33 @@ const shadowX = s => {
 };
 
 /* ── text ── */
-const FONT_FIX = { Inter: 'Inter' };
+/* Fonts. PowerPoint cannot use the web fonts Pitchcraft ships (it does not read woff2, and neither Mac nor Windows PowerPoint honours fonts embedded in a
+   file that did not come from PowerPoint itself), so a font the viewer lacks is swapped for the app's default, usually a serif, and the text reflows.
+   Default 'similar': each family becomes the closest font that ships with Office, Windows and macOS. 'keep': the original names, for people who install the fonts. */
+const SIMILAR = (() => {
+  const m = {}, add = (to, pf, names) => names.split('|').forEach(n => { m[n.toLowerCase()] = { to, pf }; });
+  add('Arial', 34, 'Inter|DM Sans|Manrope|Plus Jakarta Sans|Space Grotesk|Work Sans|Sora|Figtree|Lato|Rubik|Archivo|Epilogue|IBM Plex Sans|Cabin|Nunito|Raleway|Bricolage Grotesque|Helvetica|Helvetica Neue|system-ui|sans-serif|ui-sans-serif|-apple-system|BlinkMacSystemFont|Segoe UI|Roboto');
+  add('Century Gothic', 34, 'Outfit|Montserrat|Urbanist|Poppins|Josefin Sans|Quicksand');
+  add('Arial Black', 34, 'Syne');   // very wide and heavy, like Syne ExtraBold
+  add('Arial Narrow', 34, 'Oswald');
+  add('Impact', 34, 'Anton|Bebas Neue');
+  add('Georgia', 18, 'Instrument Serif|Playfair Display|Lora|Fraunces|Source Serif 4|Libre Baskerville|DM Serif Display|Abril Fatface|Cormorant Garamond|serif|ui-serif');
+  add('Courier New', 49, 'JetBrains Mono|Space Mono|IBM Plex Mono|Fira Code|Inconsolata|monospace|ui-monospace|SF Mono|Menlo|Consolas|Monaco');
+  add('Brush Script MT', 66, 'Pacifico|Lobster');
+  add('Comic Sans MS', 66, 'Caveat');
+  return m;
+})();
+const PITCH = { arial: 34, 'arial narrow': 34, 'century gothic': 34, impact: 34, verdana: 34, tahoma: 34, 'trebuchet ms': 34, calibri: 34, georgia: 18, 'times new roman': 18, cambria: 18, 'courier new': 49 };
+let fontMode = 'similar';
+PC.pptxFont = (f, mode) => { f = String(f || 'Arial'); const m = (mode || fontMode) === 'keep' ? null : SIMILAR[f.toLowerCase()]; return { name: m ? m.to : f, pf: m ? m.pf : (PITCH[f.toLowerCase()] || 34) }; };
+const fontTag = (tag, f) => { const r = PC.pptxFont(f); return `<a:${tag} typeface="${xe(r.name)}" pitchFamily="${r.pf}" charset="0"/>`; };
 function runX(r, ctx, op) {
   if (r.br) return `<a:br><a:rPr lang="en-GB" sz="${clampN(Math.round((r.sz || 16) * 75), 100, 400000)}"/></a:br>`;
-  const sz = clampN(Math.round((r.sz || 16) * 75), 100, 400000), f = xe(FONT_FIX[r.f] || r.f || 'Arial');
+  const sz = clampN(Math.round((r.sz || 16) * 75), 100, 400000), f = r.f || 'Arial';
   let link = '';
   if (r.link) { const rid = ctx.link(r.link); if (rid) link = `<a:hlinkClick r:id="${rid}"${r.link[0] === '#' ? ' action="ppaction://hlinksldjump"' : ''}/>`; }
-  const attrs = `lang="en-GB" sz="${sz}"${r.b ? ' b="1"' : ''}${r.i ? ' i="1"' : ''}${r.u ? ' u="sng"' : ''}${r.s ? ' strike="sngStrike"' : ''}${r.cap ? ' cap="all"' : ''}${r.sp ? ` spc="${Math.round(r.sp * 75)}"` : ''}${r.sup ? ' baseline="30000"' : r.sub ? ' baseline="-25000"' : ''} dirty="0"`;
-  return `<a:r><a:rPr ${attrs}>${solid(r.c, (r.a == null ? 1 : r.a) * (op == null ? 1 : op))}${r.hl ? `<a:highlight>${clr(r.hl)}</a:highlight>` : ''}<a:latin typeface="${f}"/><a:cs typeface="${f}"/>${link}</a:rPr><a:t>${xe(r.t)}</a:t></a:r>`;
+  const attrs = `lang="en-GB" sz="${sz}"${r.b && PC.pptxFont(f).name !== 'Arial Black' ? ' b="1"' : ''}${r.i ? ' i="1"' : ''}${r.u ? ' u="sng"' : ''}${r.s ? ' strike="sngStrike"' : ''}${r.cap ? ' cap="all"' : ''}${r.sp ? ` spc="${Math.round(r.sp * 75)}"` : ''}${r.sup ? ' baseline="30000"' : r.sub ? ' baseline="-25000"' : ''} dirty="0"`;
+  return `<a:r><a:rPr ${attrs}>${solid(r.c, (r.a == null ? 1 : r.a) * (op == null ? 1 : op))}${r.hl ? `<a:highlight>${clr(r.hl)}</a:highlight>` : ''}${fontTag('latin', f)}${fontTag('cs', f)}${link}</a:rPr><a:t>${xe(r.t)}</a:t></a:r>`;
 }
 function paraX(p, ctx, op) {
   const sz = p.sz || 16, ind = p.bu ? 24 : 0, marL = (p.ml || 0) + ind;
@@ -138,9 +157,39 @@ class Slide {
   media(m) { return this.rel('image', '../media/' + m.name); }
 }
 
+/** Stacked or see-through gradients (a glow on a dark colour) have no faithful PowerPoint equivalent, so they are painted once into a picture that sits behind everything. */
+const rasterWanted = bg => { const L = bg && bg.layers || []; return L.length > 1 || (L.length === 1 && (L[0].radial || L[0].stops.some(t => (t.a == null ? 1 : t.a) < .99))); };
+function rasterBg(bg) {
+  const K = .625, W = Math.round(SW * K), H = Math.round(SH * K), cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'); if (!g) return null;
+  const rgba = (c, a) => `rgba(${parseInt(c.slice(0, 2), 16)},${parseInt(c.slice(2, 4), 16)},${parseInt(c.slice(4, 6), 16)},${a == null ? 1 : a})`;
+  g.fillStyle = bg.fill ? rgba(bg.fill.c, 1) : '#ffffff'; g.fillRect(0, 0, W, H);
+  bg.layers.slice().reverse().forEach(L => {                       // CSS lists the top layer first, so paint the last one first
+    let gr;
+    if (L.radial) {
+      const cx = (L.at ? L.at[0] : 50) / 100 * W, cy = (L.at ? L.at[1] : 50) / 100 * H;
+      let rx = L.rx > 0 ? L.rx * K : 0, ry = L.ry > 0 ? L.ry * K : 0;
+      if (!rx) {                                                  // keyword sizes; the default is farthest-corner
+        const dx = Math.max(cx, W - cx), dy = Math.max(cy, H - cy), cl = /closest/.test(L.ext || ''), corner = !/side/.test(L.ext || ''), mx = Math.min(cx, W - cx), my = Math.min(cy, H - cy);
+        if (L.circle) { const r = cl ? (corner ? Math.hypot(mx, my) : Math.min(mx, my)) : (corner ? Math.hypot(dx, dy) : Math.max(dx, dy)); rx = ry = r; }
+        else { const f = corner ? Math.SQRT2 : 1; rx = (cl ? mx : dx) * f; ry = (cl ? my : dy) * f; }
+      }
+      rx = Math.max(1, rx); ry = Math.max(1, ry || rx);
+      g.save(); g.translate(cx, cy); g.scale(1, ry / rx); gr = g.createRadialGradient(0, 0, 0, 0, 0, rx);
+      L.stops.forEach(t => gr.addColorStop(Math.max(0, Math.min(1, t.p / 100)), rgba(t.c, t.a)));
+      g.fillStyle = gr; g.fillRect(-cx - W, (-cy - H) * (rx / ry), W * 3, H * 3 * (rx / ry)); g.restore();
+    } else {
+      const a = (L.ang + 90) * Math.PI / 180, dx = Math.sin(a), dy = -Math.cos(a), len = Math.abs(W * dx) + Math.abs(H * dy), cx = W / 2, cy = H / 2;
+      gr = g.createLinearGradient(cx - dx * len / 2, cy - dy * len / 2, cx + dx * len / 2, cy + dy * len / 2);
+      L.stops.forEach(t => gr.addColorStop(Math.max(0, Math.min(1, t.p / 100)), rgba(t.c, t.a))); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    }
+  });
+  return cv.toDataURL('image/png');
+}
+
 async function buildSlide(pkg, s, i, host, deckMeta, onWarn) {
   const sl = new Slide(pkg, i), res = pkg.walks[i], objsInfo = res.objs || {}, ctx = sl;
   const items = res.items.slice();
+  if (rasterWanted(res.bg)) { const uri = rasterBg(res.bg); if (uri) { items.unshift({ k: 'img', x: 0, y: 0, w: SW, h: SH, src: uri, size: '100% 100%', pos: '0 0', name: 'Background', alt: '' }); res.bg = Object.assign({}, res.bg, { grad: null }); } }
   if (res.bg && res.bg.img) items.unshift({ k: 'img', x: 0, y: 0, w: SW, h: SH, src: res.bg.img.src, size: res.bg.img.size, pos: res.bg.img.pos, name: 'Background', alt: '' });
   let titleIdx = items.findIndex(it => it.role === 'title' && it.k !== 'img' && it.paras);
   if (titleIdx < 0) {   // no marked heading: the largest text in the top half, if it is heading-sized
@@ -219,7 +268,7 @@ async function picX(sl, it, extra) {
   const id = sl.id(), rid = sl.media(rec), c = cropFor(it, rec.w, rec.h), prst = it.circle ? 'ellipse' : it.rad > .5 ? 'roundRect' : 'rect';
   const av = prst === 'roundRect' ? `<a:gd name="adj" fmla="val ${Math.round(clampN(it.rad / Math.max(1, Math.min(c.box.w, c.box.h)) * 100000, 0, 50000))}"/>` : '';
   const link = extra.link ? sl.link(extra.link) : '';
-  return `<p:pic><p:nvPicPr><p:cNvPr id="${id}" name="${xe(it.name || 'Picture')}" descr="${xe(it.alt || '')}">${link ? `<a:hlinkClick r:id="${link}"${extra.link[0] === '#' ? ' action="ppaction://hlinksldjump"' : ''}/>` : ''}</p:cNvPr><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="${rid}"${it.op != null && it.op < 1 ? `><a:alphaModFix amt="${Math.round(it.op * 100000)}"/></a:blip>` : '/>'}${c.src}<a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr>${xfrm(c.box.x, c.box.y, c.box.w, c.box.h, it.rot, extra.flipH, extra.flipV)}<a:prstGeom prst="${prst}"><a:avLst>${av}</a:avLst></a:prstGeom>${extra.line ? lnX(extra.line) : ''}</p:spPr></p:pic>`;
+  return `<p:pic><p:nvPicPr><p:cNvPr id="${id}" name="${xe(it.name || 'Picture')}" descr="${xe(it.alt || '')}">${link ? `<a:hlinkClick r:id="${link}"${extra.link[0] === '#' ? ' action="ppaction://hlinksldjump"' : ''}/>` : ''}</p:cNvPr><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="${rid}"${it.op != null && it.op < 1 ? `><a:alphaModFix amt="${Math.round(it.op * 100000)}"/></a:blip>` : '/>'}${c.src}<a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr>${xfrm(c.box.x, c.box.y, c.box.w, c.box.h, it.rot, extra.flipH, extra.flipV)}<a:prstGeom prst="${prst}"><a:avLst>${av}</a:avLst></a:prstGeom>${extra.line || it.line ? lnX(extra.line || it.line) : ''}</p:spPr></p:pic>`;
 }
 function placeholderX(sl, it) {
   const id = sl.id(), label = it.alt || 'Picture';
@@ -249,7 +298,9 @@ const picXrec = (sl, it, rec, extra) => {
 let probeEl = null;
 function resolveColor(host, str, fallback) {
   if (!str) return fallback || null;
-  const el = document.createElement('i'); el.style.cssText = 'color:' + str; host.appendChild(el);
+  const el = document.createElement('i'); el.style.color = str;
+  if (!el.style.color) return /^(none|transparent)$/i.test(String(str).trim()) ? null : (fallback || null);   // not a colour: an invalid value would silently inherit the text colour
+  host.appendChild(el);
   const cs = getComputedStyle(el).color, m = cs.match(/rgba?\(([^)]+)\)/); el.remove(); if (!m) return fallback || null;
   const t = m[1].split(/[\s,\/]+/).map(parseFloat), a = t.length > 3 ? t[3] : 1; if (a < .004) return null;
   const h = n => (Math.round(n) < 16 ? '0' : '') + Math.round(n).toString(16); return { c: h(t[0]) + h(t[1]) + h(t[2]), a };
@@ -406,7 +457,7 @@ async function settle(host, ms) {
  * report: { slides, warnings[], fonts[], objects } so the caller can tell the user what to check.
  */
 PC.pptx = async function (deck, opt) {
-  opt = opt || {}; deck = deck || S.deck; const say = opt.progress || (() => {});
+  opt = opt || {}; deck = deck || S.deck; fontMode = opt.fonts === 'keep' ? 'keep' : 'similar'; const say = opt.progress || (() => {});
   const host = document.createElement('div'); host.id = 'export-host'; host.setAttribute('aria-hidden', 'true');
   host.style.cssText = 'position:fixed;left:-20000px;top:0;width:1280px;height:720px;pointer-events:none;overflow:hidden'; document.body.appendChild(host);
   const pkg = { media: new Map(), warn: [], walks: [], slideIds: deck.slides.map(s => s.id), fonts: new Set() };
@@ -418,7 +469,7 @@ PC.pptx = async function (deck, opt) {
     const colours = { fg: cc('var(--fg)') || '14122b', bg: cc('var(--slide-bg)') || 'ffffff', muted: cc('var(--muted)') || '666666', tint: cc('var(--tint-bg)') || 'eeeeee' };
     for (let n = 1; n <= 6; n++) colours['c' + n] = cc(`var(--c${n})`) || '5b4bff';
     const fam = n => { const e = document.createElement('i'); e.style.fontFamily = `var(${n})`; probe.appendChild(e); const f = getComputedStyle(e).fontFamily.split(',')[0].trim().replace(/^["']|["']$/g, ''); e.remove(); return f || 'Arial'; };
-    const majorFont = fam('--font-d'), minorFont = fam('--font-b');
+    const majorFont = PC.pptxFont(fam('--font-d')).name, minorFont = PC.pptxFont(fam('--font-b')).name;
     for (let i = 0; i < deck.slides.length; i++) {
       const s = deck.slides[i]; say(`Reading slide ${i + 1} of ${deck.slides.length}`);
       host.innerHTML = PC.renderSlide(s, { editable: false, index: i, total: deck.slides.length, deck, mode: 'thumb' });
@@ -469,7 +520,7 @@ PC.pptx = async function (deck, opt) {
     pkg.media.forEach(m => files.push({ name: 'ppt/media/' + m.name, data: m.bytes, store: true }));
     const bytes = await PC.zip(files);
     const safe = String(title).replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').slice(0, 60) || 'presentation';
-    return { bytes, files, name: safe + '.pptx', report: { slides: N, warnings: pkg.warn, fonts: Array.from(pkg.fonts).sort(), pictures: pkg.media.size } };
+    return { bytes, files, name: safe + '.pptx', report: { slides: N, warnings: pkg.warn, fonts: Array.from(pkg.fonts).sort(), fontMap: Array.from(pkg.fonts).sort().map(f => ({ from: f, to: PC.pptxFont(f).name })), fontMode, pictures: pkg.media.size } };
   } finally { host.remove(); }
 };
 })();

@@ -295,9 +295,6 @@ button { cursor: pointer; }
 }
 
 /* ═══ custom slides in the editor ═══ */
-.cs-veil { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; z-index: 5; cursor: default; }
-.cs-veil::after { content: 'Custom HTML  ·  double-click to edit the code'; position: absolute; left: 24px; bottom: 22px; padding: 10px 18px; border-radius: 999px; background: rgba(23,21,43,.88); color: #fff; font: 600 22px/1 var(--f-ui); letter-spacing: .01em; opacity: 0; transform: translateY(6px); transition: .15s; pointer-events: none; }
-.cs-veil:hover::after { opacity: 1; transform: none; }
 .code-ed { white-space: pre; overflow: auto; tab-size: 2; min-height: 120px; }
 .switch small { font-weight: 400; color: var(--ui-muted); }
 /* ═══ direct manipulation: selection overlay, handles, guides (stage.js) ═══ */
@@ -455,3 +452,7 @@ body.st-drawing .stage.editing, body.st-drawing .stage.editing * { touch-action:
 .help-pane ul { padding-left: 20px; } .help-pane li { margin: 5px 0; } .help-pane code { font-family: var(--f-mono); font-size: 12.5px; background: var(--ui-bg); padding: 1px 5px; border-radius: 5px; } .help-pane .muted { color: var(--ui-muted); } .help-pane a { color: var(--ui-acc); }
 .keys.gest { grid-template-columns: 130px 1fr; }
 @media (max-width: 760px) { .help2 { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: 72dvh; } .help-nav-wrap { border-right: 0; border-bottom: 1px solid var(--ui-line); padding: 8px; } .help-nav { flex-direction: row; overflow-x: auto; } .help-nav button { white-space: nowrap; flex: none; } .help-pane { padding: 14px 16px 20px; } .keys.gest { grid-template-columns: 1fr; } }
+
+.frame-hint { margin-left: 10px; font-size: 12px; color: var(--ui-muted); opacity: 0; transition: opacity .15s; white-space: nowrap; }
+.frame:hover .frame-hint, .frame.sel .frame-hint { opacity: 1; }
+@media (max-width: 860px) { .frame-hint { display: none; } }

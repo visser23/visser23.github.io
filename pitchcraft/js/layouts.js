@@ -245,6 +245,52 @@ var flagged={};items.forEach(function(a,ai){for(var m=0;m<boxes.length;m++){var 
 if(a.b.left<=bx.r.left+1&&a.b.right>=bx.r.right-1&&a.b.top<=bx.r.top+1&&a.b.bottom>=bx.r.bottom-1)continue;if(ix*iy<0.04*a.b.width*a.b.height)continue;if(flagged[ai])continue;flagged[ai]=1;flag('text-crosses-edge',a.el,'text straddles the edge of '+name(bx.e)+' (box '+Math.round(bx.r.left)+','+Math.round(bx.r.top)+' '+Math.round(bx.r.width)+'x'+Math.round(bx.r.height)+'); it is partly inside and partly outside',a.t)}});
 return {problems:out,texts:items.length}}
 })();`;
+/* Editing text inside a custom slide (editor canvas only, mode 'live'). The kit numbers every element of the slide's own HTML in document
+   order before any slide script runs; a double-click on text makes that element editable, and on commit the frame tells the editor
+   {pc:'edit', i, tag, old, html}. The editor re-parses the slide's HTML source, checks that element i has the same tag and text, and
+   writes the change into custom.html (PC.editCustomHtml). Text made by script has no source element, so it simply is not offered. */
+const KIT_EDIT = `(function(){var root=document.querySelector('[data-pc-custom]');if(!root)return;
+var P=function(m){try{parent.postMessage(m,'*')}catch(e){}};
+var INL='b,strong,i,em,u,s,mark,code,span,br,small,sub,sup',SKIP={SCRIPT:1,STYLE:1,TEXTAREA:1,INPUT:1,SELECT:1,BUTTON:1,CANVAS:1,IMG:1,VIDEO:1,IFRAME:1,NOSCRIPT:1,TEMPLATE:1,svg:1};
+var els=Array.prototype.slice.call(root.querySelectorAll('*')),orig=els.map(function(e){return e.textContent}),cur=null;
+function ok(el){if(!el||el===root||SKIP[el.tagName]||el.closest('svg'))return false;var t=false;for(var c=el.firstChild;c;c=c.nextSibling){if(c.nodeType===3){if(/\\S/.test(c.nodeValue))t=true}else if(c.nodeType!==1&&c.nodeType!==8)return false}
+return t&&!el.querySelector(':not('+INL+')')}
+function end(keep){if(!cur)return;var c=cur;cur=null;var el=c.el;el.removeAttribute('contenteditable');el.setAttribute('style',c.style);if(!c.style)el.removeAttribute('style');
+if(!keep){el.innerHTML=c.before;return}
+var html=el.innerHTML;if(html!==c.before)P({pc:'edit',i:c.i,tag:el.tagName,old:orig[c.i],html:html,rich:c.rich})}
+addEventListener('pointerdown',function(){P({pc:'sel'})},true);
+addEventListener('dblclick',function(e){if(cur)return;var el=e.target;while(el&&el!==root&&!ok(el))el=el.parentElement;
+if(el&&el!==root)while(el.parentElement&&el.parentElement!==root&&el.matches(INL)&&ok(el.parentElement))el=el.parentElement;
+if(!el||el===root){P({pc:'code'});return}
+var i=els.indexOf(el);if(i<0){P({pc:'code'});return}
+var rich=!!el.querySelector('*'),st=el.getAttribute('style')||'';cur={el:el,i:i,before:el.innerHTML,rich:rich,style:st};
+el.setAttribute('contenteditable',rich?'true':'plaintext-only');if(el.contentEditable==='false')el.setAttribute('contenteditable','true');
+el.style.outline='2px solid #5b4bff';el.style.outlineOffset='4px';el.style.cursor='text';el.style.userSelect='text';el.style.webkitUserSelect='text';el.focus();
+el.addEventListener('blur',function f(){el.removeEventListener('blur',f);end(true)});
+el.addEventListener('keydown',function k(ev){if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();el.blur()}else if(ev.key==='Escape'){ev.preventDefault();ev.stopPropagation();var c=cur;if(c){cur=null;el.removeAttribute('contenteditable');el.setAttribute('style',c.style);if(!c.style)el.removeAttribute('style');el.innerHTML=c.before}el.removeEventListener('keydown',k);el.blur()}})},true)
+})();`;
+
+const EDIT_INLINE = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'S', 'MARK', 'CODE', 'SPAN', 'BR', 'SMALL', 'SUB', 'SUP']);
+/** Write an in-frame text edit back into a custom slide's HTML source. Returns the new HTML, or null if the element cannot be matched. */
+PC.editCustomHtml = function (html, idx, tag, old, edited, rich) {
+  if (!Number.isInteger(idx) || idx < 0 || typeof html !== 'string' || typeof edited !== 'string' || edited.length > 50000) return null;
+  const doc = new DOMParser().parseFromString('<!doctype html><body>' + html, 'text/html'), el = doc.body.querySelectorAll('*')[idx];
+  const norm = t => String(t == null ? '' : t).replace(/\s+/g, ' ').trim();
+  if (!el || el.tagName !== String(tag).toUpperCase() || norm(el.textContent) !== norm(old)) return null;
+  const src = new DOMParser().parseFromString('<!doctype html><body>' + edited, 'text/html');
+  const clean = (from, into) => from.childNodes.forEach(n => {
+    if (n.nodeType === 3) into.appendChild(doc.createTextNode(n.nodeValue));
+    else if (n.nodeType === 1 && rich && EDIT_INLINE.has(n.tagName)) {
+      const c = doc.createElement(n.tagName.toLowerCase());
+      if (n.getAttribute('class')) c.setAttribute('class', n.getAttribute('class').slice(0, 200));
+      const st = n.getAttribute('style'); if (st && !/url\(|expression|@import|javascript:/i.test(st)) c.setAttribute('style', st.slice(0, 400));
+      clean(n, c); into.appendChild(c);
+    } else if (n.nodeType === 1) clean(n, into);   // anything else keeps only its text
+  });
+  while (el.firstChild) el.removeChild(el.firstChild);
+  if (rich) clean(src.body, el); else el.appendChild(doc.createTextNode(src.body.textContent));
+  return doc.body.innerHTML.slice(0, PC.LIMITS.custom);
+};
 const inStyle = t => String(t || '').replace(/<\/style/gi, '<\\/style');
 const inScript = t => String(t || '').replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');
 
@@ -259,7 +305,7 @@ PC.customDoc = function (s, meta, mode) {
     + `<style>html,body{margin:0;padding:0;width:1280px;height:720px;overflow:hidden;background:transparent}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{-webkit-font-smoothing:antialiased}.slide{width:1280px;height:720px}${still ? '*,*::before,*::after{animation:none!important;transition:none!important}' : ''}</style>`
     + `<style>${inStyle(meta.css)}</style><style>${inStyle(c.css)}</style></head>`
     + `<body><div class="slide layout-${esc(c.base || 'custom')}" data-pc-custom="1" ${attrs}>${c.html || ''}</div>`
-    + (run ? `<script>${KIT_JS}</script>${c.js ? `<script>${inScript(c.js)}</script>` : ''}` : '') + '</body></html>';
+    + (run ? `<script>${KIT_JS}</script>${mode === 'live' ? `<script>${KIT_EDIT}</script>` : ''}${c.js ? `<script>${inScript(c.js)}</script>` : ''}` : '') + '</body></html>';
 };
 
 /** Turn any templated slide into the equivalent free-form HTML (what you see, as editable code). */
@@ -277,7 +323,7 @@ PC.detach = function (s, deck) {
 /* the custom renderer: the stage section holds one iframe; everything else is inside its sandbox */
 R.custom = c => {
   const mode = c.mode, run = mode === 'live' || mode === 'present';
-  return `<iframe class="cs-frame" title="${esc(PC.plain(c.s.headline || 'Custom slide'))}" sandbox="${run ? 'allow-scripts' : ''}" tabindex="-1" loading="eager"${c.s.custom && c.s.custom.interactive ? ' data-interactive="1"' : ''} srcdoc="${esc(PC.customDoc(c.s, c.meta, mode))}"></iframe>${mode === 'live' ? '<div class="cs-veil" aria-hidden="true"></div>' : ''}`;
+  return `<iframe class="cs-frame" title="${esc(PC.plain(c.s.headline || 'Custom slide'))}" sandbox="${run ? 'allow-scripts' : ''}" tabindex="-1" loading="eager"${c.s.custom && c.s.custom.interactive ? ' data-interactive="1"' : ''} srcdoc="${esc(PC.customDoc(c.s, c.meta, mode))}"></iframe>`;
 };
 
 const DECO_LAYOUTS = new Set(['title', 'statement', 'section', 'closing', 'quote']);

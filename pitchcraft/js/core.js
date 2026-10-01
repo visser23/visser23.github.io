@@ -5,7 +5,7 @@
 (function () {
 'use strict';
 const PC = window.PC = window.PC || {};
-PC.VERSION = '3.4.0';
+PC.VERSION = '3.5.0';
 PC.STAGE = { w: 1280, h: 720 };
 
 /* ── utilities ─────────────────────────────────────────────── */
@@ -78,7 +78,8 @@ const ICONS = {
 PC.ICON_NAMES = ['bolt', 'layers', 'sparkles', 'chart', 'lock', 'globe', 'wand', 'cursor', 'clock', 'check', 'users', 'user', 'target', 'rocket', 'shield', 'cpu', 'box', 'link', 'star', 'type', 'image', 'table', 'pie', 'terminal', 'flag', 'presentation', 'heart', 'key', 'puzzle', 'git', 'compass', 'mail', 'feather', 'gauge', 'edit', 'tag', 'map', 'file', 'code', 'download', 'upload', 'eye', 'palette', 'grid', 'play'];
 ICONS.code = 'M8 8l-5 4 5 4M16 8l5 4-5 4M14 5l-4 14';
 ICONS.moon = 'M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z'; ICONS.sun = c(12, 12, 4) + 'M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4';
-ICONS.settings = c(12, 12, 3) + 'M10.3 3h3.4l.5 2.4 1.7.7 2.1-1.3 2.4 2.4-1.3 2.1.7 1.7 2.4.5v3.4l-2.4.5-.7 1.7 1.3 2.1-2.4 2.4-2.1-1.3-1.7.7-.5 2.4h-3.4l-.5-2.4-1.7-.7-2.1 1.3-2.4-2.4 1.3-2.1-.7-1.7L3 13.7v-3.4l2.4-.5.7-1.7-1.3-2.1 2.4-2.4 2.1 1.3 1.7-.7z';
+/* Gear: Lucide "settings" (ISC licence), a standard six-lobe cog. */
+ICONS.settings = c(12, 12, 3) + 'M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z';
 PC.icon = (name, size = 20, cls = '') => {
   const d = ICONS[name] || ICONS.sparkles; const fill = d.startsWith('F:');
   return `<svg class="ic ${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${fill ? 'currentColor' : 'none'}" stroke="${fill ? 'none' : 'currentColor'}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${fill ? d.slice(2) : d}"/></svg>`;

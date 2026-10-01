@@ -50,23 +50,35 @@ function pcWalk(root, opt) {
   }
   function splitTop(s) { var out = [], d = 0, cur = ''; for (var i = 0; i < s.length; i++) { var ch = s[i]; if (ch === '(') d++; else if (ch === ')') d--; if (ch === ',' && d === 0) { out.push(cur.trim()); cur = ''; } else cur += ch; } if (cur.trim()) out.push(cur.trim()); return out; }
   /** the first usable layer of a background-image value: { grad } or { url } */
-  function layers(bg) {
+  function layers(bg, W, H) {
     var out = []; if (!bg || bg === 'none') return out;
     splitTop(bg).forEach(function (p) {
       var g = p.match(/^(repeating-)?(linear|radial|conic)-gradient\(([\s\S]*)\)$/), u = p.match(/^url\((['"]?)([\s\S]*?)\1\)$/);
-      if (g && !g[1] && g[2] !== 'conic') out.push({ grad: parseGrad(g[2], g[3]) }); else if (u) out.push({ url: u[2] });
+      if (g && !g[1] && g[2] !== 'conic') out.push({ grad: parseGrad(g[2], g[3], W || 1280, H || 720) }); else if (u) out.push({ url: u[2] });
     });
     return out;
   }
-  function parseGrad(kind, body) {
-    var parts = splitTop(body), first = parts[0], ang = 180, radial = kind === 'radial', at = [50, 50];
+  var KW = { left: 0, right: 100, top: 0, bottom: 100, center: 50 };
+  /** a CSS <position> ("8% -12%", "top left", "120px 40px") as percentages of the box */
+  function posOf(str, W, H) {
+    var t = str.trim().split(/\s+/), tv = function (v, d) { return /%$/.test(v) ? parseFloat(v) : /px$/.test(v) ? parseFloat(v) / d * 100 : null; };
+    if (t.length === 1) { if (t[0] === 'top' || t[0] === 'bottom') return [50, KW[t[0]]]; var x1 = t[0] in KW ? KW[t[0]] : tv(t[0], W); return [x1 == null ? 50 : x1, 50]; }
+    var a = t[0], b = t[1]; if (a === 'top' || a === 'bottom' || b === 'left' || b === 'right') { var sw = a; a = b; b = sw; }
+    var x = a in KW ? KW[a] : tv(a, W), y = b in KW ? KW[b] : tv(b, H); return [x == null ? 50 : x, y == null ? 50 : y];
+  }
+  function parseGrad(kind, body, W, H) {
+    var parts = splitTop(body), first = parts[0], ang = 180, radial = kind === 'radial', at = [50, 50], rx = null, ry = null, circle = false, ext = '';
     if (!radial && /^(-?[\d.]+(deg|turn|rad|grad)|to )/.test(first)) {
       parts.shift();
       var m = first.match(/^(-?[\d.]+)(deg|turn|rad|grad)/);
       if (m) { var v = parseFloat(m[1]); ang = m[2] === 'turn' ? v * 360 : m[2] === 'rad' ? v * 180 / Math.PI : m[2] === 'grad' ? v * .9 : v; }
       else { var dir = first.replace('to ', ''); ang = { top: 0, right: 90, bottom: 180, left: 270, 'top right': 45, 'right top': 45, 'bottom right': 135, 'right bottom': 135, 'bottom left': 225, 'left bottom': 225, 'top left': 315, 'left top': 315 }[dir] || 180; }
     } else if (radial && !/^(rgb|color|hsl|#|transparent)/.test(first)) {
-      parts.shift(); var am = first.match(/at\s+([\d.]+)%\s+([\d.]+)%/); if (am) at = [parseFloat(am[1]), parseFloat(am[2])];
+      parts.shift(); var am = first.match(/(?:^|\s)at\s+(.+)$/), pre = am ? first.slice(0, am.index) : first;
+      if (am) at = posOf(am[1], W, H);
+      circle = /\bcircle\b/.test(pre); var em = pre.match(/(closest|farthest)-(side|corner)/); if (em) ext = em[0];
+      var lens = (pre.match(/-?[\d.]+(?:px|%)/g) || []).map(function (v) { return /%$/.test(v) ? null : parseFloat(v); });
+      if (lens.length === 1 && lens[0] != null) { rx = ry = lens[0]; circle = true; } else if (lens.length >= 2) { var pc = pre.match(/-?[\d.]+(?:px|%)/g); rx = /%$/.test(pc[0]) ? parseFloat(pc[0]) / 100 * W : parseFloat(pc[0]); ry = /%$/.test(pc[1]) ? parseFloat(pc[1]) / 100 * H : parseFloat(pc[1]); }
     }
     var stops = parts.map(function (p) {
       var pm = p.match(/\s+(-?[\d.]+)%\s*$/), pos = pm ? parseFloat(pm[1]) : null, c = col(pm ? p.slice(0, pm.index) : p);
@@ -78,7 +90,7 @@ function pcWalk(root, opt) {
     stops.forEach(function (s) { if (!s.c) s.c = prev.c; else prev = s; });          // transparent stops take the neighbour's hue, so fades do not turn grey
     if (stops[0].p === null) stops[0].p = 0; if (stops[stops.length - 1].p === null) stops[stops.length - 1].p = 100;
     for (var i = 1; i < stops.length - 1; i++) if (stops[i].p === null) { var j = i; while (stops[j].p === null) j++; var step = (stops[j].p - stops[i - 1].p) / (j - i + 1); for (var k = i; k < j; k++) stops[k].p = stops[k - 1].p + step; }
-    return { ang: ((ang - 90) % 360 + 360) % 360, radial: radial, at: at, stops: stops.map(function (s) { return { p: Math.max(0, Math.min(100, s.p)), c: s.c, a: s.a }; }) };
+    return { ang: ((ang - 90) % 360 + 360) % 360, radial: radial, at: at, rx: rx, ry: ry, circle: circle, ext: ext, stops: stops.map(function (s) { return { p: Math.max(0, Math.min(100, s.p)), c: s.c, a: s.a }; }) };
   }
   function rel(r) { return { x: (r.left - RB.left) / SC, y: (r.top - RB.top) / SC, w: r.width / SC, h: r.height / SC }; }
   function geom(el, cs) {
@@ -249,8 +261,9 @@ function pcWalk(root, opt) {
     return { dx: nums[0] || 0, dy: nums[1] || 0, blur: nums[2] || 0, c: c.c, a: c.a };
   }
   function bgFor(cs, op) {
-    var ls = layers(cs.backgroundImage), out = { fill: null, grad: null, img: null, over: null }, c = col(cs.backgroundColor);
+    var ls = layers(cs.backgroundImage, num(cs.width) || 1280, num(cs.height) || 720), out = { fill: null, grad: null, img: null, over: null, layers: [] }, c = col(cs.backgroundColor);
     if (c) out.fill = { c: c.c, a: c.a * op };
+    ls.forEach(function (l) { if (l.grad) out.layers.push(l.grad); });
     ls.forEach(function (l, i) { if (l.grad && !out.grad && !out.img) out.grad = l.grad; else if (l.url && !out.img && !out.grad) out.img = { src: l.url, size: cs.backgroundSize, pos: cs.backgroundPosition }; });
     if (out.grad && out.fill && out.grad.stops.some(function (s) { return s.a < .95; })) out.over = true;   // gradient over a colour
     if (op < 1 && out.grad) out.grad.stops.forEach(function (s) { s.a *= op; });
@@ -283,7 +296,7 @@ function pcWalk(root, opt) {
     var line = uniform ? { w: sd[0].w, c: sd[0].c, a: sd[0].a * op, dash: sd[0].st === 'dashed' ? 'dash' : sd[0].st === 'dotted' ? 'sysDot' : 'solid' } : null;
     var hasFace = b.fill || b.grad || line;
     if (b.over && b.fill) items.push({ k: 'box', x: r1(g.x), y: r1(g.y), w: r1(g.w), h: r1(g.h), rot: g.rot, fill: b.fill, rad: rad.r, radMode: rad.mode, circle: rad.circle, name: nameOf(el) + ' colour' });
-    if (b.img) items.push({ k: 'img', x: r1(g.x), y: r1(g.y), w: r1(g.w), h: r1(g.h), rot: g.rot, src: b.img.src, size: b.img.size, pos: b.img.pos, rad: rad.r, circle: rad.circle, name: nameOf(el) + ' picture', alt: '' });
+    if (b.img) items.push({ k: 'img', x: r1(g.x), y: r1(g.y), w: r1(g.w), h: r1(g.h), rot: g.rot, src: b.img.src, size: b.img.size, pos: b.img.pos, rad: rad.r, circle: rad.circle, name: nameOf(el) + ' picture', alt: '', op: op });
     var it = { k: 'box', x: r1(g.x), y: r1(g.y), w: r1(g.w), h: r1(g.h), rot: g.rot, fill: b.over ? null : b.fill, grad: b.grad, line: line, rad: rad.r, radMode: rad.mode, circle: rad.circle, shadow: hasFace ? sh : null, name: nameOf(el), op: op };
     if (paras) { var tf = textFrame(el, g, cs, paras, true); it.paras = paras; it.ins = tf.ins; it.anchor = tf.anchor; it.wrap = tf.wrap; }
     if (hasFace || paras) { if (!hasFace && !paras) return null; items.push(it); }
@@ -348,8 +361,13 @@ function pcWalk(root, opt) {
     try { items.push({ k: 'svg', x: r1(g.x), y: r1(g.y), w: r1(g.w), h: r1(g.h), markup: svgMarkup(el), op: op, name: name || (el.getAttribute('aria-label') || 'Graphic'), alt: el.getAttribute('aria-label') || '' }); } catch (e) { warn.push('A graphic could not be read: ' + e.message); }
   }
   function imgItem(el, op, cs) {
-    var g = geom(el, cs), rad = radiusOf(cs, g);
-    items.push({ k: 'img', x: r1(g.x), y: r1(g.y), w: r1(g.w), h: r1(g.h), rot: g.rot, src: el.currentSrc || el.src, fit: cs.objectFit || 'fill', pos: cs.objectPosition, rad: rad.r, circle: rad.circle, name: 'Picture', alt: el.getAttribute('alt') || '', op: op });
+    var g = geom(el, cs), rad = radiusOf(cs, g), b = bgFor(cs, op), sd = sides(cs, g), sh = shadowOf(cs);
+    var uniform = sd[0] && sd[1] && sd[2] && sd[3] && sd[0].w === sd[1].w && sd[0].w === sd[2].w && sd[0].w === sd[3].w && sd[0].c === sd[1].c && sd[0].c === sd[3].c && sd[0].c === sd[2].c;
+    var line = uniform ? { w: sd[0].w, c: sd[0].c, a: sd[0].a * op, dash: sd[0].st === 'dashed' ? 'dash' : sd[0].st === 'dotted' ? 'sysDot' : 'solid' } : null;
+    var box = { x: r1(g.x), y: r1(g.y), w: r1(g.w), h: r1(g.h), rot: g.rot, rad: rad.r, radMode: rad.mode, circle: rad.circle };
+    if (b.fill || b.grad || sh) items.push(Object.assign({ k: 'box', fill: b.fill, grad: b.grad, shadow: sh, name: 'Picture backdrop', op: op }, box));   // behind a contained picture, and the carrier of its shadow
+    var inset = line ? line.w / 2 : 0;                                                  // a PowerPoint outline is centred on the edge, a CSS border sits inside it
+    items.push({ k: 'img', x: r1(g.x + inset), y: r1(g.y + inset), w: r1(g.w - 2 * inset), h: r1(g.h - 2 * inset), rot: g.rot, src: el.currentSrc || el.src, fit: cs.objectFit || 'fill', pos: cs.objectPosition, rad: Math.max(0, rad.r - inset), circle: rad.circle, line: line, name: 'Picture', alt: el.getAttribute('alt') || '', op: op });
   }
   function recordObjs(layer) {
     [].slice.call(layer.children).forEach(function (ob) {
@@ -364,6 +382,16 @@ function pcWalk(root, opt) {
       objs[id] = rec;
     });
   }
+  /** a blurred coloured shape (the soft glows in the themes): PowerPoint cannot blur, so the blur is painted once into a picture */
+  function glowItem(el, cs, op, blur) {
+    var g = rel(el.getBoundingClientRect()), b = bgFor(cs, 1), c = b.fill || (b.grad && b.grad.stops[0] ? { c: b.grad.stops[0].c, a: 1 } : null); if (!c || g.w < 4 || g.h < 4) return;
+    try {
+      var pad = Math.ceil(blur * 2.5), k = Math.min(1, 320 / (g.w + 2 * pad), 320 / (g.h + 2 * pad)), cv = root.ownerDocument.createElement('canvas'); cv.width = Math.max(2, Math.round((g.w + 2 * pad) * k)); cv.height = Math.max(2, Math.round((g.h + 2 * pad) * k));
+      var x = cv.getContext('2d'), rad = radiusOf(cs, g); x.filter = 'blur(' + (blur * k) + 'px)'; x.fillStyle = '#' + c.c; x.globalAlpha = c.a;
+      x.beginPath(); if (rad.circle) x.ellipse(cv.width / 2, cv.height / 2, g.w * k / 2, g.h * k / 2, 0, 0, 7); else if (x.roundRect) x.roundRect(pad * k, pad * k, g.w * k, g.h * k, rad.r * k); else x.rect(pad * k, pad * k, g.w * k, g.h * k); x.fill();
+      items.push({ k: 'img', x: r1(g.x - pad), y: r1(g.y - pad), w: r1(g.w + 2 * pad), h: r1(g.h + 2 * pad), src: cv.toDataURL('image/png'), fit: 'fill', name: 'Glow', alt: '', op: op });
+    } catch (e) { warn.push('A soft glow could not be exported.'); }
+  }
   function visit(el, op, top) {
     try {
       var cs = gcs(el), tag = el.tagName.toLowerCase();
@@ -376,7 +404,7 @@ function pcWalk(root, opt) {
       if (tag === 'img') { imgItem(el, op, cs); return; }
       if (tag === 'canvas') { try { items.push({ k: 'img', x: 0, y: 0, w: 0, h: 0, src: el.toDataURL('image/png'), fit: 'fill', name: 'Canvas', alt: '', op: op }); var g0 = rel(el.getBoundingClientRect()); var li = items[items.length - 1]; li.x = r1(g0.x); li.y = r1(g0.y); li.w = r1(g0.w); li.h = r1(g0.h); } catch (e) { warn.push('A canvas could not be read.'); } return; }
       if (/^(iframe|video|audio|object|embed)$/.test(tag)) { if (tag === 'iframe' && el.classList.contains('cs-frame')) return; warn.push('A ' + tag + ' cannot be exported.'); return; }
-      var f = cs.filter || ''; var bm = f.match(/blur\(([\d.]+)px\)/); if (bm && parseFloat(bm[1]) >= 8) return;      // soft glows have no PowerPoint equivalent that looks right
+      var f = cs.filter || ''; var bm = f.match(/blur\(([\d.]+)px\)/); if (bm && parseFloat(bm[1]) >= 8) { glowItem(el, cs, op, parseFloat(bm[1])); return; }      // soft glows become one soft-edged picture
       var g = geom(el, cs);
       var isRoot = top === true;
       if (!isRoot) {
@@ -423,7 +451,7 @@ function pcWalk(root, opt) {
 
   var rcs = gcs(root), rb = bgFor(rcs, 1);
   visit(root, 1, true);
-  return { bg: { fill: rb.fill, grad: rb.grad, img: rb.img }, items: items, objs: objs, warn: warn, fonts: Object.keys(fonts) };
+  return { bg: { fill: rb.fill, grad: rb.grad, img: rb.img, layers: rb.layers.slice(0, 8) }, items: items, objs: objs, warn: warn, fonts: Object.keys(fonts) };
 }
 window.PC = window.PC || {};
 PC.walk = pcWalk;

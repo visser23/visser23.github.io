@@ -91,8 +91,8 @@ E.frameEl = frameEl;
 function frameHtml(s, i) {
   const n = S.count();
   return `<article class="frame${i === S.sel ? ' sel' : ''}" data-i="${i}" data-id="${esc(s.id)}" aria-label="Slide ${i + 1} of ${n}">
-    <div class="frame-bar"><span class="frame-n">${PC.pad2(i + 1)}</span><span class="frame-name">${esc(slideName(s))}</span><span class="frame-sp"></span>
-      <span class="frame-act"><button data-fa="up" aria-label="Move slide up" title="Move up"${i === 0 ? ' disabled' : ''}>${icon('up', 16)}</button><button data-fa="down" aria-label="Move slide down" title="Move down"${i === n - 1 ? ' disabled' : ''}>${icon('down', 16)}</button><button data-fa="dup" aria-label="Duplicate slide" title="Duplicate">${icon('copy', 16)}</button><button data-fa="del" class="dz" aria-label="Delete slide" title="Delete">${icon('trash', 16)}</button></span></div>
+    <div class="frame-bar"><span class="frame-n">${PC.pad2(i + 1)}</span><span class="frame-name">${esc(slideName(s))}</span>${s.layout === 'custom' ? '<span class="frame-hint">double-click text to edit it</span>' : ''}<span class="frame-sp"></span>
+      <span class="frame-act">${s.layout === 'custom' ? `<button data-fa="code" aria-label="Edit the HTML, CSS and JS" title="Edit the code">${icon('code', 16)}</button>` : ''}<button data-fa="up" aria-label="Move slide up" title="Move up"${i === 0 ? ' disabled' : ''}>${icon('up', 16)}</button><button data-fa="down" aria-label="Move slide down" title="Move down"${i === n - 1 ? ' disabled' : ''}>${icon('down', 16)}</button><button data-fa="dup" aria-label="Duplicate slide" title="Duplicate">${icon('copy', 16)}</button><button data-fa="del" class="dz" aria-label="Delete slide" title="Delete">${icon('trash', 16)}</button></span></div>
     <div class="frame-box"><div class="stage editing">${slideHtml(s, i, true)}</div></div>
   </article><div class="frame-add" data-at="${i + 1}"><button aria-label="Insert a slide after slide ${i + 1}" title="Insert slide here">${icon('plus', 16)}</button></div>`;
 }
@@ -244,10 +244,20 @@ function bindCanvas() {
     e.preventDefault(); const t = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\s*\n\s*/g, ' '); document.execCommand('insertText', false, t);
   });
   cv.addEventListener('mousedown', e => { const fr = e.target.closest('.frame'); if (fr) S.select(+fr.dataset.i, 'click'); });
-  cv.addEventListener('dblclick', e => { const fr = e.target.closest('.frame'), s = fr && S.slide(+fr.dataset.i); if (s && s.layout === 'custom' && !e.target.closest('.frame-bar, .ob, .sel-layer')) PC.inspector.reveal({ path: 'custom.html' }); });
+  /* what a live custom slide tells the editor: it was pressed (select it), asks for its code, or a text was edited inside it */
+  window.addEventListener('message', e => {
+    const d = e.data; if (!d || typeof d !== 'object' || (d.pc !== 'sel' && d.pc !== 'code' && d.pc !== 'edit')) return;
+    const f = $$('#canvas-inner iframe.cs-frame').find(x => x.contentWindow === e.source); if (!f) return;
+    const fr = f.closest('.frame'), i = +fr.dataset.i, s = S.slide(i); if (!s || s.layout !== 'custom') return;
+    if (d.pc === 'sel') { S.select(i, 'click'); return; }
+    if (d.pc === 'code') { S.select(i, 'click'); PC.inspector.reveal({ path: 'custom.html' }); return; }
+    const html = PC.editCustomHtml(s.custom && s.custom.html, d.i, d.tag, d.old, d.html, !!d.rich);
+    if (html == null) { PC.ui.toast('Could not match that text to the slide code. Edit it in the Code tab.', 'bad'); E.renderFrame(i); return; }
+    S.mutate(i, sl => { sl.custom.html = html; }, 'cx:' + s.id + ':' + d.i, 'frame');
+  });
   cv.addEventListener('click', e => {
     const fa = e.target.closest('[data-fa]');
-    if (fa) { const i = +fa.closest('.frame').dataset.i, a = fa.dataset.fa; if (a === 'up') S.move(i, i - 1); else if (a === 'down') S.move(i, i + 1); else if (a === 'dup') S.duplicate(i); else if (a === 'del') S.remove(i); return; }
+    if (fa) { const i = +fa.closest('.frame').dataset.i, a = fa.dataset.fa; if (a === 'up') S.move(i, i - 1); else if (a === 'down') S.move(i, i + 1); else if (a === 'dup') S.duplicate(i); else if (a === 'del') S.remove(i); else if (a === 'code') { S.select(i, 'click'); PC.inspector.reveal({ path: 'custom.html' }); } return; }
     const add = e.target.closest('.frame-add button'); if (add) { const at = +add.closest('.frame-add').dataset.at; S.select(Math.max(0, at - 1), 'click'); E.layoutPicker('add'); return; }
     if (e.target.closest('[data-path]:not([data-readonly]), .ob, .sel-layer')) return;
     const ro = e.target.closest('[data-readonly]');
@@ -327,7 +337,7 @@ E.init = function () {
     if (nameOnly && !S.deck.meta.numbers) { E.syncRibbon(); return; } // name is only drawn on slides when numbers are on
     E.renderThumbs(); E.renderCanvas(); E.markSel(); E.syncRibbon();
   });
-  S.on('slide', ({ i }) => { E.renderFrame(i); E.updateThumb(i, true); E.syncRibbon(); });
+  S.on('slide', ({ i, src }) => { if (src !== 'frame') E.renderFrame(i); E.updateThumb(i, true); E.syncRibbon(); });   // src 'frame': the edit was made inside the live frame, which already shows it
   S.on('text', ({ i }) => { E.updateThumb(i); });
   S.on('select', ({ i, src }) => { E.markSel(); E.syncRibbon(); if (src === 'thumb' || src === 'add' || src === 'dup' || src === 'move' || src === 'remove') E.scrollToFrame(i); });
   S.on('history', () => E.syncRibbon());
