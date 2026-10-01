@@ -40,11 +40,13 @@ P.go = function (i, dir) {
   P.i = i;
   $('.pres-count', P.el).textContent = `${i + 1} / ${n}`;
   $('.pres-prog', P.el).style.width = ((i + 1) / n * 100) + '%';
-  $('[data-p="prev"]', P.el).disabled = i === 0; $('[data-p="next"]', P.el).disabled = i === n - 1;
+  $('[data-p="prev"]', P.el).disabled = visibleFrom(i, -1) < 0; $('[data-p="next"]', P.el).disabled = visibleFrom(i, 1) < 0;
   P.el.dataset.slide = i; P.renderNotes();
 };
-P.next = function () { if (P.i < S.count() - 1) P.go(P.i + 1, 1); else P.bump(); };
-P.prev = function () { if (P.i > 0) P.go(P.i - 1, -1); };
+/** The next slide in a direction that is not hidden (hidden slides are skipped when presenting). */
+const visibleFrom = (i, dir) => { for (let j = i + dir; j >= 0 && j < S.count(); j += dir) if (!S.slide(j).hidden) return j; return -1; };
+P.next = function () { const j = visibleFrom(P.i, 1); if (j >= 0) P.go(j, 1); else P.bump(); };
+P.prev = function () { const j = visibleFrom(P.i, -1); if (j >= 0) P.go(j, -1); };
 P.bump = function () { const st = $('.pres-stage', P.el); if (!st) return; st.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-14px)' }, { transform: 'translateX(0)' }], { duration: 260, easing: 'ease-out' }); };
 P.renderNotes = function () {
   let box = $('.pres-notes', P.el); if (!P.notes) { if (box) box.remove(); return; }
@@ -115,6 +117,10 @@ P.open = function (from) {
     const b = e.target.closest('[data-p]'); P.wake();
     if (b) { const a = b.dataset.p; if (a === 'exit') P.close(); else if (a === 'prev') P.prev(); else if (a === 'next') P.next(); else if (a === 'fs') P.toggleFs(); else if (a === 'notes') { P.notes = !P.notes; P.renderNotes(); } return; }
     if (e.target.closest('.pres-notes')) return;
+    const lk = e.target.closest('[data-link]');
+    if (lk) {   // a link on an object: https and mailto open a new tab, #slide-id jumps
+      const u = lk.dataset.link; if (PC.okLink(u)) { if (u[0] === '#') { const j = S.indexOf(u.slice(1)); if (j >= 0) P.go(j); } else window.open(u, '_blank', 'noopener,noreferrer'); return; }
+    }
     const r = el.getBoundingClientRect(); if (e.clientX < r.left + r.width * .25) P.prev(); else P.next();
   });
   let tx = 0, ty = 0, tt = 0;

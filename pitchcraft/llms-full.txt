@@ -1,8 +1,8 @@
 # Pitchcraft: guide for AI assistants
 
-Version 3.3.0 · canonical copy: https://visser23.github.io/pitchcraft/ai-guide.md · also inside the app: `Pitchcraft.guide()`
+Version 3.4.0 · canonical copy: https://visser23.github.io/pitchcraft/ai-guide.md · also inside the app: `Pitchcraft.guide()`
 
-Pitchcraft is a browser presentation studio. A deck is **plain JSON**. You write or edit that JSON, the user opens it in Pitchcraft, edits it visually and presents it. There is no server: everything is validated and rendered in the user's browser. This guide is generated from the same specs the app runs on, so it is always accurate for version 3.3.0.
+Pitchcraft is a browser presentation studio. A deck is **plain JSON**. You write or edit that JSON, the user opens it in Pitchcraft, edits it visually and presents it. There is no server: everything is validated and rendered in the user's browser. This guide is generated from the same specs the app runs on, so it is always accurate for version 3.4.0.
 
 **Plain-text routes.** If your tool rewrites URLs, equals signs or long output, fetch this guide as plain markdown (https://visser23.github.io/pitchcraft/ai-guide.md) or together with the schema in one file (https://visser23.github.io/pitchcraft/llms-full.txt). In the page, `Pitchcraft.guide(9)` returns one section at a time.
 
@@ -110,18 +110,21 @@ If the user said nothing about style, a good default is templates for the plain 
 
 `objects` is an array, drawn in order: later items are on top. The stage is **1280 wide, 720 tall**, origin top-left, all units are pixels, `rot` is degrees clockwise. Maximum 120 objects per slide.
 
-Common fields: `id` (unique on the slide; generated if you omit it), `type`, `x`, `y`, `w`, `h` (optional for text: it grows with its content), `rot`, `opacity` (0 to 1), `shadow` (true), `name` (label shown in the editor's layers list).
+Common fields: `id` (unique on the slide; generated if you omit it), `type`, `x`, `y`, `w`, `h` (optional for text: it grows with its content), `rot`, `opacity` (0 to 1), `shadow` (true), `name` (label shown in the editor's layers list), `flipH` / `flipV` (mirror), `locked` (the editor will not move or edit it), `group` (objects sharing a group id select and move together), `link` (`https://`, `mailto:` or `#slide-id`, followed when presenting), `alt` (alternative text for shapes, icons and lines).
+
+A slide can also be hidden from the presentation with `"hidden": true` (it stays in the editor and is skipped when presenting and exporting to PDF).
 
 | type | extra fields |
 |---|---|
 | `text` | `text`, `font`, `size` (px), `weight` (100 to 900), `italic`, `underline`, `caps` (uppercase), `align` (left, center, right, justify), `valign` (top, middle, bottom; only when `h` is set), `color`, `lh` (line height multiple), `ls` (letter spacing in em) |
-| `shape` | `shape`, `fill`, `stroke`, `strokeW`, `dash` (solid, dashed, dotted), `radius` (rect only), and all the text fields above for text inside the shape |
+| `shape` | `shape`, `fill`, `fill2` + `gradAngle` (a two-colour gradient), `stroke`, `strokeW`, `dash` (solid, dashed, dotted), `radius` (rect only), and all the text fields above for text inside the shape. Put a label in the shape's own `text`; do not lay a separate text object over it |
+| `line` | `kind` (`straight`, `elbow` for right-angle corners, `curve`), `stroke`, `strokeW`, `dash`, `arrowStart` / `arrowEnd` (`none`, `triangle`, `stealth`, `open`, `dot`, `diamond`), `vert` (elbow and curve leave vertically instead of horizontally), `bend` (0.05 to 0.95: where the middle run sits), `from` / `to` (glue an end to another object: `"objectId:t"`, `:r`, `:b` or `:l`; the line follows when that object moves). The start is the top-left of the box and the end the bottom-right, unless `flipH` / `flipV` mirror it |
 | `image` | `src` (https URL or `data:image/...`), `alt` (always write it), `fit` (cover, contain, fill), `radius`, `stroke`, `strokeW` |
 | `icon` | `icon` (name from the list in section 4), `color` |
 
-Shapes: `rect` (Rectangle), `round` (Rounded rectangle), `ellipse` (Ellipse), `triangle` (Triangle), `diamond` (Diamond), `hexagon` (Hexagon), `star` (Star), `arrow` (Block arrow), `chevron` (Chevron), `line` (Line), `connector` (Arrow line). Lines and arrow lines are drawn with `stroke` and `strokeW`; keep their `h` small (about 14).
+Shapes: `rect` (Rectangle), `round` (Rounded rectangle), `ellipse` (Ellipse), `triangle` (Triangle), `diamond` (Diamond), `hexagon` (Hexagon), `star` (Star), `arrow` (Right arrow), `chevron` (Chevron), `arrowleft` (Left arrow), `arrowup` (Up arrow), `arrowdown` (Down arrow), `arrowboth` (Left-right arrow), `pentagon` (Pentagon), `octagon` (Octagon), `parallelogram` (Parallelogram), `trapezoid` (Trapezoid), `plus` (Cross), `callout` (Speech bubble), `donut` (Ring), `cylinder` (Cylinder), `heart` (Heart), `line` (Line (old)), `connector` (Arrow line (old)). For a diagram, glue connectors to boxes with `from` / `to` rather than guessing coordinates: `{ "type": "line", "kind": "elbow", "from": "a:r", "to": "b:l", "arrowEnd": "triangle", "stroke": "var(--muted)", "strokeW": 3 }`. Their `x`, `y`, `w`, `h` are recomputed from the glue.
 
-Fonts (`font`): `body` (Theme body), `display` (Theme heading), `inter` (Inter), `bricolage` (Bricolage Grotesque), `serif` (Instrument Serif), `syne` (Syne), `mono` (JetBrains Mono), `arial` (Arial), `georgia` (Georgia), `times` (Times New Roman), `verdana` (Verdana), `trebuchet` (Trebuchet MS), `courier` (Courier New). Any other plain family name (letters, digits, spaces, hyphens) also works but only renders if installed on the viewer's machine, so prefer the keys.
+Fonts (`font`): `body` (Theme body), `display` (Theme heading), `inter` (Inter), `bricolage` (Bricolage Grotesque), `serif` (Instrument Serif), `syne` (Syne), `mono` (JetBrains Mono), `arial` (Arial), `georgia` (Georgia), `times` (Times New Roman), `verdana` (Verdana), `trebuchet` (Trebuchet MS), `courier` (Courier New), `dmsans` (DM Sans), `manrope` (Manrope), `plusjakartasans` (Plus Jakarta Sans), `spacegrotesk` (Space Grotesk), `outfit` (Outfit), `montserrat` (Montserrat), `worksans` (Work Sans), `sora` (Sora), `figtree` (Figtree), `urbanist` (Urbanist), `poppins` (Poppins), `raleway` (Raleway), `nunito` (Nunito), `lato` (Lato), `rubik` (Rubik), `archivo` (Archivo), `epilogue` (Epilogue), `ibmplexsans` (IBM Plex Sans), `josefinsans` (Josefin Sans), `quicksand` (Quicksand), `cabin` (Cabin), `playfairdisplay` (Playfair Display), `lora` (Lora), `fraunces` (Fraunces), `sourceserif4` (Source Serif 4), `cormorantgaramond` (Cormorant Garamond), `librebaskerville` (Libre Baskerville), `dmserifdisplay` (DM Serif Display), `oswald` (Oswald), `anton` (Anton), `bebasneue` (Bebas Neue), `abrilfatface` (Abril Fatface), `pacifico` (Pacifico), `lobster` (Lobster), `caveat` (Caveat), `spacemono` (Space Mono), `ibmplexmono` (IBM Plex Mono), `firacode` (Fira Code), `inconsolata` (Inconsolata). Any other plain family name (letters, digits, spaces and `- . _ & +`) also works but only renders if installed on the viewer's machine, so prefer the keys. They are all bundled and load on demand.
 
 Colours (`color`, `fill`, `stroke`): hex (`#1a1a2e`), `rgb()`/`rgba()`, a plain colour name, or a **theme token** that follows the deck theme and the slide background. Prefer tokens so the slide survives a theme change: `var(--fg)` text, `var(--muted)` muted text, `var(--shape)` accent, `var(--on-shape)` on accent, `var(--card)` card, `var(--slide-bg)` background, `#ffffff` white, `#000000` black, `var(--c1)` palette 1, `var(--c2)` palette 2, `var(--c3)` palette 3, `var(--c4)` palette 4, `var(--c5)` palette 5, `var(--c6)` palette 6.
 
@@ -131,6 +134,7 @@ Defaults when a field is omitted:
 - `shape`: w 260, h 160, shape "rect", fill "var(--shape)", stroke "", strokeW 0, radius 0, dash "solid", size 28, weight 600, font "body", align "center", valign "middle", color "var(--on-shape)", lh 1.2, ls 0
 - `image`: w 480, h 320, fit "cover", radius 0, stroke "", strokeW 0
 - `icon`: w 96, h 96, color "var(--shape)"
+- `line`: w 320, h 0, kind "straight", stroke "var(--shape)", strokeW 5, dash "solid", arrowStart "none", arrowEnd "none", bend 0.5
 
 Rules for good free-form slides:
 - Keep everything inside the safe area: x from 74 to 1205, y from 40 to 668, unless it is a deliberate full-bleed shape or image.
@@ -338,9 +342,10 @@ When Pitchcraft is open in the tab you control, use the global `Pitchcraft` obje
 - `Pitchcraft.getObjects(ref)`: Copy of the free-form objects on a slide.
 - `Pitchcraft.html(ref)`: The rendered HTML of one slide (what the DOM contains).
 - `Pitchcraft.prettyHtml(ref)`: The same, indented for reading.
+- `Pitchcraft.exportPptx()`: Async. Builds a native PowerPoint file from the deck and returns { filename, base64, report } (report lists slides, pictures, fonts and warnings). Text stays editable text; shapes stay shapes. Does not download anything; save the base64 yourself.
 - `Pitchcraft.exportJSON()`: The deck as a JSON string, exactly what a .pitchcraft file contains.
-- `Pitchcraft.audit(deck?)`: Fast layout audit of templated and blank slides: finds text that clips or leaves the safe area. Returns one entry per slide with a problems list. It cannot see inside custom slides: those come back with checked:false. Use auditAll() for them.
-- `Pitchcraft.auditAll(deck?)`: Async. Everything audit() does, plus it runs each custom slide in a hidden sandbox and measures the rendered text: text off the slide, outside the safe area, clipped by its container, or overlapping other text. Entries have checked:true. Await it.
+- `Pitchcraft.audit(deck?)`: Fast layout audit of templated and blank slides: finds text that clips or leaves the safe area. Returns one entry per slide with a problems list. It cannot see inside custom slides: those come back with status "unknown", checked:false and problems:null (never an empty list that looks clean). Use auditAll() for them.
+- `Pitchcraft.auditAll(deck?)`: Async. Everything audit() does, plus it runs each custom slide in a hidden sandbox and measures the rendered text: text off the slide, outside the safe area, clipped by its container, overlapping other text, short labels that wrap (label-wraps), text that straddles a box edge (text-crosses-edge) and text jammed against its box (text-cramped). Each entry has status "clean", "issues" or "unknown". The first measurement is retried once with more time. Await it.
 - `Pitchcraft.measureText(text, opts?)`: Measure text before you place it. opts {font "display"|"body"|"mono"|a CSS family, size (px, default 28), weight, caps, ls, lh, w (box width px)}. Returns {width, height, lines, em}: width of the longest line, height at the wrapped width, and the average em per character in this theme.
 - `Pitchcraft.current()`: Index of the selected slide.
 - `Pitchcraft.count()`: Number of slides.
@@ -348,7 +353,9 @@ When Pitchcraft is open in the tab you control, use the global `Pitchcraft` obje
 
 **Deck**
 
-- `Pitchcraft.setDeck(deckOrJson)`: Replace the whole deck (object or JSON string). Returns {slides, warnings}. Undoable.
+- `Pitchcraft.setDeck(deckOrJson)`: Replace the whole deck (object or JSON string). Returns {slides, warnings}. Undoable. The deck it replaced is kept in backups().
+- `Pitchcraft.backups()`: The last few decks that were replaced or undone away: [{index, title, slides, reason, t}]. They survive a reload.
+- `Pitchcraft.restoreBackup(index)`: Put one of those decks back. Undoable. Returns true on success.
 - `Pitchcraft.importText(text, mode?)`: Import deck JSON text. mode "replace" (default) or "append". Returns {deck, warnings}.
 - `Pitchcraft.setMeta(patch)`: Patch deck meta: {name, theme, numbers, transition, css}.
 - `Pitchcraft.setTheme(theme)`: Set the deck theme key.
@@ -565,6 +572,10 @@ Pitchcraft.setPath("s3", "items.0.value", "42");
             "blur"
           ]
         },
+        "hidden": {
+          "type": "boolean",
+          "description": "Skipped when presenting and exported as a hidden slide."
+        },
         "fill": {
           "type": "string",
           "description": "Hex, rgb()/rgba(), a colour name, or a theme token such as var(--fg), var(--muted), var(--shape), var(--on-shape), var(--c1)..var(--c6)."
@@ -682,7 +693,8 @@ Pitchcraft.setPath("s3", "items.0.value", "42");
             "text",
             "shape",
             "image",
-            "icon"
+            "icon",
+            "line"
           ]
         },
         "x": {
@@ -727,7 +739,7 @@ Pitchcraft.setPath("s3", "items.0.value", "42");
         },
         "font": {
           "type": "string",
-          "description": "One of body, display, inter, bricolage, serif, syne, mono, arial, georgia, times, verdana, trebuchet, courier, or a plain installed family name."
+          "description": "One of body, display, inter, bricolage, serif, syne, mono, arial, georgia, times, verdana, trebuchet, courier, dmsans, manrope, plusjakartasans, spacegrotesk, outfit, montserrat, worksans, sora, figtree, urbanist, poppins, raleway, nunito, lato, rubik, archivo, epilogue, ibmplexsans, josefinsans, quicksand, cabin, playfairdisplay, lora, fraunces, sourceserif4, cormorantgaramond, librebaskerville, dmserifdisplay, oswald, anton, bebasneue, abrilfatface, pacifico, lobster, caveat, spacemono, ibmplexmono, firacode, inconsolata, or a plain installed family name."
         },
         "size": {
           "type": "number",
@@ -785,6 +797,19 @@ Pitchcraft.setPath("s3", "items.0.value", "42");
             "star",
             "arrow",
             "chevron",
+            "arrowleft",
+            "arrowup",
+            "arrowdown",
+            "arrowboth",
+            "pentagon",
+            "octagon",
+            "parallelogram",
+            "trapezoid",
+            "plus",
+            "callout",
+            "donut",
+            "cylinder",
+            "heart",
             "line",
             "connector"
           ]
@@ -821,7 +846,7 @@ Pitchcraft.setPath("s3", "items.0.value", "42");
         "alt": {
           "type": "string",
           "maxLength": 300,
-          "description": "Always provide for images."
+          "description": "Alternative text for shapes, icons and lines (images use alt)."
         },
         "fit": {
           "enum": [
@@ -878,6 +903,92 @@ Pitchcraft.setPath("s3", "items.0.value", "42");
             "grid",
             "play"
           ]
+        },
+        "flipH": {
+          "type": "boolean",
+          "description": "Mirror left-right (lines: the start is on the right)."
+        },
+        "flipV": {
+          "type": "boolean",
+          "description": "Mirror top-bottom."
+        },
+        "locked": {
+          "type": "boolean",
+          "description": "The editor will not move, resize or edit it until unlocked."
+        },
+        "group": {
+          "type": "string",
+          "pattern": "^[\\w-]{1,24}$",
+          "description": "Objects sharing a group id select and move together."
+        },
+        "link": {
+          "type": "string",
+          "description": "https://, mailto: or #slide-id. Followed when presenting."
+        },
+        "list": {
+          "enum": [
+            "bullet",
+            "number"
+          ],
+          "description": "Text and shapes: each line becomes a bullet or numbered item."
+        },
+        "fill2": {
+          "type": "string",
+          "description": "Hex, rgb()/rgba(), a colour name, or a theme token such as var(--fg), var(--muted), var(--shape), var(--on-shape), var(--c1)..var(--c6)."
+        },
+        "gradAngle": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 360,
+          "description": "With fill2: a linear gradient from fill to fill2. 90 = left to right, 180 = top to bottom."
+        },
+        "kind": {
+          "enum": [
+            "straight",
+            "elbow",
+            "curve"
+          ],
+          "description": "type \"line\": straight, elbow (right-angle corners) or curve. Start = top-left of the box, end = bottom-right, unless flipped."
+        },
+        "vert": {
+          "type": "boolean",
+          "description": "Elbow and curve: leave the start vertically instead of horizontally."
+        },
+        "bend": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 0.95,
+          "description": "Elbow and curve: where the middle run sits, 0..1 (default 0.5)."
+        },
+        "arrowStart": {
+          "enum": [
+            "none",
+            "triangle",
+            "stealth",
+            "open",
+            "dot",
+            "diamond"
+          ]
+        },
+        "arrowEnd": {
+          "enum": [
+            "none",
+            "triangle",
+            "stealth",
+            "open",
+            "dot",
+            "diamond"
+          ]
+        },
+        "from": {
+          "type": "string",
+          "pattern": "^[\\w-]{1,40}:[trbl]$",
+          "description": "type \"line\": glue the start to a side of another object, \"objectId:t|r|b|l\". The line follows when the object moves."
+        },
+        "to": {
+          "type": "string",
+          "pattern": "^[\\w-]{1,40}:[trbl]$",
+          "description": "Glue the end likewise."
         }
       }
     }

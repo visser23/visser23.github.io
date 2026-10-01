@@ -421,3 +421,10 @@
 .ob-icon .ob-in > svg { width: 100%; height: 100%; }
 .ob-shadow > .ob-in { filter: drop-shadow(0 12px 20px rgba(0, 0, 0, .3)); }
 .anim 
+/* lines and connectors: the box can be 0 high, so the svg draws outside it and only the stroke takes the pointer */
+.ob-line { pointer-events: none; } .ob-line .ob-in { height: 0; overflow: visible; display: block; } .ob-line .ob-linesvg { position: absolute; left: 0; top: 0; width: auto; height: auto; overflow: visible; }
+.ob-line .ln-hit { pointer-events: none; } .editing .ob-line { pointer-events: none; cursor: move; } .editing .ob-line .ln-hit { pointer-events: stroke; }
+.editing .ob-line:hover:not(.ob-editing) { outline: none; } .editing .ob-line:hover .ln-hit { stroke: rgba(91, 75, 255, .25) !important; }
+/* bullet and numbered lists inside text boxes and shapes */
+.bl { display: block; position: relative; padding-left: 1.05em; } .bl::before { content: attr(data-mk); position: absolute; left: 0; top: 0; } .bl-0::before { content: none; }
+.ob-link { cursor: pointer; } .editing .ob-link { cursor: move; } .ob-locked { cursor: default; }

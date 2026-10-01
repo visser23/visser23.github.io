@@ -86,57 +86,61 @@ PC.exportMenu = function (anchor) {
     { icon: 'printer', label: 'Save as PDF', hint: 'Opens the print dialog · one slide per page', run: () => PC.print() },
     { icon: 'sparkles', label: 'Build with AI…', hint: 'Prompts for chat windows and browser AIs', run: () => PC.ai.dialog() },
     '-',
-    { icon: 'presentation', label: 'PowerPoint (.pptx)', hint: 'Planned: your JSON maps cleanly to slides', disabled: true, soon: true }
+    { icon: 'presentation', label: 'PowerPoint (.pptx)', hint: 'Editable shapes, text boxes and notes', run: () => PC.exportPptx() }
   ]);
 };
 
-PC.helpDialog = function () {
-  const k = (keys, what) => `<span>${keys.map(x => `<kbd>${x}</kbd>`).join(' ')}</span><span>${what}</span>`;
-  const faq = (q, a) => `<details class="faq"><summary>${q}</summary><p>${a}</p></details>`;
-  const m = UI.modal({
-    title: 'How Pitchcraft works', size: '',
-    body: `<p>Pitchcraft turns a small piece of JSON into presentation-ready slides. Build them by hand, let an AI write them, or both. Everything runs in your browser and autosaves locally.</p>
-      <div class="help-grid">
-        <div class="help-card">${icon('sidebar', 24)}<b>Slides, on the left</b><p>Live thumbnails of every slide. Click to jump, drag to reorder, hover to duplicate or delete.</p></div>
-        <div class="help-card">${icon('layout', 24)}<b>Ribbon, on top</b><p>Add slides, <b>Insert</b> text boxes, pictures, shapes and icons, format text, and change theme, background, accent and transition.</p></div>
-        <div class="help-card">${icon('edit', 24)}<b>Canvas, in the middle</b><p>Click any text to type. Drag things to move them, use the handles to resize and rotate, arrow keys to nudge, Shift to select several.</p></div>
-        <div class="help-card">${icon('sliders', 24)}<b>Inspector, on the right</b><p><b>Format</b> for whatever is selected (font, size, colour, position), <b>Slide</b> for layout, background and the slide's data, <b>Code</b> for the JSON and HTML, <b>Deck</b> for theme and export.</p></div>
-      </div>
-      <div class="lp-group">Building a slide</div>
-      <div class="help-grid">
-        <div class="help-card"><b>Start from a layout</b><p>Templates such as Title, Metrics or Chart arrange your content for you. You can still drag any text or card to a new spot, and change its font and size in the Format tab. <i>Reset</i> puts it back.</p></div>
-        <div class="help-card"><b>Or start from blank</b><p>Pick the <b>Blank</b> layout (Add slide, then Free-form) for an empty canvas. Use <b>Insert</b> to add text boxes, pictures, shapes and icons anywhere. Drop a picture file straight onto the slide.</p></div>
-        <div class="help-card"><b>Or write it as code</b><p>In the Slide tab, under <i>How this slide is built</i>, choose <b>HTML, CSS and JS</b>. A template slide keeps its look and becomes code you can change freely. This route has no limits on layout, brand or animation, and it is where an AI is most useful for design.</p></div>
-      </div>
-      <div class="lp-group">Working with an AI</div>
-      <div class="help-grid">
-        <div class="help-card"><b>In a chat window</b> (ChatGPT, Claude, Gemini…)<p>Click <b>AI</b> in the top bar, then <i>Build with AI</i>. Copy the prompt into your chat. The AI replies with a <code>.pitchcraft</code> file (or a JSON block). Drop it on this page, or use <i>Import</i>.</p></div>
-        <div class="help-card"><b>An AI in your browser</b> (Comet, Atlas, Claude for Chrome…)<p>Click <b>AI</b>, choose <i>AI in your browser</i> and copy the agent prompt. The AI edits this open deck live through the <code>Pitchcraft</code> API, including moving and styling objects. Ctrl+Z undoes anything.</p></div>
-      </div>
-      <p>Both flows follow one published guide that is generated from the app itself, so it always matches this version: <a href="${esc(PC.GUIDE ? PC.GUIDE.pageUrl : '#')}" target="_blank" rel="noopener noreferrer">the Pitchcraft guide for AI assistants</a>.</p>
-      <div class="lp-group">Questions</div>
-      ${faq('What is a .pitchcraft file?', 'Your whole deck as plain JSON text. Download it from Export, open it in any text editor, keep it in git, and drag it onto this page to load it again.')}
-      ${faq('Where is my work saved?', 'Automatically, in this browser only (local storage). Nothing is uploaded. Download a <code>.pitchcraft</code> file to back it up or share it. Clearing your browser data removes the autosave.')}
-      ${faq('Where did the Content tab go?', 'Text is edited straight on the slide now. Click a card or text to see its fields and formatting in the <b>Format</b> tab. Charts, tables, lists, code and custom HTML are in the <b>Slide</b> tab.')}
-      ${faq('Can I move things on a templated slide?', 'Yes. Click a text or card, then drag it (the coral grip beside it, or the dashed box). The move is stored on the slide as a small <i>tweak</i>, so the layout keeps working. Use <i>Reset position</i> to undo it.')}
-      ${faq('What is the difference between Blank, free-form objects and HTML, CSS and JS?', 'Blank slides and objects are drag-and-drop: text boxes, shapes, pictures and icons that follow the theme. <b>HTML, CSS and JS</b> is the full-capability route: the slide is code that runs in a sandbox, so any layout, brand style, diagram or animation is possible. Templates are the quick route for plain content. Switch between them under <i>How this slide is built</i> in the Slide tab.')}
-      ${faq('How do I start a new deck?', 'Click <b>New deck</b> in the ribbon (or the Deck tab). If the current deck has changes you have not downloaded, you are asked whether to download the file first. The new deck is one slide that explains how to have an AI build the rest.')}
-      ${faq('Why does an AI need the guide?', 'Pitchcraft only accepts decks in its own format. The guide lists every layout, field and limit, so the AI writes a deck that imports cleanly. Anything invalid is dropped or corrected on import, and you get a warning.')}
-      ${faq('Can I export to PowerPoint?', 'Not yet. You can export a PDF (one slide per page) and the <code>.pitchcraft</code> file. PowerPoint export is planned.')}
-      <div class="lp-group">Keyboard</div>
-      <div class="keys">${k(['P'], 'Present from the current slide')}${k(['Ctrl', 'Z'], 'Undo (add <kbd>Shift</kbd> to redo)')}${k(['Ctrl', 'D'], 'Duplicate the selected object, or the slide')}${k(['↑', '↓'], 'Previous or next slide (nudge when an object is selected)')}${k(['←', '→'], 'Nudge the selected object (<kbd>Shift</kbd> for 10 px)')}${k(['Delete'], 'Delete the selected object')}${k(['Ctrl', 'C'], 'Copy, then <kbd>Ctrl</kbd> <kbd>V</kbd> to paste objects')}${k(['Ctrl', ']'], 'Bring forward (<kbd>[</kbd> sends back)')}${k(['Enter'], 'Finish editing a text field (new line inside a text box)')}${k(['Esc'], 'Finish editing, or clear the selection')}${k(['Ctrl', 'S'], 'Download the .pitchcraft file')}${k(['?'], 'This help')}
-      ${k(['→', 'Space'], 'While presenting: next')}${k(['←'], 'While presenting: previous')}${k(['N'], 'While presenting: speaker notes')}${k(['F'], 'While presenting: fullscreen')}${k(['Esc'], 'While presenting: exit')}</div>`,
-    footer: `<button class="btn" data-close>Close</button><button class="btn" id="help-ai">${icon('sparkles', 16)} Build with AI</button><button class="btn primary" id="help-tour">${icon('presentation', 16)} Open the product tour</button>`
+/** Build the PowerPoint file, offer it for download, and say plainly what to check. */
+PC.exportPptx = async function (opt) {
+  opt = opt || {};
+  const note = UI.toast('Building the PowerPoint file…', 'ok');
+  try {
+    const t0 = performance.now(), r = await PC.pptx(S.deck, { progress: m => log('pptx:', m) });
+    log('pptx built in', Math.round(performance.now() - t0), 'ms,', r.bytes.length, 'bytes,', r.report.warnings.length, 'warnings');
+    if (opt.returnBytes) return r;
+    const url = URL.createObjectURL(new Blob([r.bytes], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' })), a = document.createElement('a');
+    a.href = url; a.download = r.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+    const m = UI.modal({ title: 'PowerPoint file ready', size: '',
+      body: `<p><b>${esc(r.name)}</b> has been downloaded: ${r.report.slides} slide${r.report.slides === 1 ? '' : 's'}${r.report.pictures ? `, ${r.report.pictures} picture${r.report.pictures === 1 ? '' : 's'}` : ''}.</p>
+        <p>Text, shapes, lines, speaker notes and links are real PowerPoint objects you can edit. Charts and icons arrive as pictures. Animations and some effects (blur, glows) are not carried over.</p>
+        ${r.report.fonts.length ? `<p><b>Fonts used:</b> ${r.report.fonts.map(esc).join(', ')}. PowerPoint swaps in a similar font for any it does not have installed, which can change how text wraps.</p>` : ''}
+        ${r.report.warnings.length ? `<div class="lp-group">Needs a look</div><ul class="plain">${r.report.warnings.slice(0, 12).map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}`,
+      footer: '<button class="btn primary" type="button" data-close>Done</button>' });
+    return r;
+  } catch (e) {
+    log('pptx failed', e); UI.toast('The PowerPoint export failed: ' + (e && e.message || e), 'err');
+    if (opt.returnBytes) throw e;
+  } finally { if (note && note.remove) note.remove(); }
+};
+
+/** Settings: appearance now; fonts and privacy are added by their own modules through PC.settingsExtras. */
+PC.settingsExtras = PC.settingsExtras || [];
+PC.settingsDialog = function () {
+  const cur = () => window.PCUI ? window.PCUI.pref() : 'light';
+  const row = (title, hint, control) => `<div class="settings-row"><div><b>${title}</b><small>${hint}</small></div>${control}</div>`;
+  const m = UI.modal({ title: 'Settings', size: '',
+    body: `<div class="settings-h">Appearance</div>
+      ${row('Colour scheme', 'Auto switches to dark from 19:00 to 07:00. Slides keep their own theme either way.', `<div class="seg" role="group" aria-label="Colour scheme">${[['light', 'Light', 'sun'], ['dark', 'Dark', 'moon'], ['auto', 'Auto', 'clock']].map(([k, l, ic]) => `<button type="button" data-ui-pref="${k}" aria-pressed="${cur() === k}">${icon(ic, 15)} ${l}</button>`).join('')}</div>`)}
+      <div data-extras></div>`,
+    footer: '<button class="btn primary" type="button" data-close>Done</button>' });
+  m.body.addEventListener('click', e => {
+    const b = e.target.closest('[data-ui-pref]'); if (!b) return;
+    window.PCUI.set(b.dataset.uiPref); m.body.querySelectorAll('[data-ui-pref]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    log('appearance set to', b.dataset.uiPref, '->', document.documentElement.dataset.ui);
   });
-  $('#help-tour', m.el).addEventListener('click', () => { m.close(); PC.loadTemplate('tour'); });
-  $('#help-ai', m.el).addEventListener('click', () => { m.close(); PC.ai.dialog(); });
+  const host = $('[data-extras]', m.body); PC.settingsExtras.forEach(fn => { try { fn(host, m); } catch (e) { log('settings extra failed', e); } });
 };
 
 /** Insert > Shape: a small grid of previews. */
 PC.shapeMenu = function (anchor) {
-  const m = document.createElement('div'); m.className = 'menu shape-menu'; m.setAttribute('role', 'menu'); m.setAttribute('aria-label', 'Insert a shape');
-  m.innerHTML = Object.entries(PC.SHAPES).map(([k, name]) => `<button type="button" role="menuitem" class="shape-opt" data-shape="${k}" title="${esc(name)}" aria-label="${esc(name)}">${PC.shapeSvg({ shape: k, fill: 'currentColor', stroke: 'currentColor', strokeW: k === 'line' || k === 'connector' ? 6 : 0 }, 56, 40)}<span>${esc(name)}</span></button>`).join('');
-  m.addEventListener('click', e => { const b = e.target.closest('[data-shape]'); if (!b) return; UI.closeMenu(); PC.stage.insert('shape', { shape: b.dataset.shape }); });
+  const m = document.createElement('div'); m.className = 'menu shape-menu'; m.setAttribute('role', 'menu'); m.setAttribute('aria-label', 'Insert a shape or line');
+  const lines = Object.entries(PC.LINE_PRESETS).map(([k, [name, kind, a0, a1]]) => `<button type="button" role="menuitem" class="shape-opt" data-line="${k}" title="${esc(name)}" aria-label="${esc(name)}">${PC.lineSvg({ kind, arrowStart: a0, arrowEnd: a1, strokeW: 3, stroke: 'currentColor', flipV: kind === 'straight' }, 52, 26).replace('class="ob-svg ob-linesvg"', 'class="ob-svg" style="margin:6px 0"')}<span>${esc(name)}</span></button>`).join('');
+  const shapes = PC.SHAPE_MENU.map(k => [k, PC.SHAPES[k]]).map(([k, name]) => `<button type="button" role="menuitem" class="shape-opt" data-shape="${k}" title="${esc(name)}" aria-label="${esc(name)}">${PC.shapeSvg({ shape: k, fill: 'currentColor', stroke: 'currentColor', strokeW: 0 }, 56, 40)}<span>${esc(name)}</span></button>`).join('');
+  m.innerHTML = `<h5>Lines and connectors</h5>${lines}<h5>Shapes</h5>${shapes}`;
+  m.addEventListener('click', e => {
+    const l = e.target.closest('[data-line]'); if (l) { UI.closeMenu(); PC.stage.setTool(l.dataset.line); return; }
+    const b = e.target.closest('[data-shape]'); if (!b) return; UI.closeMenu(); PC.stage.insert('shape', { shape: b.dataset.shape });
+  });
   UI.popover(anchor, m); const f = $('button', m); if (f) f.focus();
 };
 PC.iconDialog = function () {
@@ -178,7 +182,7 @@ PC.audit = function (deck) {
   try {
     deck.slides.forEach((s, i) => {
       if (s.layout === 'custom') {   // the slide is a sandboxed iframe: nothing in here can see inside it, so say so rather than report a clean bill of health
-        out.push({ index: i, id: s.id, layout: s.layout, theme: deck.meta.theme, bg: s.bg || '', problems: [], checked: false, note: 'Custom slide: not inspected. Run await Pitchcraft.auditAll() to measure it in a sandbox.' });
+        out.push({ index: i, id: s.id, layout: s.layout, theme: deck.meta.theme, bg: s.bg || '', problems: null, checked: false, status: 'unknown', note: 'UNKNOWN, not clean. Custom slide: not inspected here. Run await Pitchcraft.auditAll() to measure it in a sandbox.' });
         return;
       }
       host.innerHTML = PC.renderSlide(s, { editable: false, index: i, total: deck.slides.length, deck });
@@ -205,48 +209,68 @@ PC.audit = function (deck) {
         const tx = el.querySelector('.ob-t'); if (tx && el.style.height && (el.scrollHeight > el.clientHeight + 2 || tx.scrollHeight > el.clientHeight + 2)) flag('object-text-clipped', el, `${id}: text is taller than its box (${tx.scrollHeight} > ${el.clientHeight})`);
         if (type === 'text' && el.querySelector('.ob-t') && el.querySelector('.ob-t').scrollWidth > el.clientWidth + 2) flag('text-wider-than-box', el, `${id}: a word is wider than the box`);
       });
-      out.push({ index: i, id: s.id, layout: s.layout, theme: deck.meta.theme, bg: s.bg || '', problems, checked: true });
+      out.push({ index: i, id: s.id, layout: s.layout, theme: deck.meta.theme, bg: s.bg || '', problems, checked: true, status: problems.length ? 'issues' : 'clean' });
     });
   } finally { host.remove(); }
-  out.unchecked = out.filter(e => !e.checked).map(e => e.id);
+  out.unchecked = out.filter(e => !e.checked).map(e => e.id); out.allChecked = out.unchecked.length === 0;
   return out;
 };
 
-/** Run one custom slide in a hidden, sandboxed copy of itself and ask its kit script to measure the rendered text. */
-function auditCustom(s, deck) {
+/** The audit answer comes from a sandboxed slide the deck author controls: keep only the fields we know, as plain strings and numbers. */
+const cleanAudit = r => {
+  if (!r || typeof r !== 'object') return { error: 'the slide returned no result' };
+  if (r.error) return { error: String(r.error).slice(0, 300) };
+  const t = (v, n) => String(v == null ? '' : v).slice(0, n);
+  return { problems: (Array.isArray(r.problems) ? r.problems : []).slice(0, 60).map(p => ({ type: t(p && p.type, 40), el: t(p && p.el, 80), text: t(p && p.text, 80), detail: t(p && p.detail, 300) })),
+    texts: Math.max(0, Math.min(100000, Math.round(+r.texts) || 0)), fontsReady: r.fontsReady !== false };
+};
+/** One attempt at measuring a custom slide in a hidden, sandboxed copy of itself. Resolves { result } or { error }. */
+function auditAttempt(s, deck, ms) {
   return new Promise(resolve => {
     const f = document.createElement('iframe'), id = 'a' + Math.random().toString(36).slice(2), errors = [];
     f.setAttribute('sandbox', 'allow-scripts'); f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
     f.style.cssText = 'position:fixed;left:-20000px;top:0;width:1280px;height:720px;border:0;pointer-events:none';
-    let done = false;
-    const finish = r => { if (done) return; done = true; window.removeEventListener('message', onMsg); clearTimeout(to); f.remove(); resolve(r); };
+    let done = false, poke = 0;
+    const finish = r => { if (done) return; done = true; window.removeEventListener('message', onMsg); clearTimeout(to); clearInterval(poke); f.remove(); resolve(r); };
     const onMsg = e => {
       if (e.source !== f.contentWindow || !e.data) return;
       if (e.data.pc === 'error') errors.push(e.data.msg);
       if (e.data.pc === 'audit-result' && e.data.id === id) {
-        const r = e.data.result || { error: 'no result' };
+        const r = cleanAudit(e.data.result);                       // a custom slide answers for itself, so treat the answer as untrusted text and numbers
+        if (r.error) return finish({ error: r.error });
         if (r.problems) errors.slice(0, 5).forEach(m => r.problems.push({ type: 'script-error', el: 'script', text: '', detail: String(m).slice(0, 200) }));
-        finish(r);
+        finish({ result: r });
       }
     };
-    const to = setTimeout(() => finish({ error: 'timed out after 6s (does the slide js loop forever?)' }), 6000);
+    const to = setTimeout(() => finish({ error: 'no answer within ' + Math.round(ms / 1000) + 's', timeout: true }), ms);
     window.addEventListener('message', onMsg);
-    f.addEventListener('load', () => setTimeout(() => { try { f.contentWindow.postMessage({ pc: 'audit', id }, '*'); } catch (x) { finish({ error: String(x) }); } }, 450));
+    // ask repeatedly once the frame has loaded: a request sent before the slide's scripts were ready is simply asked again
+    f.addEventListener('load', () => setTimeout(() => { const ask = () => { try { f.contentWindow.postMessage({ pc: 'audit', id }, '*'); } catch (x) { finish({ error: String(x) }); } }; ask(); poke = setInterval(ask, 1500); }, 450));
     f.srcdoc = PC.customDoc(s, deck.meta, 'live');
     document.body.appendChild(f);
   });
 }
-/** audit() plus the custom slides, measured in hidden sandboxes. Async. */
+/** Measure a custom slide. The first slide of a cold page can be slow (fonts and stylesheets load for the first time), so a miss is retried once with more time. */
+async function auditCustom(s, deck) {
+  let r = await auditAttempt(s, deck, PC._auditFirstMs || 12000);
+  if (r.timeout) r = await auditAttempt(s, deck, PC._auditRetryMs || 20000);
+  if (r.error) return { error: r.error + (r.timeout ? ' after two attempts. The usual cause is a slow first load of fonts or pictures; an endless loop in the slide\'s JavaScript is the other possibility' : ''), unknown: true };
+  return r.result;
+}
+/** audit() plus the custom slides, measured in hidden sandboxes. Async.
+ *  Each entry has status: 'clean' | 'issues' | 'unknown'. Unknown means the slide could NOT be measured; its problems list is null, never an empty clean-looking array. */
 PC.auditAll = async function (deck) {
   deck = deck || S.deck; const base = PC.audit(deck);
   for (const e of base) {
     if (e.layout !== 'custom') continue;
     const r = await auditCustom(deck.slides[e.index], deck);
-    if (r.error) { e.checked = false; e.note = 'Could not measure this custom slide: ' + r.error; continue; }
-    e.checked = true; e.problems = r.problems; e.texts = r.texts; delete e.note;
+    if (r.error) { e.checked = false; e.status = 'unknown'; e.problems = null; e.note = 'UNKNOWN, not clean. Could not measure this custom slide: ' + r.error + '. Run auditAll() again.'; continue; }
+    e.checked = true; e.problems = r.problems; e.texts = r.texts; e.status = r.problems.length ? 'issues' : 'clean'; delete e.note;
+    if (r.fontsReady === false) e.note = 'Fonts were still loading when this was measured, so widths may differ slightly. Run auditAll() again to confirm.';
     if (!r.texts) e.note = 'No visible text found. Nothing to measure.';
   }
   base.unchecked = base.filter(e => !e.checked).map(e => e.id);
+  base.allChecked = base.unchecked.length === 0;
   return base;
 };
 
@@ -255,7 +279,7 @@ PC.measureText = function (text, o) {
   o = o || {}; const theme = (S.deck.meta && S.deck.meta.theme) || 'studio', th = PC.THEMES[theme] || PC.THEMES.studio;
   const font = o.font || 'body', size = Math.max(6, Math.min(600, +o.size || 28)), key = String(font);
   const isHeading = key === 'display';
-  const fam = Object.prototype.hasOwnProperty.call(PC.FONTS, key) ? PC.fontCss(key) : /^[\w ,'"-]{1,80}$/.test(key) ? key : PC.fontCss('body');
+  const fam = Object.prototype.hasOwnProperty.call(PC.FONTS, key) ? PC.fontCss(key) : PC.cleanFont(key) ? PC.fontCss(PC.cleanFont(key)) : PC.fontCss('body');
   const weight = o.weight != null ? +o.weight : isHeading ? 'var(--d-weight)' : 400;
   const caps = o.caps != null ? !!o.caps : null, ls = o.ls != null ? +o.ls + 'em' : isHeading ? 'var(--d-ls)' : 'normal';
   const host = document.createElement('div'); host.className = 'slide'; host.dataset.theme = theme;
@@ -289,7 +313,7 @@ PC.act = function (act, btn) {
     case 'numbers': return S.setMeta({ numbers: !S.deck.meta.numbers });
     case 'toggle-side': return toggleClass('side');
     case 'toggle-insp': return toggleClass('insp');
-    case 'undo': if (S.undo()) UI.toast('Undone'); return;
+    case 'undo': if (S.undo()) { if (S.crossed) UI.toast('That undid a whole deck change. The deck you left is saved in Deck, Recover.', 'ok', { label: 'Redo', run: () => PC.act('redo') }); else UI.toast('Undone'); } return;
     case 'redo': if (S.redo()) UI.toast('Redone'); return;
     case 'help': return PC.helpDialog();
     case 'present': return P.open(S.sel);
@@ -332,6 +356,7 @@ function bindGlobal() {
   }));
   $('#btn-present').addEventListener('click', () => PC.act('present'));
   $('#btn-help').addEventListener('click', () => PC.act('help'));
+  $('#btn-settings').addEventListener('click', () => PC.settingsDialog());
   $('#btn-ai').addEventListener('click', () => PC.act('ai'));
   $('#btn-fab').addEventListener('click', () => { Ins.ensureOpen(); });
   $('#btn-add-slide').addEventListener('click', () => PC.act('new'));
@@ -349,6 +374,7 @@ window.Pitchcraft = {
   guide: section => PC.ai.guide(section), manifest: () => PC.ai.manifest(), schema: () => PC.buildSchema((PC.GUIDE && PC.GUIDE.url ? PC.GUIDE.url.replace(/ai-guide\.md$/, '') : 'https://visser23.github.io/pitchcraft/')),
   layouts: PC.LAYOUTS, themes: PC.THEMES, transitions: PC.TRANSITIONS, chartTypes: PC.CHART_TYPES, icons: PC.ICON_NAMES,
   getDeck: () => PC.clone(S.deck),
+  backups: () => S.backups().map((b, index) => ({ index, title: b.title, slides: b.slides, reason: b.reason, t: b.t })), restoreBackup: i => S.restoreBackup(+i),
   setDeck(d, opts) { const r = PC.parseDeck(typeof d === 'string' ? stripFences(d) : PC.clone(d)); S.load(r.deck, opts); return { slides: r.deck.slides.length, warnings: r.warnings }; },
   getSlide: ref => PC.clone(S.slide(slideRef(ref))),
   updateSlide(ref, patch) {
@@ -376,7 +402,8 @@ window.Pitchcraft = {
   current: () => S.sel, count: () => S.count(),
   html: ref => PC.renderSlide(S.slide(slideRef(ref)), { editable: false, index: slideRef(ref), total: S.count(), deck: S.deck }),
   prettyHtml: ref => Ins.prettyHtml(window.Pitchcraft.html(ref)),
-  exportJSON: deckJson, newDeck: PC.newDeck, audit: PC.audit, auditAll: PC.auditAll, measureText: PC.measureText, preparePrint: PC.preparePrint,
+  exportJSON: deckJson,
+  async exportPptx() { const r = await PC.exportPptx({ returnBytes: true }); let bin = ''; for (let i = 0; i < r.bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, r.bytes.subarray(i, i + 0x8000)); return { filename: r.name, base64: btoa(bin), report: r.report }; }, newDeck: PC.newDeck, audit: PC.audit, auditAll: PC.auditAll, measureText: PC.measureText, preparePrint: PC.preparePrint,
   present: from => P.open(from), closePresent: () => P.close(), isPresenting: () => P.isOpen(),
   undo: () => S.undo(), redo: () => S.redo(), loadTemplate: PC.loadTemplate, importText: PC.importText,
   getObjects: ref => PC.clone(S.slide(slideRef(ref)).objects || []),

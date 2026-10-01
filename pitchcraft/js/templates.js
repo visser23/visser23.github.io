@@ -60,18 +60,19 @@ const tour = {
         { icon: 'edit', title: 'Blank', body: 'Place text, shapes, images and icons wherever you want them.' },
         { icon: 'code', title: 'HTML, CSS and JS', body: 'Write the slide as code. No limit on layout, brand styling or animation.' }
       ],
-      notes: 'Switch between them in the Slide tab, under How this slide is built. Converting a template slide to HTML keeps what it looks like and turns it into code you can edit. Undo reverses it.' },
+      notes: 'Switch between them in the Slide tab, under How this slide is built. Converting a template slide to HTML keeps what it looks like and turns it into code you can edit in the Code tab. Undo reverses it.' },
     { id: 'tour-free', layout: 'blank', bg: 'tint', transition: 'rise',
       notes: 'This slide is a blank slide: no template, every element is a free-form object. Click any of them to drag, resize, rotate or restyle it. Insert more from the Insert tab in the ribbon.',
       objects: [
         { id: 'fk', type: 'text', x: 80, y: 84, w: 640, text: 'Blank slides', size: 26, weight: 700, caps: true, ls: 0.1, color: 'var(--shape)' },
         { id: 'fh', type: 'text', x: 80, y: 130, w: 680, text: 'Put things **where you want** them.', size: 64, weight: 800, font: 'display', lh: 1.06 },
-        { id: 'fb', type: 'text', x: 80, y: 360, w: 620, text: 'Add text, images, shapes and icons from the Insert tab. Drag to move, drag a corner to resize, and use the Format tab for fonts and colours. Text and cards on template slides can be dragged too.', size: 28, color: 'var(--muted)', lh: 1.4 },
+        { id: 'fb', type: 'text', x: 80, y: 360, w: 620, text: 'Add text, images, shapes, lines and icons from the Insert tab. Connectors snap to shapes and follow them. Drag to move, drag a corner to resize, and use the Format tab for fonts and colours. Text and cards on template slides can be dragged too.', size: 28, color: 'var(--muted)', lh: 1.4 },
         { id: 'fc', type: 'shape', shape: 'round', x: 820, y: 120, w: 360, h: 240, fill: 'var(--shape)', text: 'Drag me', size: 44, weight: 700, color: 'var(--on-shape)', align: 'center', valign: 'middle', rot: -4, shadow: true },
         { id: 'fe', type: 'shape', shape: 'ellipse', x: 1010, y: 410, w: 170, h: 170, fill: 'var(--shape)' },
         { id: 'fs', type: 'shape', shape: 'star', x: 830, y: 430, w: 130, h: 130, fill: 'var(--c3)', rot: 12 },
         { id: 'fi', type: 'icon', icon: 'sparkles', x: 1050, y: 450, w: 90, h: 90, color: 'var(--on-shape)' },
-        { id: 'fl', type: 'shape', shape: 'line', x: 80, y: 600, w: 620, h: 14, stroke: 'var(--muted)', strokeW: 3 }
+        { id: 'fl', type: 'shape', shape: 'line', x: 80, y: 600, w: 620, h: 14, stroke: 'var(--muted)', strokeW: 3 },
+        { id: 'fx', type: 'line', kind: 'elbow', vert: true, flipH: true, from: 'fc:b', to: 'fs:t', x: 895, y: 360, w: 105, h: 70, stroke: 'var(--muted)', strokeW: 3, arrowEnd: 'triangle' }
       ] },
     { id: 'tour-custom', layout: 'custom', bg: 'dark', headline: 'HTML, CSS and JS slide',
       notes: 'Templates are the quick route. Any slide can instead be HTML, CSS and JavaScript, so you or an AI can build any layout, or match a company brand exactly. This slide is one: the box on the right types itself out, and the shape is a live animation. Thumbnails show the slide before its JavaScript runs.',
@@ -80,7 +81,7 @@ const tour = {
   <div class="nw-l">
     <div class="kicker rv">Custom slides</div>
     <h2 class="nw-h rv">Write a slide as <span class="nw-w">code</span>.</h2>
-    <p class="nw-p rv">Open the Slide tab and choose HTML, CSS and JS, or ask an AI to write one. Colours and fonts shared by every custom slide go in the Deck tab, under Brand CSS.</p>
+    <p class="nw-p rv">Choose HTML, CSS and JS in the Slide tab, and the code opens in the Code tab. Or ask an AI to write one. Colours and fonts shared by every custom slide go in the Code tab, under Brand CSS.</p>
     <div class="nw-chips rv"><span>HTML</span><span>CSS</span><span>JS</span><span>Sandboxed</span></div>
   </div>
   <div class="nw-r rv">
@@ -155,13 +156,13 @@ document.querySelector('.nw-blob').animate([{ borderRadius: '42% 58% 60% 40% / 4
       code: { language: 'json', filename: 'slide.json', source: '{\n  "layout": "metrics",\n  "headline": "Key numbers",\n  "items": [\n    { "value": "42%", "label": "Conversion", "trend": "up" },\n    { "value": "1.8s", "label": "Load time", "trend": "down" }\n  ]\n}' } },
     { id: 'tour-limits', layout: 'comparison', kicker: 'Limits', headline: 'What it ==does not== do yet',
       columns: [
-        { headline: 'Not available', body: 'Deliberately or not yet.', items: ['PowerPoint export (planned)', 'Several people editing at once', 'Accounts or cloud storage'] },
-        { headline: 'Works today', body: 'In any current browser.', items: ['Present fullscreen', 'Export a file or a PDF', 'Custom HTML, CSS and JS slides'] }] },
+        { headline: 'Not available', body: 'Deliberately or not yet.', items: ['Several people editing at once', 'Accounts or cloud storage', 'Comments and sharing links'] },
+        { headline: 'Works today', body: 'In any current browser.', items: ['Present fullscreen, on a phone too', 'Export to PowerPoint, PDF or a file', 'Custom HTML, CSS and JS slides'] }] },
     { id: 'tour-roadmap', layout: 'timeline', bg: 'tint', kicker: 'Roadmap', headline: 'What is ==next==',
       items: [
-        { date: 'Shipped', title: 'The toolkit', body: 'Blank and custom slides, AI guide, presenter, PDF.', status: 'done' },
+        { date: 'Shipped', title: 'The toolkit', body: 'Blank and custom slides, connectors, AI guide, presenter, PDF, PowerPoint export, dark mode.', status: 'done' },
         { date: 'Now', title: 'Templates', body: 'More decks and more chart types.', status: 'now' },
-        { date: 'Next', title: 'PowerPoint export', body: 'Planned. The JSON maps cleanly to .pptx.', status: 'next' },
+        { date: 'Next', title: 'Native PowerPoint charts', body: 'Charts export as pictures today. Editable ones are next.', status: 'next' },
         { date: 'Later', title: 'Shared decks', body: 'Sharing and comments.', status: 'next' }] },
     { id: 'tour-end', layout: 'closing', bg: 'grad', kicker: 'Next', headline: 'Try it on ==this deck==.', body: 'Click any text to edit it, press P to present, or start a new deck from the Deck tab.',
       items: [{ icon: 'play', label: 'Present', value: 'P' }, { icon: 'file', label: 'New deck', value: 'Deck tab' }, { icon: 'wand', label: 'Build with AI', value: 'Top bar' }] }

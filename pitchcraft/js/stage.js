@@ -74,13 +74,24 @@ St.layout = function () {
     const r = rectOf(it); if (!r) return;
     const b = document.createElement('div'); b.className = 'sel-box ' + (it.k === 'o' ? 'is-obj' : 'is-fx') + (St.editing && it.k === 'o' && St.editing === it.id ? ' is-editing' : '');
     b.style.cssText = `left:${r.x * k}px;top:${r.y * k}px;width:${r.w * k}px;height:${r.h * k}px;${r.rot ? `rotate:${r.rot}deg;` : ''}`;
+    if (it.k === 'o' && !St.editing && document.documentElement.classList.contains('touch-ui')) {   // a finger can drag a selected object by its body (touch-action: none lives on this layer only)
+      const bo = objById(it.id); if (bo && !bo.locked && bo.type !== 'line') { const n = document.createElement('i'); n.className = 'sel-body'; n.dataset.h = 'move'; n.dataset.oid = it.id; b.appendChild(n); }
+    }
     if (single && !St.editing) {
-      if (it.k === 'o') {
-        const o = objById(it.id), hs = o.type === 'text' ? HANDLES.filter(h => o.h != null || !/^[ns]$/.test(h)) : HANDLES;
+      const lo = it.k === 'o' ? objById(it.id) : null;
+      if (lo && lo.type === 'line' && !lo.locked) {   // a line has two end handles (and a bend handle for elbows and curves), not a resize box
+        b.classList.add('is-line');
+        const g = PC.lineGeom(lo, lo.w, lo.h || 0), mk = (cls, h, x, y, tip) => { const n = document.createElement('i'); n.className = 'sel-h ' + cls; n.dataset.h = h; n.style.cssText = `left:${x * k}px;top:${y * k}px;`; n.title = tip; b.appendChild(n); };
+        mk('sel-end', 'start', g.start[0], g.start[1], 'Drag to move the start'); mk('sel-end', 'end', g.end[0], g.end[1], 'Drag to move the end');
+        if (lo.kind && lo.kind !== 'straight') mk('sel-bend', 'bend', g.mid[0], g.mid[1], 'Drag to move the corner');
+        if (lo.from || lo.to) b.classList.add('is-glued');
+      } else if (lo && lo.locked) { b.classList.add('is-locked'); }
+      else if (it.k === 'o') {
+        const o = lo, hs = o.type === 'text' ? HANDLES.filter(h => o.h != null || !/^[ns]$/.test(h)) : HANDLES;
         hs.forEach(h => { const n = document.createElement('i'); n.className = 'sel-h'; n.dataset.h = h; n.style.cssText = `left:${hpos[h][0]};top:${hpos[h][1]};cursor:${h.length === 2 ? (h === 'nw' || h === 'se' ? 'nwse' : 'nesw') : h === 'n' || h === 's' ? 'ns' : 'ew'}-resize`; b.appendChild(n); });
         const rot = document.createElement('i'); rot.className = 'sel-h sel-rot'; rot.dataset.h = 'rotate'; b.appendChild(rot);
       }
-      ['t', 'r', 'b', 'l'].forEach(s => { const n = document.createElement('i'); n.className = 'sel-edge ' + s; n.dataset.h = 'move'; b.appendChild(n); });
+      if (!(lo && (lo.type === 'line' || lo.locked))) ['t', 'r', 'b', 'l'].forEach(s => { const n = document.createElement('i'); n.className = 'sel-edge ' + s; n.dataset.h = 'move'; b.appendChild(n); });
       if (it.k !== 'o') { const g = document.createElement('i'); g.className = 'sel-grip'; g.dataset.h = 'move'; g.title = 'Drag to move'; g.innerHTML = PC.icon('move', 14); b.appendChild(g); }
     }
     layer.appendChild(b);
@@ -121,19 +132,19 @@ St.resetTweaks = function () {
   S.mutate(St.frame, s => { ks.forEach(k => { if (s.tweaks) delete s.tweaks[k]; }); if (s.tweaks && !Object.keys(s.tweaks).length) delete s.tweaks; }, '', 'stage'); relayout();
 };
 St.remove = function () {
-  const ids = St.sel.filter(it => it.k === 'o').map(it => it.id); if (!ids.length) { St.resetTweaks(); return false; }
+  const ids = St.sel.filter(it => it.k === 'o' && !(objById(it.id) || {}).locked).map(it => it.id); if (!ids.length) { if (!St.sel.some(it => it.k === 'o')) St.resetTweaks(); return false; }
   mutateObjects(a => { for (let i = a.length - 1; i >= 0; i--) if (ids.includes(a[i].id)) a.splice(i, 1); });
   St.sel = St.sel.filter(it => it.k !== 'o'); St.editing = null; St.layout(); S.emit('stage'); return true;
 };
 St.duplicate = function () {
   const src = St.sel.filter(it => it.k === 'o').map(it => objById(it.id)).filter(Boolean); if (!src.length) return false; const made = [];
-  mutateObjects(a => { src.forEach(o => { const c = PC.clone(o); c.id = ''; c.x = r1(o.x + 24); c.y = r1(o.y + 24); const n = PC.cleanObject(c, new Set(a.map(x => x.id))); a.push(n); made.push({ k: 'o', id: n.id }); }); });
+  const gmap = {}; mutateObjects(a => { src.forEach(o => { const c = PC.clone(o); c.id = ''; c.x = r1(o.x + 24); c.y = r1(o.y + 24); delete c.from; delete c.to; if (c.group) c.group = gmap[c.group] = gmap[c.group] || newGroupId(); const n = PC.cleanObject(c, new Set(a.map(x => x.id))); a.push(n); made.push({ k: 'o', id: n.id }); }); });
   St.setSel(made); return true;
 };
 St.nudge = function (dx, dy) {
   if (!St.sel.length) return;
   S.mutate(St.frame, s => St.sel.forEach(it => {
-    if (it.k === 'o') { const o = (s.objects || []).find(x => x.id === it.id); if (o) { o.x = r1(o.x + dx); o.y = r1(o.y + dy); } }
+    if (it.k === 'o') { const o = (s.objects || []).find(x => x.id === it.id); if (o && !o.locked) { o.x = r1(o.x + dx); o.y = r1(o.y + dy); if (o.type !== 'line') return; delete o.from; delete o.to; } }
     else { s.tweaks = s.tweaks || {}; const t = s.tweaks[it.key] = s.tweaks[it.key] || {}; t.dx = r1((t.dx || 0) + dx); t.dy = r1((t.dy || 0) + dy); }
   }), 'nudge', 'stage'); relayout();
 };
@@ -218,7 +229,7 @@ St.pickImage = function () {
 
 /* ── text editing inside an object ── */
 St.edit = function (id, selectAll) {
-  const o = objById(id); if (!o || (o.type !== 'text' && o.type !== 'shape')) return false;
+  const o = objById(id); if (!o || o.locked || (o.type !== 'text' && o.type !== 'shape')) return false;
   const el = elOf({ k: 'o', id }); const t = el && el.querySelector('.ob-t'); if (!t) return false;
   St.editing = id; t.setAttribute('contenteditable', PC.plainSupported ? 'plaintext-only' : 'true'); t.setAttribute('spellcheck', 'false'); t.dataset.ph = o.type === 'text' ? 'Text' : 'Type here';
   t.focus({ preventScroll: true });
@@ -247,18 +258,28 @@ function snap(bbox, dx, dy, movingIds) {
 /* ── gestures ── */
 const applyObjEl = (o, cssOnly) => {
   const el = elOf({ k: 'o', id: o.id }); if (!el) return;
-  if (!cssOnly && o.type === 'shape') { const tpl = document.createElement('template'); tpl.innerHTML = PC.renderObject(o, +el.dataset.oi, { editable: true }); el.replaceWith(tpl.content.firstElementChild); return; }
+  if (!cssOnly && (o.type === 'shape' || o.type === 'line')) { const tpl = document.createElement('template'); tpl.innerHTML = PC.renderObject(o, +el.dataset.oi, { editable: true }); el.replaceWith(tpl.content.firstElementChild); return; }
   el.style.left = o.x + 'px'; el.style.top = o.y + 'px'; el.style.width = o.w + 'px'; if (o.h != null) el.style.height = o.h + 'px'; else el.style.height = '';
   if (o.rot) el.style.rotate = o.rot + 'deg'; else el.style.removeProperty('rotate');
   const t = el.querySelector('.ob-t'); if (t && o.type === 'text' && o.size) t.style.fontSize = o.size + 'px';
 };
 function beginMove(e) {
-  const items = St.sel.slice(), snaps = items.map(it => ({ it, r: rectOf(it), o: it.k === 'o' ? PC.clone(objById(it.id)) : null, tw: it.k !== 'o' ? Object.assign({}, (slideNow().tweaks || {})[it.key]) : null }));
+  const items = St.sel.filter(it => !(it.k === 'o' && (objById(it.id) || {}).locked)), snaps = items.map(it => ({ it, r: rectOf(it), o: it.k === 'o' ? PC.clone(objById(it.id)) : null, tw: it.k !== 'o' ? Object.assign({}, (slideNow().tweaks || {})[it.key]) : null }));
+  if (!items.length) return;
   St.drag = { mode: 'move', sx: e.clientX, sy: e.clientY, moved: false, snaps, frame: St.frame, ids: items.filter(i => i.k === 'o').map(i => i.id) };
+  listen();
+}
+const stagePoint = e => { const st = stageEl(), b = st.getBoundingClientRect(), k = E.k || 1; return { x: (e.clientX - b.left) / k, y: (e.clientY - b.top) / k }; };
+/** Start dragging one end (or the bend) of a line. `fresh` = the line was just drawn, so a click without a drag gives it a default length. */
+function beginLine(e, id, which, fresh) {
+  const o = objById(id); if (!o || o.locked) return;
+  St.drag = { mode: 'line', which, sx: e.clientX, sy: e.clientY, moved: false, o0: PC.clone(o), ends: PC.lineEnds(o), frame: St.frame, ids: [id], fresh: !!fresh, glue: null };
   listen();
 }
 function beginHandle(e, h) {
   const it = St.sel[0]; if (!it || it.k !== 'o') return; const o = objById(it.id), r = rectOf(it), box = h.closest('.sel-box').getBoundingClientRect();
+  if (o.locked) return;
+  if (o.type === 'line') { beginLine(e, o.id, h.dataset.h); return; }
   St.drag = { mode: h.dataset.h === 'rotate' ? 'rotate' : 'resize', h: h.dataset.h, sx: e.clientX, sy: e.clientY, moved: false, start: Object.assign({}, r), o0: PC.clone(o), cx: box.left + box.width / 2, cy: box.top + box.height / 2, frame: St.frame, ids: [o.id] };
   listen();
 }
@@ -266,10 +287,42 @@ function listen() { window.addEventListener('pointermove', onMove); window.addEv
 function unlisten() { window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); window.removeEventListener('pointercancel', onUp); document.removeEventListener('keydown', onDragKey, true); document.body.classList.remove('st-dragging'); }
 function onDragKey(e) { if (e.key === 'Escape' && St.drag) { e.preventDefault(); e.stopPropagation(); St.drag.cancel = true; onUp(e); } }
 
+/** While something is being dragged, lines glued to it follow (the data is re-linked for real when the gesture is committed). */
+function liveLines() {
+  const s = slideNow(); if (!s || !(s.objects || []).some(o => o.type === 'line' && (o.from || o.to))) return;
+  const copy = s.objects.map(o => Object.assign({}, o, St.live[o.id] || {}));
+  const hOf = t => (t.h != null ? t.h : (elOf({ k: 'o', id: t.id }) || {}).offsetHeight || PC.guessHeight(t));
+  PC.relinkLines({ objects: copy }, t => ({ x: t.x, y: t.y, w: t.w, h: hOf(t) })).forEach(id => {
+    if (St.drag && St.drag.ids.includes(id)) return; const o = copy.find(x => x.id === id); St.live[id] = { x: o.x, y: o.y, w: o.w, h: o.h }; applyObjEl(o, false);
+  });
+}
+/** Small dots on every side of every shape while a line end is being dragged, with the one it will glue to highlighted. */
+function drawSiteDots(rects, glue) {
+  const layer = $('.sel-layer', frameEl() || document); if (!layer) return; $$('.sel-site', layer).forEach(n => n.remove()); const k = E.k || 1;
+  rects.forEach(({ id, r }) => PC.SITES.forEach(site => { const p = PC.sitePoint(r, site), n = document.createElement('i'); n.className = 'sel-site' + (glue === id + ':' + site ? ' on' : ''); n.style.cssText = `left:${p.x * k}px;top:${p.y * k}px`; layer.appendChild(n); }));
+}
 function onMove(e) {
   const d = St.drag; if (!d) return; const k = E.k || 1;
   let dx = (e.clientX - d.sx) / k, dy = (e.clientY - d.sy) / k;
   if (!d.moved) { if (Math.hypot(dx * k, dy * k) < 4) return; d.moved = true; St.editing = null; if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); }
+  if (d.mode === 'line') {
+    const o0 = d.o0, P = stagePoint(e), others = objs().filter(o => o.type !== 'line' && o.id !== o0.id);
+    if (d.which === 'bend') {
+      const rad = -(o0.rot || 0) * Math.PI / 180, cx = o0.x + o0.w / 2, cy = o0.y + (o0.h || 0) / 2, lx = (P.x - cx) * Math.cos(rad) - (P.y - cy) * Math.sin(rad) + o0.w / 2, ly = (P.x - cx) * Math.sin(rad) + (P.y - cy) * Math.cos(rad) + (o0.h || 0) / 2;
+      const raw = o0.vert ? (o0.flipV ? ((o0.h || 0) - ly) / (o0.h || 1) : ly / (o0.h || 1)) : (o0.flipH ? (o0.w - lx) / (o0.w || 1) : lx / (o0.w || 1));
+      const b = clamp(Math.abs(raw - .5) < .03 ? .5 : raw, .05, .95); d.tmp = Object.assign({}, o0, { bend: r1(b * 1000) / 1000 }); if (d.tmp.bend === .5) delete d.tmp.bend;
+      St.live[o0.id] = { x: o0.x, y: o0.y, w: o0.w, h: o0.h || 0 }; applyObjEl(d.tmp, false); St.layout(); return;
+    }
+    const fixed = d.which === 'start' ? d.ends.e : d.ends.s; let q = { x: P.x, y: P.y };
+    if (e.shiftKey) { const vx = q.x - fixed.x, vy = q.y - fixed.y, L = Math.hypot(vx, vy), a = Math.round(Math.atan2(vy, vx) / (Math.PI / 4)) * Math.PI / 4; q = { x: fixed.x + Math.cos(a) * L, y: fixed.y + Math.sin(a) * L }; }
+    d.glue = null; const rects = others.map(o => ({ id: o.id, r: { x: o.x, y: o.y, w: o.w, h: o.h != null ? o.h : (elOf({ k: 'o', id: o.id }) || {}).offsetHeight || PC.guessHeight(o) } }));
+    if (!e.altKey) { const ns = PC.nearestSite(rects, q, 16 / (E.k || 1) + 4); if (ns) { q = { x: ns.x, y: ns.y }; d.glue = ns.id + ':' + ns.site; } }
+    const sP = d.which === 'start' ? q : d.ends.s, eP = d.which === 'start' ? d.ends.e : q, t = Object.assign({}, o0, PC.lineFromEnds(sP, eP)); delete t.rot;
+    if (!t.flipH) delete t.flipH; if (!t.flipV) delete t.flipV;
+    const key = d.which === 'start' ? 'from' : 'to'; if (d.glue) t[key] = d.glue; else delete t[key];
+    d.tmp = t; St.live[o0.id] = { x: t.x, y: t.y, w: t.w, h: t.h }; applyObjEl(t, false); St.layout();
+    drawSiteDots(rects, d.glue); return;
+  }
   if (d.mode === 'move') {
     if (e.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }
     let guides = [];
@@ -282,7 +335,7 @@ function onMove(e) {
       if (s.o) { const o = Object.assign({}, s.o, { x: r1(s.o.x + dx), y: r1(s.o.y + dy) }); St.live[o.id] = { x: o.x, y: o.y }; applyObjEl(o, true); }
       else { const el = elOf(s.it); if (el) el.style.translate = `${r1((s.tw.dx || 0) + dx)}px ${r1((s.tw.dy || 0) + dy)}px`; }
     });
-    St.layout(); drawGuides(guides);
+    liveLines(); St.layout(); drawGuides(guides);
   } else if (d.mode === 'rotate') {
     let a = Math.atan2(e.clientY - d.cy, e.clientX - d.cx) * 180 / Math.PI + 90; a = ((a + 180) % 360 + 360) % 360 - 180;
     if (e.shiftKey) a = Math.round(a / 15) * 15; else { const n = Math.round(a / 45) * 45; if (Math.abs(a - n) < 3) a = n; }
@@ -299,15 +352,22 @@ function onMove(e) {
     const t = Object.assign({}, o0, { x: r1(C.x - w / 2), y: r1(C.y - h / 2), w: r1(w) });
     if (o0.type !== 'text' || hy || o0.h != null) t.h = r1(h);
     if (o0.type === 'text' && corner) t.size = r1(clamp((o0.size || PC.OBJ_DEFAULTS.text.size) * (w / s.w), 4, 600));
-    d.tmp = t; St.live[o0.id] = { x: t.x, y: t.y, w: t.w }; if (t.h != null) St.live[o0.id].h = t.h; applyObjEl(t, o0.type !== 'shape'); St.layout();
+    d.tmp = t; St.live[o0.id] = { x: t.x, y: t.y, w: t.w }; if (t.h != null) St.live[o0.id].h = t.h; applyObjEl(t, o0.type !== 'shape'); liveLines(); St.layout();
   }
 }
 function onUp() {
   const d = St.drag; if (!d) return; St.drag = null; St.live = {}; unlisten(); $$('.sel-guide').forEach(n => n.remove());
+  $$('.sel-site').forEach(n => n.remove());
+  if (d.mode === 'line' && d.fresh && !d.moved && !d.cancel) {   // a click with the line tool: drop a default-sized line
+    const o = d.o0, big = o.kind && o.kind !== 'straight';
+    S.mutate(d.frame, sl => { const i = (sl.objects || []).findIndex(x => x.id === o.id); if (i >= 0) sl.objects[i] = PC.cleanObject(Object.assign({}, sl.objects[i], { w: 320, h: big ? 120 : 0 }), new Set(sl.objects.filter((_, j) => j !== i).map(x => x.id))) || sl.objects[i]; }, '', 'stage');
+    St.layout(); S.emit('stage'); return;
+  }
+  if (!d.cancel && !d.moved && d.tapEdit && St.sel.length === 1 && St.sel[0].id === d.tapEdit) { St.layout(); St.edit(d.tapEdit); return; }   // a second tap on a selected text box starts typing
   if (d.cancel || !d.moved) { if (d.cancel) { const i = d.frame; if (E.frameEl(i)) E.renderFrame(i); } if (!d.moved && d.collapseTo) St.selectObject(d.collapseTo, false); St.layout(); return; }
   if (d.mode === 'move') {
     S.mutate(d.frame, s => d.snaps.forEach(sn => {
-      if (sn.o) { const o = (s.objects || []).find(x => x.id === sn.o.id); if (o) { o.x = r1(sn.o.x + d.dx); o.y = r1(sn.o.y + d.dy); } }
+      if (sn.o) { const o = (s.objects || []).find(x => x.id === sn.o.id); if (o) { o.x = r1(sn.o.x + d.dx); o.y = r1(sn.o.y + d.dy); if (o.type === 'line' && !d.snaps.every(z => z.o && z.o.type === 'line')) { /* moved with its shapes: keep the glue */ } else if (o.type === 'line') { delete o.from; delete o.to; } } }
       else { s.tweaks = s.tweaks || {}; const t = s.tweaks[sn.it.key] = Object.assign({}, sn.tw); t.dx = r1((sn.tw.dx || 0) + d.dx); t.dy = r1((sn.tw.dy || 0) + d.dy); if (!t.dx) delete t.dx; if (!t.dy) delete t.dy; if (!Object.keys(t).length) delete s.tweaks[sn.it.key]; }
     }), '', 'stage');
   } else if (d.tmp) {
@@ -317,13 +377,55 @@ function onUp() {
   St.layout(); S.emit('stage');
 }
 
+/* ── groups, lock, flip ── */
+/** An object plus everything that shares its group, as selection items. */
+function withGroup(it) {
+  const o = objById(it.id); if (!o || !o.group) return [it];
+  return objs().filter(x => x.group === o.group).map(x => ({ k: 'o', id: x.id }));
+}
+const newGroupId = () => 'g' + Math.random().toString(36).slice(2, 7);
+St.group = function () {
+  const ids = St.sel.filter(it => it.k === 'o').map(it => it.id); if (ids.length < 2) { UI.toast('Select two or more objects to group them.'); return false; }
+  const g = newGroupId(); mutateObjects(a => a.forEach(o => { if (ids.includes(o.id)) o.group = g; })); relayout(); return true;
+};
+St.ungroup = function () {
+  const gs = new Set(St.sel.filter(it => it.k === 'o').map(it => (objById(it.id) || {}).group).filter(Boolean)); if (!gs.size) return false;
+  mutateObjects(a => a.forEach(o => { if (gs.has(o.group)) delete o.group; })); relayout(); return true;
+};
+St.flip = function (axis) {
+  const ids = St.sel.filter(it => it.k === 'o').map(it => it.id); if (!ids.length) return false; const k = axis === 'v' ? 'flipV' : 'flipH';
+  mutateObjects(a => a.forEach(o => { if (!ids.includes(o.id) || o.type === 'text') return; if (o[k]) delete o[k]; else o[k] = true; })); return true;
+};
+St.lock = function (on) {
+  const ids = St.sel.filter(it => it.k === 'o').map(it => it.id); if (!ids.length) return false;
+  mutateObjects(a => a.forEach(o => { if (!ids.includes(o.id)) return; if (on) o.locked = true; else delete o.locked; })); relayout(); return true;
+};
+
+/* ── drawing a line: pick one from Insert, then drag on the slide ── */
+St.setTool = function (preset) {
+  St.tool = preset || null; document.body.classList.toggle('st-drawing', !!St.tool);
+  if (St.tool) UI.toast('Drag on the slide to draw the line. Shift snaps the angle. Esc cancels.');
+};
+function drawStart(e, frEl) {
+  const preset = PC.LINE_PRESETS[St.tool]; St.setTool(null); if (!preset) return;
+  const i = +frEl.dataset.i; if (i !== S.sel) S.select(i, 'click'); St.frame = i;
+  const P = stagePoint(e), others = objs().filter(o => o.type !== 'line').map(o => ({ id: o.id, r: { x: o.x, y: o.y, w: o.w, h: o.h != null ? o.h : (elOf({ k: 'o', id: o.id }) || {}).offsetHeight || PC.guessHeight(o) } }));
+  const ns = PC.nearestSite(others, P, 18); const start = ns ? { x: ns.x, y: ns.y } : { x: Math.round(P.x), y: Math.round(P.y) };
+  let id = '';
+  mutateObjects(a => { const o = PC.newObject('line', { kind: preset[1], arrowStart: preset[2], arrowEnd: preset[3], x: start.x, y: start.y, w: 0, h: 0 }, a); if (ns) o.from = ns.id + ':' + ns.site; a.push(o); id = o.id; });
+  St.setSel([{ k: 'o', id }]);
+  beginLine(e, id, 'end', true);
+}
+
 /* ── pointer + keyboard wiring ── */
 function blurActive() { const a = document.activeElement; if (a && a !== document.body && a.blur && (UI.isTextTarget(a) || a.closest('.frame'))) a.blur(); }
 function onDown(e) {
   if (e.button !== 0 || St.drag) return;
   const t = e.target; if (!t.closest) return;
-  const h = t.closest('.sel-h, .sel-edge, .sel-grip');
-  if (h) { e.preventDefault(); e.stopPropagation(); if (h.dataset.h === 'move') beginMove(e); else beginHandle(e, h); return; }
+  if (e.pointerType === 'touch' && PC.touch && PC.touch.down(e)) return;   // fingers: tap selects, a drag scrolls, two fingers pinch (js/touch.js)
+  if (St.tool && t.closest('.stage.editing') && !t.closest('.frame-bar, .frame-add, .sel-h')) { e.preventDefault(); e.stopPropagation(); drawStart(e, t.closest('.frame')); return; }
+  const h = t.closest('.sel-h, .sel-edge, .sel-grip, .sel-body');
+  if (h) { e.preventDefault(); e.stopPropagation(); if (h.dataset.h === 'move') { beginMove(e); if (St.drag && h.classList.contains('sel-body')) St.drag.tapEdit = h.dataset.oid; } else beginHandle(e, h); return; }
   const frEl = t.closest('.frame'), stage = t.closest('.stage.editing'); if (!frEl || !stage) return;
   const i = +frEl.dataset.i; if (i !== S.sel) S.select(i, 'click');
   if (i !== St.frame) { St.sel = []; St.frame = i; }
@@ -333,9 +435,9 @@ function onDown(e) {
     e.preventDefault(); blurActive();
     const it = { k: 'o', id: ob.dataset.obj }, add = e.shiftKey || e.metaKey || e.ctrlKey, was = St.sel.some(x => same(x, it));
     if (add) { St.selectObject(it.id, true); if (!St.sel.some(x => same(x, it))) return; }
-    else if (!was) St.setSel([it], i);
+    else if (!was) St.setSel(withGroup(it), i);
     try { ob.focus({ preventScroll: true }); } catch (_) { /* noop */ }       // after the selection is settled: the focusin handler must not override it
-    beginMove(e); if (was && !add && St.sel.length > 1) St.drag.collapseTo = it.id;
+    beginMove(e); if (St.drag && was && !add && St.sel.length > 1 && !(objById(it.id) || {}).group) St.drag.collapseTo = it.id;
     return;
   }
   const li = t.closest('[data-list]'), tx = t.closest('[data-path]');
@@ -344,6 +446,17 @@ function onDown(e) {
   if (t.closest('[data-readonly], .frame-bar, .frame-add')) return;
   startMarquee(e, i);
 }
+/** A finger tap that did not drag: select what is under it (or clear). Adds to the selection while St.multi is on. */
+St.tap = function (t) {
+  const frEl = t.closest && t.closest('.frame'), stage = t.closest && t.closest('.stage.editing'); if (!frEl || !stage) { St.multi = false; if (St.sel.length) St.setSel([]); return; }
+  const i = +frEl.dataset.i; if (i !== S.sel) S.select(i, 'click'); if (i !== St.frame) { St.sel = []; St.frame = i; }
+  const ob = t.closest('.ob');
+  if (ob) { const id = ob.dataset.obj; blurActive(); if (St.multi) St.selectObject(id, true); else St.setSel(withGroup({ k: 'o', id }), i); try { ob.focus({ preventScroll: true }); } catch (_) { /* noop */ } return; }
+  const li = t.closest('[data-list]'); if (li) { blurActive(); St.setSel([{ k: 'l', key: li.dataset.list + '.' + li.dataset.idx }], i); return; }
+  St.multi = false; if (St.sel.length) St.setSel([], i);
+};
+St.objectById = objById;
+St.cancelDrag = () => { if (St.drag) { St.drag.cancel = true; onUp(); } };
 function startMarquee(e, i) {
   e.preventDefault();
   const host = $('.frame-box', E.frameEl(i)), hb = host.getBoundingClientRect(), k = E.k || 1, add = e.shiftKey;
@@ -363,6 +476,7 @@ function startMarquee(e, i) {
 function onKey(e) {
   if (PC.present.isOpen() || UI.hasModal() || UI.isTextTarget(e.target) || e.target.closest('.menu')) return;
   const mod = e.ctrlKey || e.metaKey, k = e.key;
+  if (St.tool && k === 'Escape') { St.setTool(null); e.preventDefault(); return; }
   if (e.target.closest('.thumbs, #ribbon, #tabs, #panel') && !(k === 'Escape' && St.sel.length)) return;   // panels keep their own keys; Esc always deselects
   if (!St.sel.length) { if (mod && k.toLowerCase() === 'a' && e.target.closest('.frame, #canvas') && (slideNow() || {}).objects && St.selectAllObjects()) e.preventDefault(); return; }
   if (St.drag) return;
@@ -375,6 +489,7 @@ function onKey(e) {
   else if (!mod && k === 'Escape') St.clear();
   else if (!mod && k === 'Enter') { const it = St.sel[0]; if (St.sel.length === 1 && it.k === 'o') { if (!St.edit(it.id)) used = false; } else used = false; }
   else if (mod && k.toLowerCase() === 'd') { if (!St.duplicate()) used = false; }
+  else if (mod && k.toLowerCase() === 'g') { if (!(e.shiftKey ? St.ungroup() : St.group())) used = false; }
   else if (mod && k.toLowerCase() === 'a') { if (!St.selectAllObjects()) used = false; }
   else if (mod && (k === ']' || k === '}')) St.order(e.shiftKey ? 'front' : 'forward');
   else if (mod && (k === '[' || k === '{')) St.order(e.shiftKey ? 'back' : 'backward');
@@ -391,7 +506,7 @@ function onCopy(e, cut) {
 }
 St.pasteObjects = function (list) {
   const clean = PC.cleanObjects(list); if (!clean.length) return false; St.frame = S.sel; const made = [];
-  mutateObjects(a => clean.forEach(o => { o.id = ''; o.x = r1(o.x + 24); o.y = r1(o.y + 24); const n = PC.cleanObject(o, new Set(a.map(x => x.id))); a.push(n); made.push({ k: 'o', id: n.id }); }));
+  const gmap = {}; mutateObjects(a => clean.forEach(o => { o.id = ''; o.x = r1(o.x + 24); o.y = r1(o.y + 24); delete o.from; delete o.to; if (o.group) o.group = gmap[o.group] = gmap[o.group] || newGroupId(); const n = PC.cleanObject(o, new Set(a.map(x => x.id))); a.push(n); made.push({ k: 'o', id: n.id }); }));
   St.setSel(made); return true;
 };
 function onPaste(e) {
@@ -404,6 +519,7 @@ function onPaste(e) {
 
 St.init = function () {
   const cv = $('#canvas-inner');
+  PC.objRect = (slide, o) => { const fr = E.frameEl(S.deck.slides.indexOf(slide)), el = fr && fr.querySelector(`.ob[data-obj="${CSS.escape(o.id)}"]`); return { x: o.x, y: o.y, w: o.w, h: o.h != null ? o.h : el ? el.offsetHeight : PC.guessHeight(o) }; };
   cv.addEventListener('pointerdown', onDown, true);
   cv.addEventListener('focusin', e => {
     const el = e.target.closest && e.target.closest('[data-path]'); if (!el || el.dataset.readonly || !el.isContentEditable) return;

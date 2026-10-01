@@ -144,6 +144,10 @@
             "blur"
           ]
         },
+        "hidden": {
+          "type": "boolean",
+          "description": "Skipped when presenting and exported as a hidden slide."
+        },
         "fill": {
           "type": "string",
           "description": "Hex, rgb()/rgba(), a colour name, or a theme token such as var(--fg), var(--muted), var(--shape), var(--on-shape), var(--c1)..var(--c6)."
@@ -261,7 +265,8 @@
             "text",
             "shape",
             "image",
-            "icon"
+            "icon",
+            "line"
           ]
         },
         "x": {
@@ -306,7 +311,7 @@
         },
         "font": {
           "type": "string",
-          "description": "One of body, display, inter, bricolage, serif, syne, mono, arial, georgia, times, verdana, trebuchet, courier, or a plain installed family name."
+          "description": "One of body, display, inter, bricolage, serif, syne, mono, arial, georgia, times, verdana, trebuchet, courier, dmsans, manrope, plusjakartasans, spacegrotesk, outfit, montserrat, worksans, sora, figtree, urbanist, poppins, raleway, nunito, lato, rubik, archivo, epilogue, ibmplexsans, josefinsans, quicksand, cabin, playfairdisplay, lora, fraunces, sourceserif4, cormorantgaramond, librebaskerville, dmserifdisplay, oswald, anton, bebasneue, abrilfatface, pacifico, lobster, caveat, spacemono, ibmplexmono, firacode, inconsolata, or a plain installed family name."
         },
         "size": {
           "type": "number",
@@ -364,6 +369,19 @@
             "star",
             "arrow",
             "chevron",
+            "arrowleft",
+            "arrowup",
+            "arrowdown",
+            "arrowboth",
+            "pentagon",
+            "octagon",
+            "parallelogram",
+            "trapezoid",
+            "plus",
+            "callout",
+            "donut",
+            "cylinder",
+            "heart",
             "line",
             "connector"
           ]
@@ -400,7 +418,7 @@
         "alt": {
           "type": "string",
           "maxLength": 300,
-          "description": "Always provide for images."
+          "description": "Alternative text for shapes, icons and lines (images use alt)."
         },
         "fit": {
           "enum": [
@@ -457,6 +475,92 @@
             "grid",
             "play"
           ]
+        },
+        "flipH": {
+          "type": "boolean",
+          "description": "Mirror left-right (lines: the start is on the right)."
+        },
+        "flipV": {
+          "type": "boolean",
+          "description": "Mirror top-bottom."
+        },
+        "locked": {
+          "type": "boolean",
+          "description": "The editor will not move, resize or edit it until unlocked."
+        },
+        "group": {
+          "type": "string",
+          "pattern": "^[\\w-]{1,24}$",
+          "description": "Objects sharing a group id select and move together."
+        },
+        "link": {
+          "type": "string",
+          "description": "https://, mailto: or #slide-id. Followed when presenting."
+        },
+        "list": {
+          "enum": [
+            "bullet",
+            "number"
+          ],
+          "description": "Text and shapes: each line becomes a bullet or numbered item."
+        },
+        "fill2": {
+          "type": "string",
+          "description": "Hex, rgb()/rgba(), a colour name, or a theme token such as var(--fg), var(--muted), var(--shape), var(--on-shape), var(--c1)..var(--c6)."
+        },
+        "gradAngle": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 360,
+          "description": "With fill2: a linear gradient from fill to fill2. 90 = left to right, 180 = top to bottom."
+        },
+        "kind": {
+          "enum": [
+            "straight",
+            "elbow",
+            "curve"
+          ],
+          "description": "type \"line\": straight, elbow (right-angle corners) or curve. Start = top-left of the box, end = bottom-right, unless flipped."
+        },
+        "vert": {
+          "type": "boolean",
+          "description": "Elbow and curve: leave the start vertically instead of horizontally."
+        },
+        "bend": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 0.95,
+          "description": "Elbow and curve: where the middle run sits, 0..1 (default 0.5)."
+        },
+        "arrowStart": {
+          "enum": [
+            "none",
+            "triangle",
+            "stealth",
+            "open",
+            "dot",
+            "diamond"
+          ]
+        },
+        "arrowEnd": {
+          "enum": [
+            "none",
+            "triangle",
+            "stealth",
+            "open",
+            "dot",
+            "diamond"
+          ]
+        },
+        "from": {
+          "type": "string",
+          "pattern": "^[\\w-]{1,40}:[trbl]$",
+          "description": "type \"line\": glue the start to a side of another object, \"objectId:t|r|b|l\". The line follows when the object moves."
+        },
+        "to": {
+          "type": "string",
+          "pattern": "^[\\w-]{1,40}:[trbl]$",
+          "description": "Glue the end likewise."
         }
       }
     }

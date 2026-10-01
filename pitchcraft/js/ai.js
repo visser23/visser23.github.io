@@ -171,7 +171,7 @@ THE KIT (optional: it follows the deck theme and background)
 
 BRANDING
 - The sandbox blocks network access except https images and fonts. For a guaranteed result embed assets as data: URIs.
-- Brand colours, fonts and logo classes that EVERY custom slide shares belong in the deck's meta.css (Deck tab, Brand CSS), not in each slide.
+- Brand colours, fonts and logo classes that EVERY custom slide shares belong in the deck's meta.css (Code tab, Brand CSS), not in each slide.
 
 BEHAVIOUR
 - js runs when the slide is shown, inside a sandbox: no access to the editor, storage, cookies or the network.

@@ -11,13 +11,13 @@ UI.$$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 UI.isTextTarget = t => !!(t && t.closest && t.closest('input, textarea, select, [contenteditable="true"], [contenteditable="plaintext-only"]'));
 
 /* ── toasts ── */
-UI.toast = function (msg, kind) {
+UI.toast = function (msg, kind, action) {
   const root = UI.$('#toasts'); if (!root) return;
   const t = document.createElement('div'); t.className = 'toast' + (kind === 'bad' ? ' bad' : ''); t.setAttribute('role', 'status'); t.textContent = msg;
-  root.appendChild(t); setTimeout(() => t.remove(), kind === 'bad' ? 5200 : 2800);
+  if (action) { t.classList.add('has-act'); const b = document.createElement('button'); b.type = 'button'; b.className = 'toast-act'; b.textContent = action.label; b.addEventListener('click', () => { t.remove(); action.run(); }); t.appendChild(b); }
+  root.appendChild(t); setTimeout(() => t.remove(), action ? 12000 : kind === 'bad' ? 5200 : 2800);
   while (root.children.length > 3) root.firstChild.remove();
 };
-
 /* ── clipboard / download ── */
 UI.copy = async function (text, okMsg) {
   try { await navigator.clipboard.writeText(text); }

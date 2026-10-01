@@ -8,7 +8,7 @@ const E = PC.editor = { zoom: 'fit', k: 0.6, editing: null, scrollLock: 0, inspe
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
 const slideHtml = (s, i, editable) => PC.renderSlide(s, { editable, index: i, total: S.count(), deck: S.deck, mode: editable ? 'live' : 'thumb' });
-const slideName = s => { const l = PC.LAYOUTS[s.layout], first = (s.objects || []).find(o => o.text), h = PC.plain(s.headline || s.body || s.kicker || (first && first.text) || ''); return l.name + (h ? ' · ' + h.slice(0, 64) : ''); };
+const slideName = s => { const l = PC.LAYOUTS[s.layout], first = (s.objects || []).find(o => o.text), h = PC.plain(s.headline || s.body || s.kicker || (first && first.text) || ''); return l.name + (h ? ' · ' + h.slice(0, 64) : '') + (s.hidden ? ' (hidden)' : ''); };
 
 /* ── text helpers ── */
 function readText(el) {
@@ -71,8 +71,9 @@ E.fit = function () {
   const c = $('#canvas'); if (!c) return;
   const cs = getComputedStyle(c), padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
   const w = (c.clientWidth - padX) / 1280, h = (c.clientHeight - 60) / 720;
-  let k = E.zoom === 'fit' ? Math.min(w, Math.max(h, .3)) : E.zoom;
-  k = clamp(k, .15, 2); E.k = k;
+  const fk = clamp(Math.min(w, Math.max(h, .3)), .15, 2); E.fitK = fk;
+  let k = E.zoom === 'fit' ? fk : E.zoom;
+  k = clamp(k, .15, 2); E.k = k; c.classList.toggle('zoomed', E.zoom !== 'fit');
   c.style.setProperty('--k', k.toFixed(4));
   const z = $('#zoom-val'); if (z) z.textContent = Math.round(k * 100) + '%';
   if (PC.stage && PC.stage.layout) PC.stage.layout();   // selection handles are in screen pixels
@@ -120,7 +121,7 @@ E.focusField = function (path) {
 };
 
 /* ── slide panel ── */
-const thumbHtml = (s, i) => `<div class="thumb${i === S.sel ? ' sel' : ''}" data-i="${i}" draggable="true" role="button" tabindex="0" aria-label="Slide ${i + 1}: ${esc(slideName(s))}" title="${esc(slideName(s))}"><span class="thumb-n">${i + 1}</span><div class="thumb-frame" aria-hidden="true"><div class="stage">${slideHtml(s, i, false)}</div></div><div class="thumb-act"><button data-ta="dup" aria-label="Duplicate slide ${i + 1}" tabindex="-1">${icon('copy', 13)}</button><button data-ta="del" aria-label="Delete slide ${i + 1}" tabindex="-1">${icon('trash', 13)}</button></div></div>`;
+const thumbHtml = (s, i) => `<div class="thumb${i === S.sel ? ' sel' : ''}${s.hidden ? ' is-hidden' : ''}" data-i="${i}" draggable="true" role="button" tabindex="0" aria-label="Slide ${i + 1}: ${esc(slideName(s))}" title="${esc(slideName(s))}"><span class="thumb-n">${i + 1}</span><div class="thumb-frame" aria-hidden="true"><div class="stage">${slideHtml(s, i, false)}</div></div><div class="thumb-act"><button data-ta="dup" aria-label="Duplicate slide ${i + 1}" tabindex="-1">${icon('copy', 13)}</button><button data-ta="del" aria-label="Delete slide ${i + 1}" tabindex="-1">${icon('trash', 13)}</button></div></div>`;
 E.renderThumbs = function () {
   $('#thumbs').innerHTML = S.deck.slides.map(thumbHtml).join('');
   const c = $('#slide-count'); if (c) c.textContent = S.count();
@@ -268,7 +269,7 @@ function bindCanvas() {
     });
   }, { passive: true });
   ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach(ev => canvas.addEventListener(ev, () => { E.scrollTarget = null; E.scrollLock = 0; }, { passive: true, capture: true }));
-  new ResizeObserver(() => E.fit()).observe(canvas);
+  new ResizeObserver(() => { const k0 = E.k; E.fit(); if (Math.abs((E.k || 0) - (k0 || 0)) > 0.001) E.scrollToFrame(S.sel, true); }).observe(canvas);   // the slides changed size: keep the current one in view rather than leave the scroll position pointing at empty space
 }
 
 function bindThumbs() {

@@ -5,7 +5,7 @@
 (function () {
 'use strict';
 const PC = window.PC = window.PC || {};
-PC.VERSION = '3.3.0';
+PC.VERSION = '3.4.0';
 PC.STAGE = { w: 1280, h: 720 };
 
 /* ── utilities ─────────────────────────────────────────────── */
@@ -77,13 +77,15 @@ const ICONS = {
 };
 PC.ICON_NAMES = ['bolt', 'layers', 'sparkles', 'chart', 'lock', 'globe', 'wand', 'cursor', 'clock', 'check', 'users', 'user', 'target', 'rocket', 'shield', 'cpu', 'box', 'link', 'star', 'type', 'image', 'table', 'pie', 'terminal', 'flag', 'presentation', 'heart', 'key', 'puzzle', 'git', 'compass', 'mail', 'feather', 'gauge', 'edit', 'tag', 'map', 'file', 'code', 'download', 'upload', 'eye', 'palette', 'grid', 'play'];
 ICONS.code = 'M8 8l-5 4 5 4M16 8l5 4-5 4M14 5l-4 14';
+ICONS.moon = 'M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z'; ICONS.sun = c(12, 12, 4) + 'M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4';
+ICONS.settings = c(12, 12, 3) + 'M10.3 3h3.4l.5 2.4 1.7.7 2.1-1.3 2.4 2.4-1.3 2.1.7 1.7 2.4.5v3.4l-2.4.5-.7 1.7 1.3 2.1-2.4 2.4-2.1-1.3-1.7.7-.5 2.4h-3.4l-.5-2.4-1.7-.7-2.1 1.3-2.4-2.4 1.3-2.1-.7-1.7L3 13.7v-3.4l2.4-.5.7-1.7-1.3-2.1 2.4-2.4 2.1 1.3 1.7-.7z';
 PC.icon = (name, size = 20, cls = '') => {
   const d = ICONS[name] || ICONS.sparkles; const fill = d.startsWith('F:');
   return `<svg class="ic ${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${fill ? 'currentColor' : 'none'}" stroke="${fill ? 'none' : 'currentColor'}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${fill ? d.slice(2) : d}"/></svg>`;
 };
 
 /* Logo mark: a stack of slides with a spark. Used in header, favicon and README. */
-PC.logoMark = (size = 28) => `<svg class="logo-mark" width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="pcg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c6bff"/><stop offset="1" stop-color="#ff6b57"/></linearGradient></defs><rect x="2" y="2" width="28" height="28" rx="9" fill="url(#pcg)"/><rect x="8" y="9" width="14" height="10" rx="2.2" fill="#fff" opacity=".45"/><rect x="10.5" y="12" width="14" height="10" rx="2.2" fill="#fff"/><path d="M22.5 6.2l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z" fill="#fff"/></svg>`;
+PC.logoMark = (size = 28) => `<svg class="logo-mark" width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="pcg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4b3bff"/><stop offset=".55" stop-color="#8a4dff"/><stop offset="1" stop-color="#ff6b57"/></linearGradient></defs><rect x="1.5" y="1.5" width="29" height="29" rx="9.5" fill="url(#pcg)"/><rect x="14.5" y="8" width="11.5" height="9" rx="2.4" fill="#fff" opacity=".28" transform="rotate(9 20 12.5)"/><path d="M10 25.5V8.2c0-.7.6-1.3 1.3-1.3h6.9a5.5 5.5 0 0 1 0 11H13" fill="none" stroke="#fff" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.6 9.7l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z" fill="#ffd36e"/></svg>`;
 
 /* ── themes, tones, backgrounds, transitions ───────────────── */
 PC.THEMES = {
@@ -210,13 +212,14 @@ PC.migrateSlide = function (raw, i = 0) {
   if (Array.isArray(raw.objects) && raw.objects.length) s.objects = PC.cleanObjects(raw.objects);
   else if (raw.layout === 'blank') s.objects = [];
   const tw = PC.cleanTweaks(raw.tweaks); if (Object.keys(tw).length) s.tweaks = tw;
+  if (raw.hidden === true) s.hidden = true;   // skipped when presenting
   if (typeof raw.fill === 'string' && raw.fill && okColor(raw.fill)) s.fill = raw.fill;
   if (typeof raw.bgImage === 'string' && raw.bgImage && okUrl(raw.bgImage)) s.bgImage = raw.bgImage;
   // custom HTML/CSS/JS slide content (rendered in a sandboxed iframe; see layouts.js). Kept only when it has code or the layout is custom.
-  const rc = raw.custom && typeof raw.custom === 'object' && !Array.isArray(raw.custom) ? raw.custom : null, cap = v => (typeof v === 'string' ? v : typeof v === 'number' ? String(v) : '').slice(0, PC.LIMITS.custom);
-  if (rc && (cap(rc.html) || raw.layout === 'custom') || raw.layout === 'custom') {
+  const rc = raw.custom && typeof raw.custom === 'object' && !Array.isArray(raw.custom) ? raw.custom : null, cap = (v, kind) => { v = (typeof v === 'string' ? v : typeof v === 'number' ? String(v) : '').slice(0, PC.LIMITS.custom); return (kind && PC.beautify ? PC.beautify.auto(kind, v) : v).slice(0, PC.LIMITS.custom); };   // code that arrives crammed onto a line or two is tidied (see beautify.js)
+  if (rc && (cap(rc.html, '') || raw.layout === 'custom') || raw.layout === 'custom') {
     const c = rc || {};
-    s.custom = { html: cap(c.html), css: cap(c.css), js: cap(c.js), interactive: c.interactive === true };
+    s.custom = { html: cap(c.html, 'html'), css: cap(c.css, 'css'), js: cap(c.js, 'js'), interactive: c.interactive === true };
     if (typeof c.base === 'string' && c.base !== 'custom' && PC.LAYOUTS[c.base]) s.custom.base = c.base;
   }
   if (raw.code && typeof raw.code === 'object') Object.assign(s.code, { language: str(raw.code.language, 'json'), filename: str(raw.code.filename), source: str(raw.code.source) });
@@ -273,7 +276,7 @@ PC.parseDeck = function (input) {
     name: str(meta.name, 'Untitled deck').slice(0, 80), theme: PC.THEMES[meta.theme] ? meta.theme : 'studio',
     numbers: !!meta.numbers, transition: PC.TRANSITIONS[meta.transition] ? meta.transition : 'fade'
   });
-  if (typeof meta.css === 'string' && meta.css) m.css = meta.css.slice(0, PC.LIMITS.metaCss);   // shared brand CSS for custom slides
+  if (typeof meta.css === 'string' && meta.css) m.css = (PC.beautify ? PC.beautify.auto('css', meta.css.slice(0, PC.LIMITS.metaCss)) : meta.css).slice(0, PC.LIMITS.metaCss);   // shared brand CSS for custom slides
   return { deck: { format: 'pitchcraft', version: 3, meta: m, slides: out }, warnings };
 };
 
@@ -286,14 +289,17 @@ PC.API_DOCS = [
   ['Read', 'getObjects(ref)', 'Copy of the free-form objects on a slide.'],
   ['Read', 'html(ref)', 'The rendered HTML of one slide (what the DOM contains).'],
   ['Read', 'prettyHtml(ref)', 'The same, indented for reading.'],
+  ['Read', 'exportPptx()', 'Async. Builds a native PowerPoint file from the deck and returns { filename, base64, report } (report lists slides, pictures, fonts and warnings). Text stays editable text; shapes stay shapes. Does not download anything; save the base64 yourself.'],
   ['Read', 'exportJSON()', 'The deck as a JSON string, exactly what a .pitchcraft file contains.'],
-  ['Read', 'audit(deck?)', 'Fast layout audit of templated and blank slides: finds text that clips or leaves the safe area. Returns one entry per slide with a problems list. It cannot see inside custom slides: those come back with checked:false. Use auditAll() for them.'],
-  ['Read', 'auditAll(deck?)', 'Async. Everything audit() does, plus it runs each custom slide in a hidden sandbox and measures the rendered text: text off the slide, outside the safe area, clipped by its container, or overlapping other text. Entries have checked:true. Await it.'],
+  ['Read', 'audit(deck?)', 'Fast layout audit of templated and blank slides: finds text that clips or leaves the safe area. Returns one entry per slide with a problems list. It cannot see inside custom slides: those come back with status "unknown", checked:false and problems:null (never an empty list that looks clean). Use auditAll() for them.'],
+  ['Read', 'auditAll(deck?)', 'Async. Everything audit() does, plus it runs each custom slide in a hidden sandbox and measures the rendered text: text off the slide, outside the safe area, clipped by its container, overlapping other text, short labels that wrap (label-wraps), text that straddles a box edge (text-crosses-edge) and text jammed against its box (text-cramped). Each entry has status "clean", "issues" or "unknown". The first measurement is retried once with more time. Await it.'],
   ['Read', 'measureText(text, opts?)', 'Measure text before you place it. opts {font "display"|"body"|"mono"|a CSS family, size (px, default 28), weight, caps, ls, lh, w (box width px)}. Returns {width, height, lines, em}: width of the longest line, height at the wrapped width, and the average em per character in this theme.'],
   ['Read', 'current()', 'Index of the selected slide.'],
   ['Read', 'count()', 'Number of slides.'],
   ['Read', 'schema()', 'JSON Schema (draft 2020-12) of a deck, including slide custom {html, css, js}, objects and tweaks. Also published as pitchcraft.schema.json.'],
-  ['Deck', 'setDeck(deckOrJson)', 'Replace the whole deck (object or JSON string). Returns {slides, warnings}. Undoable.'],
+  ['Deck', 'setDeck(deckOrJson)', 'Replace the whole deck (object or JSON string). Returns {slides, warnings}. Undoable. The deck it replaced is kept in backups().'],
+  ['Deck', 'backups()', 'The last few decks that were replaced or undone away: [{index, title, slides, reason, t}]. They survive a reload.'],
+  ['Deck', 'restoreBackup(index)', 'Put one of those decks back. Undoable. Returns true on success.'],
   ['Deck', 'importText(text, mode?)', 'Import deck JSON text. mode "replace" (default) or "append". Returns {deck, warnings}.'],
   ['Deck', 'setMeta(patch)', 'Patch deck meta: {name, theme, numbers, transition, css}.'],
   ['Deck', 'setTheme(theme)', 'Set the deck theme key.'],
