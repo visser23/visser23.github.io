@@ -82,6 +82,14 @@
       <p>Both use one guide generated from the app, so it always matches this version (${esc(ver())}): <a href="${esc(PC.GUIDE ? PC.GUIDE.pageUrl : '#')}" target="_blank" rel="noopener noreferrer">the Pitchcraft guide for AI assistants</a>. Agents can check their work with <code>await Pitchcraft.auditAll()</code>, which measures every slide, custom ones included, and reports <i>unknown</i> rather than <i>fine</i> if a slide could not be measured.</p>
       <p>Pitchcraft never contacts an AI service itself. Importing validates everything: anything invalid is dropped or corrected, and you get a warning.</p>`],
 
+    ['pptximport', 'Import from PowerPoint', 'upload', () => `
+      <p>Click <b>Import</b> and choose a <code>.pptx</code> file, or drop one anywhere on the page. Choose <b>Add to this deck</b> or <b>Replace deck</b>.</p>
+      <ul><li>Every PowerPoint slide becomes an <b>HTML slide</b>: text, shapes, lines, pictures, tables and simple charts, placed where they were. Double-click text to edit it in place; the <b>Code</b> tab has the HTML and CSS if you want to go further.</li>
+      <li>Speaker notes and hidden slides carry across. Theme colours, fonts and bullet styles are resolved for you. Fonts this computer does not have are replaced by a similar one.</li>
+      <li>A report tells you what could not be carried over (for example SmartArt, embedded objects, animations, links and videos). The slide itself is never left blank because of one of these.</li>
+      <li>It never leaves your browser. Nothing in the file is run: no macros, scripts or links come across, and pictures are re-encoded.</li></ul>
+      <p>Round trip: export to PowerPoint, edit there, and import it back. It will not be pixel-identical, but it is close.</p>`],
+
     ['export', 'Export and share', 'download', () => `
       <p>Open <b>Export</b> in the ribbon.</p>
       <ul><li><b>PowerPoint (.pptx):</b> a native file you can edit in PowerPoint, Keynote or Google Slides. Text stays text (a paragraph is one text box), a shape with text is one shape with the text inside it, lines are connectors, speaker notes, hidden slides and transitions carry across. Charts, icons and complex graphics become pictures. It will not be pixel-perfect: web fonts are swapped for similar fonts PowerPoint has (or keep the originals from the export dialog and install them).</li>

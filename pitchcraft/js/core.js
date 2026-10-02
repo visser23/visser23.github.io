@@ -5,7 +5,7 @@
 (function () {
 'use strict';
 const PC = window.PC = window.PC || {};
-PC.VERSION = '3.5.0';
+PC.VERSION = '3.6.0';
 PC.STAGE = { w: 1280, h: 720 };
 
 /* ── utilities ─────────────────────────────────────────────── */
@@ -301,6 +301,7 @@ PC.API_DOCS = [
   ['Deck', 'setDeck(deckOrJson)', 'Replace the whole deck (object or JSON string). Returns {slides, warnings}. Undoable. The deck it replaced is kept in backups().'],
   ['Deck', 'backups()', 'The last few decks that were replaced or undone away: [{index, title, slides, reason, t}]. They survive a reload.'],
   ['Deck', 'restoreBackup(index)', 'Put one of those decks back. Undoable. Returns true on success.'],
+  ['Deck', 'importPptx(base64OrBytes, mode?, name?)', 'Async. Import a PowerPoint (.pptx) file as HTML slides. data = base64 string or Uint8Array; mode "replace" (default) or "append". Every slide becomes a custom HTML slide (text, shapes, pictures, tables and simple charts positioned on the 1280x720 stage). Returns {deck, warnings, report}; warnings list what could not be carried over.'],
   ['Deck', 'importText(text, mode?)', 'Import deck JSON text. mode "replace" (default) or "append". Returns {deck, warnings}.'],
   ['Deck', 'setMeta(patch)', 'Patch deck meta: {name, theme, numbers, transition, css}.'],
   ['Deck', 'setTheme(theme)', 'Set the deck theme key.'],

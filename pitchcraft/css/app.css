@@ -31,6 +31,8 @@ button { cursor: pointer; }
 .wordmark em { font-family: var(--f-serif); font-style: italic; font-weight: 400; font-size: 27px; letter-spacing: -.02em; background: linear-gradient(120deg, #5b4bff, #ff6b57); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: 2px; }
 .deck-name { flex: 0 1 300px; min-width: 60px; border: 1px solid transparent; background: transparent; border-radius: 9px; padding: 7px 10px; font-weight: 600; font-size: 15px; text-overflow: ellipsis; }
 .deck-name:hover { background: var(--ui-bg); } .deck-name:focus { background: var(--ui-surface); border-color: var(--ui-acc); outline: none; }
+.app-ver { font-size: 11px; font-weight: 600; color: var(--ui-muted); border: 1px solid var(--ui-line, currentColor); border-radius: 999px; padding: 2px 8px; white-space: nowrap; flex: none; font-variant-numeric: tabular-nums; }
+.app-ver:empty { display: none; }
 .save-state { font-size: 12px; color: var(--ui-muted); display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 .save-state::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--ui-ok); }
 .save-state.dirty::before { background: var(--ui-coral); }
@@ -244,7 +246,7 @@ button { cursor: pointer; }
   :root { --top-h: 50px; --rib-h: 64px; --stat-h: 0px; }
   .only-mobile { display: grid; } .no-mobile { display: none !important; }
   .app { grid-template-rows: var(--top-h) auto minmax(0, 1fr); }
-  .topbar { gap: 8px; padding: 0 8px; } .wordmark { font-size: 20px; } .wordmark em { font-size: 23px; } .deck-name { flex: 1 1 auto; font-size: 14px; } .save-state, .help-btn .lbl { display: none; }
+  .topbar { gap: 8px; padding: 0 8px; } .wordmark { font-size: 20px; } .wordmark em { font-size: 23px; } .deck-name { flex: 1 1 auto; font-size: 14px; } .save-state, .help-btn .lbl, .app-ver { display: none; }
   .help-btn { padding: 4px; } .btn.primary .lbl { display: none; } .btn.primary { padding: 8px 10px; }
   .rb { min-width: 50px; padding: 4px 6px; font-size: 10.5px; }
   .workspace, .app[data-side='closed'] .workspace, .app[data-insp='closed'] .workspace, .app[data-insp='open'] .workspace, .app[data-side='closed'][data-insp='closed'] .workspace { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }

@@ -45,6 +45,26 @@ PC.importText = function (text, mode) {
   log(`imported ${deck.slides.length} slide(s) (${mode || 'replace'})`, warnings.length ? warnings : '');
   return { deck, warnings };
 };
+/** Import a PowerPoint file (.pptx) as custom HTML slides. bytes: Uint8Array/ArrayBuffer; mode 'replace' | 'append'. Returns { deck, warnings, report }. */
+PC.importPptxBytes = async function (bytes, mode, name) {
+  const r = await PC.importPptx(bytes, { name, progress: m => log('pptx import:', m) });
+  const { warnings } = PC.importText(JSON.stringify(r.deck), mode); r.warnings = r.warnings.concat(warnings.filter(w => !r.warnings.includes(w)));
+  log(`pptx imported: ${r.report.slides} slides, ${r.report.pictures} pictures, ${r.warnings.length} notes`);
+  return r;
+};
+PC.importPptxFile = async function (file, mode) {
+  if (file.size > 120 * 1024 * 1024) throw new Error('That PowerPoint file is over 120 MB.');
+  const note = UI.toast('Reading the PowerPoint file…', 'ok');
+  try { const r = await PC.importPptxBytes(new Uint8Array(await file.arrayBuffer()), mode, file.name); PC.importReport(r, file.name); return r; }
+  finally { if (note && note.remove) note.remove(); }
+};
+PC.importReport = function (r, name) {
+  const w = r.warnings;
+  UI.modal({ title: 'PowerPoint imported', body: `<p><b>${esc(name || 'The file')}</b> became ${r.report.slides} HTML slide${r.report.slides === 1 ? '' : 's'}${r.report.pictures ? ` with ${r.report.pictures} picture${r.report.pictures === 1 ? '' : 's'}` : ''}. Double-click text on a slide to edit it in place; the Code tab has the HTML and CSS.</p>
+    ${r.report.fonts.length ? `<p><b>Fonts used:</b> ${r.report.fonts.slice(0, 12).map(esc).join(', ')}. Fonts this computer lacks are replaced by a similar one.</p>` : ''}
+    ${w.length ? `<div class="lp-group">Needs a look</div><ul class="plain">${w.slice(0, 14).map(x => `<li>${esc(x)}</li>`).join('')}</ul>${w.length > 14 ? `<p class="hint">…and ${w.length - 14} more.</p>` : ''}` : '<p>Nothing needed attention.</p>'}`,
+    footer: '<button class="btn primary" type="button" data-close>Done</button>' });
+};
 PC.loadTemplate = function (id) {
   const t = PC.TEMPLATES.find(x => x.id === id); if (!t) throw new Error('Unknown template ' + id);
   S.load(PC.parseDeck(PC.clone(t.deck)).deck); UI.toast(`Loaded "${t.name}". Ctrl+Z brings your old deck back.`); log('template loaded:', id);
@@ -60,22 +80,25 @@ PC.templatesDialog = function () {
   m.el.addEventListener('click', e => { const c = e.target.closest('[data-tpl]'); if (c) { m.close(); PC.loadTemplate(c.dataset.tpl); } });
 };
 
-PC.importDialog = function (prefill) {
+PC.importDialog = function (prefill, pptxFile) {
   const body = document.createElement('div');
-  body.innerHTML = `<p>Drop a <code>.pitchcraft</code> file, or paste deck JSON (from an AI chat, or a file you exported). Older Pitchcraft decks are upgraded automatically. <button class="linkish" id="imp-ai" type="button">Need an AI to write one?</button></p>
-    <div class="drop" id="imp-drop">Drop a <b>.json</b> or <b>.pitchcraft</b> file here, or <button class="btn sm" id="imp-pick">choose a file</button><input type="file" id="imp-file" accept=".json,.pitchcraft,application/json,text/plain" hidden></div>
+  body.innerHTML = `<p>Drop a <code>.pitchcraft</code> file or a <b>PowerPoint (.pptx)</b> file, or paste deck JSON (from an AI chat, or a file you exported). Older Pitchcraft decks are upgraded automatically. <button class="linkish" id="imp-ai" type="button">Need an AI to write one?</button></p>
+    <div class="drop" id="imp-drop">Drop a <b>.pitchcraft</b>, <b>.json</b> or <b>.pptx</b> file here, or <button class="btn sm" id="imp-pick">choose a file</button><input type="file" id="imp-file" accept=".json,.pitchcraft,.pptx,.potx,application/json,text/plain,application/vnd.openxmlformats-officedocument.presentationml.presentation" hidden></div>
     <label class="lbl" for="imp-text">Deck JSON</label><textarea class="txt mono" id="imp-text" rows="10" spellcheck="false" placeholder='{ "meta": { "name": "My deck" }, "slides": [ … ] }' data-autofocus></textarea><div class="err" id="imp-err" role="alert"></div>`;
   const foot = document.createElement('div'); foot.style.display = 'contents';
   foot.innerHTML = `<button class="btn" data-close>Cancel</button><button class="btn" id="imp-add">Add to this deck</button><button class="btn primary" id="imp-replace">Replace deck</button>`;
   const m = UI.modal({ title: 'Import a deck', body, footer: foot, size: 'mid' });
   const ta = $('#imp-text', m.el), err = $('#imp-err', m.el), drop = $('#imp-drop', m.el); if (prefill) ta.value = prefill;
   $('#imp-ai', m.el).addEventListener('click', () => { m.close(); PC.ai.dialog('chat'); });
-  const run = mode => { try { const { warnings } = PC.importText(ta.value, mode); m.close(); UI.toast(warnings.length ? `Imported with ${warnings.length} note(s): ${warnings[0]}` : 'Deck imported'); } catch (ex) { err.textContent = ex.message; ta.focus(); } };
-  const read = f => { if (!f) return; if (f.size > 8 * 1024 * 1024) { err.textContent = 'That file is over 8 MB.'; return; } const r = new FileReader(); r.onload = () => { ta.value = String(r.result); err.textContent = ''; }; r.readAsText(f); };
+  let pending = null;
+  const setPending = f => { pending = f; ta.value = ''; ta.disabled = true; err.textContent = ''; ta.placeholder = `${f.name} (${Math.round(f.size / 1024)} KB) is ready. Choose Add to this deck or Replace deck: each slide becomes an HTML slide you can edit.`; };
+  const run = async mode => { if (pending) { try { m.close(); await PC.importPptxFile(pending, mode); } catch (ex) { UI.toast('The PowerPoint import failed: ' + (ex && ex.message || ex), 'err'); log('pptx import failed', ex); } return; } try { const { warnings } = PC.importText(ta.value, mode); m.close(); UI.toast(warnings.length ? `Imported with ${warnings.length} note(s): ${warnings[0]}` : 'Deck imported'); } catch (ex) { err.textContent = ex.message; ta.focus(); } };
+  const read = f => { if (!f) return; if (/\.(pptx|potx|ppsx)$/i.test(f.name)) { setPending(f); return; } if (f.size > 8 * 1024 * 1024) { err.textContent = 'That file is over 8 MB.'; return; } const r = new FileReader(); r.onload = () => { ta.value = String(r.result); err.textContent = ''; }; r.readAsText(f); };
   $('#imp-replace', m.el).addEventListener('click', () => run('replace')); $('#imp-add', m.el).addEventListener('click', () => run('append'));
   $('#imp-pick', m.el).addEventListener('click', () => $('#imp-file', m.el).click()); $('#imp-file', m.el).addEventListener('change', e => read(e.target.files[0]));
   ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
   ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); if (ev === 'drop') read(e.dataTransfer.files[0]); }));
+  if (pptxFile) setPending(pptxFile);
   return m;
 };
 
@@ -124,7 +147,8 @@ PC.settingsDialog = function () {
   const m = UI.modal({ title: 'Settings', size: '',
     body: `<div class="settings-h">Appearance</div>
       ${row('Colour scheme', 'Auto switches to dark from 19:00 to 07:00. Slides keep their own theme either way.', `<div class="seg" role="group" aria-label="Colour scheme">${[['light', 'Light', 'sun'], ['dark', 'Dark', 'moon'], ['auto', 'Auto', 'clock']].map(([k, l, ic]) => `<button type="button" data-ui-pref="${k}" aria-pressed="${cur() === k}">${icon(ic, 15)} ${l}</button>`).join('')}</div>`)}
-      <div data-extras></div>`,
+      <div data-extras></div>
+      <p class="hint" style="margin:14px 0 0">Pitchcraft v${esc(PC.VERSION)}</p>`,
     footer: '<button class="btn primary" type="button" data-close>Done</button>' });
   m.body.addEventListener('click', e => {
     const b = e.target.closest('[data-ui-pref]'); if (!b) return;
@@ -355,7 +379,7 @@ function bindGlobal() {
   });
   ['dragover', 'drop'].forEach(ev => window.addEventListener(ev, e => {
     if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return; e.preventDefault();
-    if (ev === 'drop' && !e.target.closest('#imp-drop')) { const f = e.dataTransfer.files[0]; if (!f || /^image\//.test(f.type)) return; const r = new FileReader(); r.onload = () => { UI.closeModals(); PC.importDialog(String(r.result)); }; r.readAsText(f); }
+    if (ev === 'drop' && !e.target.closest('#imp-drop')) { const f = e.dataTransfer.files[0]; if (!f || /^image\//.test(f.type)) return; if (/\.(pptx|potx|ppsx)$/i.test(f.name)) { UI.closeModals(); PC.importDialog('', f); return; } const r = new FileReader(); r.onload = () => { UI.closeModals(); PC.importDialog(String(r.result)); }; r.readAsText(f); }
   }));
   $('#btn-present').addEventListener('click', () => PC.act('present'));
   $('#btn-help').addEventListener('click', () => PC.act('help'));
@@ -408,7 +432,7 @@ window.Pitchcraft = {
   exportJSON: deckJson,
   async exportPptx() { const r = await PC.exportPptx({ returnBytes: true }); let bin = ''; for (let i = 0; i < r.bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, r.bytes.subarray(i, i + 0x8000)); return { filename: r.name, base64: btoa(bin), report: r.report }; }, newDeck: PC.newDeck, audit: PC.audit, auditAll: PC.auditAll, measureText: PC.measureText, preparePrint: PC.preparePrint,
   present: from => P.open(from), closePresent: () => P.close(), isPresenting: () => P.isOpen(),
-  undo: () => S.undo(), redo: () => S.redo(), loadTemplate: PC.loadTemplate, importText: PC.importText,
+  undo: () => S.undo(), redo: () => S.redo(), loadTemplate: PC.loadTemplate, importText: PC.importText, async importPptx(data, mode, name) { const bin = typeof data === 'string' ? Uint8Array.from(atob(data.replace(/^data:[^,]*,/, '')), c => c.charCodeAt(0)) : data; return PC.importPptxBytes(bin, mode || 'replace', name || 'Imported presentation'); },
   getObjects: ref => PC.clone(S.slide(slideRef(ref)).objects || []),
   addObject(ref, obj) {
     const i = slideRef(ref); if (!obj || !PC.has(PC.OBJECT_TYPES, obj.type)) throw new Error(`Object needs a type: ${Object.keys(PC.OBJECT_TYPES).join(', ')}`);
@@ -442,6 +466,7 @@ function boot() {
   document.fonts && document.fonts.ready.then(() => { E.fit(); document.documentElement.dataset.fonts = 'ready'; });
   document.documentElement.dataset.ready = '1';
   if (q.has('present')) setTimeout(() => P.open(0), 50);
+  document.documentElement.dataset.version = PC.VERSION; const av = $('#app-ver'); if (av) { av.textContent = 'v' + PC.VERSION; av.title = 'Pitchcraft version ' + PC.VERSION; }
   log(`v${PC.VERSION} ready · ${S.count()} slides · theme ${S.deck.meta.theme} · plaintext-only ${PC.plainSupported} · fullscreen ${!!document.documentElement.requestFullscreen}`);
 }
 boot();

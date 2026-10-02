@@ -1,8 +1,8 @@
 # Pitchcraft: guide for AI assistants
 
-Version 3.5.0 · canonical copy: https://visser23.github.io/pitchcraft/ai-guide.md · also inside the app: `Pitchcraft.guide()`
+Version 3.6.0 · canonical copy: https://visser23.github.io/pitchcraft/ai-guide.md · also inside the app: `Pitchcraft.guide()`
 
-Pitchcraft is a browser presentation studio. A deck is **plain JSON**. You write or edit that JSON, the user opens it in Pitchcraft, edits it visually and presents it. There is no server: everything is validated and rendered in the user's browser. This guide is generated from the same specs the app runs on, so it is always accurate for version 3.5.0.
+Pitchcraft is a browser presentation studio. A deck is **plain JSON**. You write or edit that JSON, the user opens it in Pitchcraft, edits it visually and presents it. There is no server: everything is validated and rendered in the user's browser. This guide is generated from the same specs the app runs on, so it is always accurate for version 3.6.0.
 
 **Plain-text routes.** If your tool rewrites URLs, equals signs or long output, fetch this guide as plain markdown (https://visser23.github.io/pitchcraft/ai-guide.md) or together with the schema in one file (https://visser23.github.io/pitchcraft/llms-full.txt). In the page, `Pitchcraft.guide(9)` returns one section at a time.
 
@@ -356,6 +356,7 @@ When Pitchcraft is open in the tab you control, use the global `Pitchcraft` obje
 - `Pitchcraft.setDeck(deckOrJson)`: Replace the whole deck (object or JSON string). Returns {slides, warnings}. Undoable. The deck it replaced is kept in backups().
 - `Pitchcraft.backups()`: The last few decks that were replaced or undone away: [{index, title, slides, reason, t}]. They survive a reload.
 - `Pitchcraft.restoreBackup(index)`: Put one of those decks back. Undoable. Returns true on success.
+- `Pitchcraft.importPptx(base64OrBytes, mode?, name?)`: Async. Import a PowerPoint (.pptx) file as HTML slides. data = base64 string or Uint8Array; mode "replace" (default) or "append". Every slide becomes a custom HTML slide (text, shapes, pictures, tables and simple charts positioned on the 1280x720 stage). Returns {deck, warnings, report}; warnings list what could not be carried over.
 - `Pitchcraft.importText(text, mode?)`: Import deck JSON text. mode "replace" (default) or "append". Returns {deck, warnings}.
 - `Pitchcraft.setMeta(patch)`: Patch deck meta: {name, theme, numbers, transition, css}.
 - `Pitchcraft.setTheme(theme)`: Set the deck theme key.
