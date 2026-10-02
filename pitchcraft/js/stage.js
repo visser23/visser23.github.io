@@ -198,6 +198,19 @@ St.insert = function (type, over = {}) {
 };
 /** Shrink big pictures before they hit localStorage, and give every image a sensible starting size. */
 function loadImage(src) { return new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('That file could not be read as an image.')); im.src = src; }); }
+/** Shrink a big picture until it fits comfortably in a deck file: keep PNG/WebP lossless when that is small enough, otherwise JPEG (pictures without transparency) at falling size and quality. Transparent pictures stay PNG and just get smaller. */
+function shrinkImage(im, nw, nh, type) {
+  const GOAL = 1.6 * 1024 * 1024, draw = max => { const k = Math.min(1, max / Math.max(nw, nh)), cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(nw * k)); cv.height = Math.max(1, Math.round(nh * k)); cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height); return cv; };
+  let alpha = false;
+  if (type !== 'image/jpeg') { try { const sm = document.createElement('canvas'); sm.width = Math.min(nw, 256); sm.height = Math.min(nh, 256); const c = sm.getContext('2d'); c.drawImage(im, 0, 0, sm.width, sm.height); const d = c.getImageData(0, 0, sm.width, sm.height).data; for (let i = 3; i < d.length; i += 4) if (d[i] < 250) { alpha = true; break; } } catch (e) { alpha = true; } }
+  let best = null;
+  for (const max of [1920, 1600, 1280, 1024, 800, 640]) {
+    const cv = draw(max), pick = (u, q) => { const src = cv.toDataURL(u, q); if (!best || src.length < best.src.length) best = { src, w: cv.width, h: cv.height }; return src.length <= GOAL; };
+    if (type !== 'image/jpeg' && pick('image/png')) return best;
+    if (!alpha) { if (pick('image/jpeg', .86) || pick('image/jpeg', .72) || pick('image/jpeg', .6)) return best; }
+  }
+  return best;
+}
 St.insertImageFile = async function (file, at) {
   if (!file) return '';
   if (!/^image\/(png|jpe?g|gif|webp|svg\+xml)$/.test(file.type)) { UI.toast('Please choose a PNG, JPEG, GIF, WebP or SVG image.', 'bad'); return ''; }
@@ -205,10 +218,7 @@ St.insertImageFile = async function (file, at) {
   try {
     let src = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(new Error('read failed')); r.readAsDataURL(file); });
     const im = await loadImage(src); let nw = im.naturalWidth || 640, nh = im.naturalHeight || 360;
-    if (file.type !== 'image/svg+xml' && file.type !== 'image/gif' && (Math.max(nw, nh) > 1920 || file.size > 900 * 1024)) {
-      const k = Math.min(1, 1920 / Math.max(nw, nh)), cv = document.createElement('canvas'); cv.width = Math.round(nw * k); cv.height = Math.round(nh * k);
-      cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height); src = cv.toDataURL(file.type === 'image/jpeg' ? 'image/jpeg' : 'image/png', .86); nw = cv.width; nh = cv.height;
-    }
+    if (file.type !== 'image/svg+xml' && file.type !== 'image/gif' && (Math.max(nw, nh) > 1920 || file.size > 900 * 1024)) { const r = shrinkImage(im, nw, nh, file.type); src = r.src; nw = r.w; nh = r.h; }
     if (src.length > 3.2 * 1024 * 1024) { UI.toast('That image is still very large after shrinking. Use a smaller one or link to a URL.', 'bad'); return ''; }
     return St.placeImage(src, nw, nh, file.name.replace(/\.[^.]+$/, ''), at);
   } catch (e) { UI.toast(e.message || 'Could not add that image.', 'bad'); return ''; }

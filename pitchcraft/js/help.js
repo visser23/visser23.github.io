@@ -90,11 +90,12 @@
       <li>It never leaves your browser. Nothing in the file is run: no macros, scripts or links come across, and pictures are re-encoded.</li></ul>
       <p>Round trip: export to PowerPoint, edit there, and open it again here. It will not be pixel-identical, but it is close.</p>`],
 
-    ['export', 'Export and share', 'download', () => `
-      <p>Open <b>Export</b> in the ribbon.</p>
+    ['export', 'Save and share', 'download', () => `
+      <p>Open <b>Save</b> in the ribbon, or press <b>Share</b> to send the deck to someone.</p>
       <ul><li><b>PowerPoint (.pptx):</b> a native file you can edit in PowerPoint, Keynote or Google Slides. Text stays text (a paragraph is one text box), a shape with text is one shape with the text inside it, lines are connectors, speaker notes, hidden slides and transitions carry across. Charts, icons and complex graphics become pictures. It will not be pixel-perfect: web fonts are swapped for similar fonts PowerPoint has (or keep the originals from the export dialog and install them).</li>
       <li><b>PDF:</b> one slide per page (hidden slides skipped), through your browser's print dialog.</li>
-      <li><b>.pitchcraft file</b> (<kbd>Ctrl</kbd> <kbd>S</kbd>) or <b>Copy deck JSON:</b> the whole deck as text. Keep it in git, email it, drop it on this page to reopen.</li></ul>`],
+      <li><b>.pitchcraft file</b> (<kbd>Ctrl</kbd> <kbd>S</kbd>) or <b>Copy deck JSON:</b> the whole deck as text. Keep it in git, email it, drop it on this page to reopen.</li>
+      <li><b>Share:</b> a link that contains the whole deck, so there is no server and nothing is stored. The other person opens the link and gets their own copy (after a question). Decks with pictures stored in them are too big for a link, so Share saves the file and writes a short message to go with it. A link made today is a snapshot: later edits are not in it.</li></ul>`],
 
     ['safety', 'Undo, backups and recovery', 'refresh', () => `
       <ul><li><b>Undo and redo</b> (<kbd>Ctrl</kbd> <kbd>Z</kbd>, <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Z</kbd>, or the top-bar arrows) step through your edits, typing included.</li>
@@ -132,7 +133,7 @@
       + '<p class="muted">On a Mac, use <kbd>Cmd</kbd> in place of <kbd>Ctrl</kbd>.</p>'],
 
     ['faq', 'Questions', 'help', () => [
-      faq('What is a .pitchcraft file?', 'Your whole deck as plain JSON text. Download it from Export, open it in any text editor, keep it in git, and drag it onto this page to load it again.'),
+      faq('What is a .pitchcraft file?', 'Your whole deck as plain JSON text. Save it from the Save menu, open it in any text editor, keep it in git, and drag it onto this page to load it again.'),
       faq('Where is my work saved?', 'Automatically, in this browser only (local storage). Nothing is uploaded. Download a <code>.pitchcraft</code> file to back it up or share it.'),
       faq('Can I move things on a templated slide?', 'Yes. Click a text or card, then drag it. The move is stored on the slide as a small <i>tweak</i>, so the layout keeps working. <i>Reset position</i> undoes it.'),
       faq('What is the difference between Blank, objects and HTML, CSS and JS?', 'Blank slides and objects are drag-and-drop shapes that follow the theme. <b>HTML, CSS and JS</b> is the full-capability route for any layout, brand style, diagram or animation. Templates are the quick route for plain content. You can switch a slide between them.'),

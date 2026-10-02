@@ -111,7 +111,7 @@ PC.importDialog = function (prefill, pptxFile) {
   $('#imp-ai', m.el).addEventListener('click', () => { m.close(); PC.ai.dialog('chat'); });
   let pending = null;
   const setPending = f => { pending = f; ta.value = ''; ta.disabled = true; err.textContent = ''; ta.placeholder = `${f.name} (${Math.round(f.size / 1024)} KB) is ready. Choose Open as the deck or Add slides to this deck.`; };
-  const run = async mode => { if (pending) { try { m.close(); if (/\.(pptx|potx|ppsx)$/i.test(pending.name)) await PC.importPptxFile(pending, mode); else { const { warnings } = PC.importText(await pending.text(), mode); UI.toast(warnings.length ? `Opened with ${warnings.length} note(s): ${warnings[0]}` : 'Deck opened'); } } catch (ex) { UI.toast('Could not open the file: ' + (ex && ex.message || ex), 'err'); log('pptx open failed', ex); } return; } try { const { warnings } = PC.importText(ta.value, mode); m.close(); UI.toast(warnings.length ? `Opened with ${warnings.length} note(s): ${warnings[0]}` : 'Deck opened'); } catch (ex) { err.textContent = ex.message; ta.focus(); } };
+  const run = async mode => { if (pending) { try { m.close(); if (/\.(pptx|potx|ppsx)$/i.test(pending.name)) await PC.importPptxFile(pending, mode); else { const { warnings } = PC.importText(await pending.text(), mode); UI.toast(warnings.length ? `Opened with ${warnings.length} note(s): ${warnings[0]}` : 'Deck opened'); } } catch (ex) { UI.toast('Could not open the file: ' + (ex && ex.message || ex), 'bad'); log('pptx open failed', ex); } return; } try { const { warnings } = PC.importText(ta.value, mode); m.close(); UI.toast(warnings.length ? `Opened with ${warnings.length} note(s): ${warnings[0]}` : 'Deck opened'); } catch (ex) { err.textContent = ex.message; ta.focus(); } };
   const read = f => { if (!f) return; if (/\.(pptx|potx|ppsx)$/i.test(f.name)) { setPending(f); return; } if (f.size > 100 * 1024 * 1024) { err.textContent = 'That file is over 100 MB.'; return; } if (f.size > 1.5 * 1024 * 1024) { setPending(f); return; } const r = new FileReader(); r.onload = () => { ta.value = String(r.result); err.textContent = ''; }; r.readAsText(f); };
   $('#imp-replace', m.el).addEventListener('click', () => run('replace')); $('#imp-add', m.el).addEventListener('click', () => run('append'));
   $('#imp-pick', m.el).addEventListener('click', () => $('#imp-file', m.el).click()); $('#imp-file', m.el).addEventListener('change', e => read(e.target.files[0]));
@@ -124,11 +124,12 @@ PC.importDialog = function (prefill, pptxFile) {
 PC.exportMenu = function (anchor) {
   UI.menu(anchor, [
     { icon: 'download', label: 'Save deck file', hint: '.pitchcraft · Ctrl+S · open it again any time', run: PC.exportDeck },
-    { icon: 'copy', label: 'Copy deck JSON', hint: 'Paste into an AI or a repo', run: () => UI.copy(deckJson(), 'Deck JSON copied') },
+    { icon: 'share', label: 'Share a link…', hint: 'The deck is inside the link · nothing is uploaded', run: () => PC.shareDialog() },
+    { icon: 'presentation', label: 'Save as PowerPoint (.pptx)', hint: 'Editable shapes, text boxes and notes', run: () => PC.exportPptx() },
     { icon: 'printer', label: 'Save as PDF', hint: 'Opens the print dialog · one slide per page', run: () => PC.print() },
-    { icon: 'sparkles', label: 'Build with AI…', hint: 'Prompts for chat windows and browser AIs', run: () => PC.ai.dialog() },
     '-',
-    { icon: 'presentation', label: 'PowerPoint (.pptx)', hint: 'Editable shapes, text boxes and notes', run: () => PC.exportPptx() }
+    { icon: 'copy', label: 'Copy deck JSON', hint: 'Paste into an AI or a repo', run: () => UI.copy(deckJson(), 'Deck JSON copied') },
+    { icon: 'sparkles', label: 'Build with AI…', hint: 'Prompts for chat windows and browser AIs', run: () => PC.ai.dialog() }
   ]);
 };
 
@@ -153,7 +154,7 @@ PC.exportPptx = async function (opt) {
     m.body.addEventListener('click', e => { const b = e.target.closest('[data-fonts]'); if (!b) return; m.close && m.close(); PC.exportPptx({ fonts: b.dataset.fonts }); });
     return r;
   } catch (e) {
-    log('pptx failed', e); UI.toast('The PowerPoint export failed: ' + (e && e.message || e), 'err');
+    log('pptx failed', e); UI.toast('The PowerPoint export failed: ' + (e && e.message || e), 'bad');
     if (opt.returnBytes) throw e;
   } finally { if (note && note.remove) note.remove(); }
 };
@@ -353,6 +354,7 @@ PC.act = function (act, btn) {
     case 'templates': return PC.templatesDialog();
     case 'newdeck': return PC.newDeckFlow();
     case 'open': case 'import': return PC.importDialog();
+    case 'share': return PC.shareDialog();
     case 'export': return PC.exportMenu(btn || $('.rb[data-act="export"]'));
     case 'print': return PC.print();
     case 'inspect': E.inspect = !E.inspect; $('#canvas-inner').classList.toggle('inspect', E.inspect); E.syncRibbon(); if (Ins.tab === 'code') Ins.render(); return;
@@ -449,6 +451,7 @@ window.Pitchcraft = {
   html: ref => PC.renderSlide(S.slide(slideRef(ref)), { editable: false, index: slideRef(ref), total: S.count(), deck: S.deck }),
   prettyHtml: ref => Ins.prettyHtml(window.Pitchcraft.html(ref)),
   exportJSON: deckJson,
+  async shareLink() { const r = await PC.share.link(S.deck); return r.tier === 'file' ? '' : r.url; },
   async exportPptx() { const r = await PC.exportPptx({ returnBytes: true }); let bin = ''; for (let i = 0; i < r.bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, r.bytes.subarray(i, i + 0x8000)); return { filename: r.name, base64: btoa(bin), report: r.report }; }, newDeck: PC.newDeck, audit: PC.audit, auditAll: PC.auditAll, measureText: PC.measureText, preparePrint: PC.preparePrint,
   present: from => P.open(from), closePresent: () => P.close(), isPresenting: () => P.isOpen(),
   undo: () => S.undo(), redo: () => S.redo(), loadTemplate: PC.loadTemplate, importText: PC.importText, async importPptx(data, mode, name) { const bin = typeof data === 'string' ? Uint8Array.from(atob(data.replace(/^data:[^,]*,/, '')), c => c.charCodeAt(0)) : data; return PC.importPptxBytes(bin, mode || 'replace', name || 'Imported presentation'); },
@@ -485,6 +488,7 @@ function boot() {
   document.fonts && document.fonts.ready.then(() => { E.fit(); document.documentElement.dataset.fonts = 'ready'; });
   document.documentElement.dataset.ready = '1';
   if (q.has('present')) setTimeout(() => P.open(0), 50);
+  if (PC.share) PC.share.openFromHash();   // a shared link: ask before opening it
   document.documentElement.dataset.version = PC.VERSION; const av = $('#app-ver'); if (av) { av.textContent = 'v' + PC.VERSION; av.title = 'Pitchcraft version ' + PC.VERSION; }
   log(`v${PC.VERSION} ready · ${S.count()} slides · theme ${S.deck.meta.theme} · plaintext-only ${PC.plainSupported} · fullscreen ${!!document.documentElement.requestFullscreen}`);
 }

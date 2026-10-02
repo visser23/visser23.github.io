@@ -5,7 +5,7 @@
 (function () {
 'use strict';
 const PC = window.PC = window.PC || {};
-PC.VERSION = '3.7.0';
+PC.VERSION = '3.8.0';
 PC.STAGE = { w: 1280, h: 720 };
 
 /* ── utilities ─────────────────────────────────────────────── */
@@ -46,7 +46,7 @@ const ICONS = {
   up: 'M12 19V5M5 12l7-7 7 7', down: 'M12 5v14M5 12l7 7 7-7', left: 'M15 6l-6 6 6 6', right: 'M9 6l6 6-6 6',
   chevdown: 'M6 9l6 6 6-6', play: 'F:M7 4.5v15l13-7.5z', x: 'M6 6l12 12M18 6L6 18',
   layout: 'M3 4h18v16H3zM3 10h18M10 10v10', palette: 'M12 3a9 9 0 1 0 0 18c1.4 0 2-.9 2-1.9 0-1.6-1.1-1.9-1.1-3.1 0-1 .8-1.7 1.9-1.7H17a4 4 0 0 0 4-4c0-4.1-4-7.3-9-7.3zM7.5 11.5h.01M9.5 7.5h.01M14.5 7.5h.01',
-  download: 'M12 4v11M7 10l5 5 5-5M4 20h16', upload: 'M12 16V5M7 10l5-5 5 5M4 20h16', 'folder-open': 'M6 14l1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2',
+  download: 'M12 4v11M7 10l5 5 5-5M4 20h16', upload: 'M12 16V5M7 10l5-5 5 5M4 20h16', share: 'M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13', 'folder-open': 'M6 14l1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2',
   help: c(12, 12, 9) + 'M9.6 9.2a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1.1 1-1.1 1.7M12 17h.01',
   eye: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z' + c(12, 12, 3), sliders: 'M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4',
   sidebar: 'M3 4h18v16H3zM9 4v16', panel: 'M3 4h18v16H3zM15 4v16', bold: 'M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z',
@@ -291,6 +291,7 @@ PC.API_DOCS = [
   ['Read', 'html(ref)', 'The rendered HTML of one slide (what the DOM contains).'],
   ['Read', 'prettyHtml(ref)', 'The same, indented for reading.'],
   ['Read', 'exportPptx()', 'Async. Builds a native PowerPoint file from the deck and returns { filename, base64, report } (report lists slides, pictures, fonts and warnings). Text stays editable text; shapes stay shapes. Does not download anything; save the base64 yourself.'],
+  ['Deck', 'shareLink()', 'Async. A link that contains this whole deck (nothing is uploaded). Returns the URL, or an empty string when the deck is too big for a link: use exportJSON() or save the file instead.'],
   ['Read', 'exportJSON()', 'The deck as a JSON string, exactly what a .pitchcraft file contains.'],
   ['Read', 'audit(deck?)', 'Fast layout audit of templated and blank slides: finds text that clips or leaves the safe area. Returns one entry per slide with a problems list. It cannot see inside custom slides: those come back with status "unknown", checked:false and problems:null (never an empty list that looks clean). Use auditAll() for them.'],
   ['Read', 'auditAll(deck?)', 'Async. Everything audit() does, plus it runs each custom slide in a hidden sandbox and measures the rendered text: text off the slide, outside the safe area, clipped by its container, overlapping other text, short labels that wrap (label-wraps), text that straddles a box edge (text-crosses-edge) and text jammed against its box (text-cramped). Each entry has status "clean", "issues" or "unknown". The first measurement is retried once with more time. Await it.'],

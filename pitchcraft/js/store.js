@@ -28,7 +28,7 @@ const S = PC.store = {
     clearTimeout(S.saveTimer);
     S.saveTimer = setTimeout(() => {
       try { localStorage.setItem(KEY, JSON.stringify(S.deck)); S.storageOk = true; S.emit('saved', true); }
-      catch (e) { if (S.storageOk) { S.storageOk = false; PC.ui.toast('Browser storage is full or blocked, so autosave is off. Export your deck to keep it.', 'bad'); } S.emit('saved', false); }
+      catch (e) { if (S.storageOk) { S.storageOk = false; PC.ui.toast('Browser storage is full or blocked, so autosave is off. Save your deck to a file to keep it.', 'bad'); } S.emit('saved', false); }
     }, 350);
     S.emit('saved', null);
   },

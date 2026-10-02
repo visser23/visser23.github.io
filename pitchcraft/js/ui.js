@@ -31,7 +31,7 @@ UI.copy = async function (text, okMsg) {
 UI.download = function (name, text, mime) {
   const url = URL.createObjectURL(new Blob([text], { type: mime || 'application/json' }));
   const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
 };
 
 /* ── modal ── */

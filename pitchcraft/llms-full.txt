@@ -1,8 +1,8 @@
 # Pitchcraft: guide for AI assistants
 
-Version 3.7.0 · canonical copy: https://visser23.github.io/pitchcraft/ai-guide.md · also inside the app: `Pitchcraft.guide()`
+Version 3.8.0 · canonical copy: https://visser23.github.io/pitchcraft/ai-guide.md · also inside the app: `Pitchcraft.guide()`
 
-Pitchcraft is a browser presentation studio. A deck is **plain JSON**. You write or edit that JSON, the user opens it in Pitchcraft, edits it visually and presents it. There is no server: everything is validated and rendered in the user's browser. This guide is generated from the same specs the app runs on, so it is always accurate for version 3.7.0.
+Pitchcraft is a browser presentation studio. A deck is **plain JSON**. You write or edit that JSON, the user opens it in Pitchcraft, edits it visually and presents it. There is no server: everything is validated and rendered in the user's browser. This guide is generated from the same specs the app runs on, so it is always accurate for version 3.8.0.
 
 **Plain-text routes.** If your tool rewrites URLs, equals signs or long output, fetch this guide as plain markdown (https://visser23.github.io/pitchcraft/ai-guide.md) or together with the schema in one file (https://visser23.github.io/pitchcraft/llms-full.txt). In the page, `Pitchcraft.guide(9)` returns one section at a time.
 
@@ -353,6 +353,7 @@ When Pitchcraft is open in the tab you control, use the global `Pitchcraft` obje
 
 **Deck**
 
+- `Pitchcraft.shareLink()`: Async. A link that contains this whole deck (nothing is uploaded). Returns the URL, or an empty string when the deck is too big for a link: use exportJSON() or save the file instead.
 - `Pitchcraft.setDeck(deckOrJson)`: Replace the whole deck (object or JSON string). Returns {slides, warnings}. Undoable. The deck it replaced is kept in backups().
 - `Pitchcraft.backups()`: The last few decks that were replaced or undone away: [{index, title, slides, reason, t}]. They survive a reload.
 - `Pitchcraft.restoreBackup(index)`: Put one of those decks back. Undoable. Returns true on success.

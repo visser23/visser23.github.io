@@ -24,7 +24,7 @@ const tour = {
         { col: 'in', icon: 'layers', title: 'A template', body: 'Or a single blank slide' },
         { col: 'hub', icon: 'file', title: 'deck.pitchcraft', body: 'One JSON file' },
         { col: 'out', icon: 'presentation', title: 'Present', body: 'Fullscreen in the browser' },
-        { col: 'out', icon: 'download', title: 'Export', body: 'A file, or a PDF' },
+        { col: 'out', icon: 'download', title: 'Save', body: 'A file, a link, or a PDF' },
         { col: 'out', icon: 'link', title: 'Share', body: 'Send the file to someone' }
       ] },
     { id: 'tour-steps', layout: 'process', kicker: 'Fastest start', headline: 'Build a deck with an ==AI chat==',
@@ -130,8 +130,8 @@ document.querySelector('.nw-blob').animate([{ borderRadius: '42% 58% 60% 40% / 4
     { id: 'tour-saving', layout: 'bullets', kicker: 'Saving', headline: 'Where your ==deck== is kept', body: 'Nothing is uploaded to a server.',
       items: [
         { title: 'Autosave', body: 'Every change is saved in this browser.' },
-        { title: 'Export', body: 'Ctrl+S downloads a .pitchcraft file. That file is your real copy.' },
-        { title: 'Clearing browser data', body: 'This deletes the autosave. Export first.' },
+        { title: 'Save', body: 'Ctrl+S saves a .pitchcraft file. That file is your real copy. Share makes a link to it.' },
+        { title: 'Clearing browser data', body: 'This deletes the autosave. Save a file first.' },
         { title: 'PDF', body: 'The PDF button prints one page per slide.' }
       ] },
     { id: 'tour-demo', layout: 'demo', kicker: 'Sample data', headline: 'Charts are drawn from ==data==', body: 'This is the JSON behind the chart. Change a number and the chart follows.', chartType: 'line',
@@ -157,7 +157,7 @@ document.querySelector('.nw-blob').animate([{ borderRadius: '42% 58% 60% 40% / 4
     { id: 'tour-limits', layout: 'comparison', kicker: 'Limits', headline: 'What it ==does not== do yet',
       columns: [
         { headline: 'Not available', body: 'Deliberately or not yet.', items: ['Several people editing at once', 'Accounts or cloud storage', 'Comments and sharing links'] },
-        { headline: 'Works today', body: 'In any current browser.', items: ['Present fullscreen, on a phone too', 'Export to PowerPoint, PDF or a file', 'Custom HTML, CSS and JS slides'] }] },
+        { headline: 'Works today', body: 'In any current browser.', items: ['Present fullscreen, on a phone too', 'Save as PowerPoint, PDF or a file, or share a link', 'Custom HTML, CSS and JS slides'] }] },
     { id: 'tour-roadmap', layout: 'timeline', bg: 'tint', kicker: 'Roadmap', headline: 'What is ==next==',
       items: [
         { date: 'Shipped', title: 'The toolkit', body: 'Blank and custom slides, connectors, AI guide, presenter, PDF, PowerPoint export, dark mode.', status: 'done' },
