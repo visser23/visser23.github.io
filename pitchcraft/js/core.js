@@ -5,7 +5,7 @@
 (function () {
 'use strict';
 const PC = window.PC = window.PC || {};
-PC.VERSION = '3.6.0';
+PC.VERSION = '3.7.0';
 PC.STAGE = { w: 1280, h: 720 };
 
 /* ── utilities ─────────────────────────────────────────────── */
@@ -46,7 +46,7 @@ const ICONS = {
   up: 'M12 19V5M5 12l7-7 7 7', down: 'M12 5v14M5 12l7 7 7-7', left: 'M15 6l-6 6 6 6', right: 'M9 6l6 6-6 6',
   chevdown: 'M6 9l6 6 6-6', play: 'F:M7 4.5v15l13-7.5z', x: 'M6 6l12 12M18 6L6 18',
   layout: 'M3 4h18v16H3zM3 10h18M10 10v10', palette: 'M12 3a9 9 0 1 0 0 18c1.4 0 2-.9 2-1.9 0-1.6-1.1-1.9-1.1-3.1 0-1 .8-1.7 1.9-1.7H17a4 4 0 0 0 4-4c0-4.1-4-7.3-9-7.3zM7.5 11.5h.01M9.5 7.5h.01M14.5 7.5h.01',
-  download: 'M12 4v11M7 10l5 5 5-5M4 20h16', upload: 'M12 16V5M7 10l5-5 5 5M4 20h16',
+  download: 'M12 4v11M7 10l5 5 5-5M4 20h16', upload: 'M12 16V5M7 10l5-5 5 5M4 20h16', 'folder-open': 'M6 14l1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2',
   help: c(12, 12, 9) + 'M9.6 9.2a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1.1 1-1.1 1.7M12 17h.01',
   eye: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z' + c(12, 12, 3), sliders: 'M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4',
   sidebar: 'M3 4h18v16H3zM9 4v16', panel: 'M3 4h18v16H3zM15 4v16', bold: 'M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z',
@@ -301,8 +301,8 @@ PC.API_DOCS = [
   ['Deck', 'setDeck(deckOrJson)', 'Replace the whole deck (object or JSON string). Returns {slides, warnings}. Undoable. The deck it replaced is kept in backups().'],
   ['Deck', 'backups()', 'The last few decks that were replaced or undone away: [{index, title, slides, reason, t}]. They survive a reload.'],
   ['Deck', 'restoreBackup(index)', 'Put one of those decks back. Undoable. Returns true on success.'],
-  ['Deck', 'importPptx(base64OrBytes, mode?, name?)', 'Async. Import a PowerPoint (.pptx) file as HTML slides. data = base64 string or Uint8Array; mode "replace" (default) or "append". Every slide becomes a custom HTML slide (text, shapes, pictures, tables and simple charts positioned on the 1280x720 stage). Returns {deck, warnings, report}; warnings list what could not be carried over.'],
-  ['Deck', 'importText(text, mode?)', 'Import deck JSON text. mode "replace" (default) or "append". Returns {deck, warnings}.'],
+  ['Deck', 'importPptx(base64OrBytes, mode?, name?)', 'Async. Open a PowerPoint (.pptx) file as HTML slides. data = base64 string or Uint8Array; mode "replace" (default) or "append". Every slide becomes a custom HTML slide (text, shapes, pictures, tables and simple charts positioned on the 1280x720 stage). Returns {deck, warnings, report}; warnings list what could not be carried over.'],
+  ['Deck', 'importText(text, mode?)', 'Open deck JSON text (what the Open dialog does with pasted or dropped text). mode "replace" (default) or "append". Returns {deck, warnings}.'],
   ['Deck', 'setMeta(patch)', 'Patch deck meta: {name, theme, numbers, transition, css}.'],
   ['Deck', 'setTheme(theme)', 'Set the deck theme key.'],
   ['Deck', 'newDeck()', 'Replace the deck with a fresh one-slide deck (the starter). Undoable. The New deck button asks the user to save first; this call does not.'],

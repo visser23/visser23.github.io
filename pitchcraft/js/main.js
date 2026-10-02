@@ -10,7 +10,26 @@ const log = (...a) => console.info('[pitchcraft]', ...a);
 const stripFences = t => String(t).trim().replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, '').trim();
 const deckJson = () => JSON.stringify(S.deck, null, 2);
 let exportedSnap = '';   // the deck as it was when the user last downloaded a file: anything after that counts as unsaved
-PC.exportDeck = () => { UI.download(PC.slug(S.deck.meta.name) + '.pitchcraft', deckJson(), 'application/json'); exportedSnap = JSON.stringify(S.deck); };
+PC.downloadDeck = deck => { UI.download(PC.slug(S.deck.meta.name) + '.pitchcraft', JSON.stringify(deck, null, 2), 'application/json'); exportedSnap = JSON.stringify(S.deck); };
+/** Save the deck as a .pitchcraft file. Returns true when the file was downloaded straight away, false when the user is asked about linked pictures first. */
+PC.exportDeck = () => {
+  const p = PC.deckPortability(S.deck), fontNote = p.fonts.length ? ` These fonts are not bundled with Pitchcraft, so computers without them show a similar font: ${p.fonts.slice(0, 6).join(', ')}${p.fonts.length > 6 ? '…' : ''}.` : '';
+  if (!p.links.length) { PC.downloadDeck(S.deck); if (fontNote) UI.toast('Saved.' + fontNote); return true; }
+  const snap = PC.clone(S.deck), n = p.links.length;
+  const body = document.createElement('div');
+  body.innerHTML = `<p><b>${n} picture${n === 1 ? ' is' : 's are'} linked, not stored in the deck.</b> A deck file keeps pictures you added from your computer inside it, but linked pictures stay on the web (or in a folder). Opened on another computer, offline, or after the link changes, they show blank.</p>
+    <p><b>Embed</b> copies them into the file. It works when the website allows it; any that refuse stay linked and are listed.</p>${fontNote ? `<p class="hint">${esc(fontNote.trim())}</p>` : ''}`;
+  const foot = document.createElement('div'); foot.style.display = 'contents';
+  foot.innerHTML = '<button class="btn" data-close>Cancel</button><button class="btn" id="pt-any">Save anyway</button><button class="btn primary" id="pt-embed">Embed pictures and save</button>';
+  const m = UI.modal({ title: 'Some pictures are not inside the file', body, footer: foot });
+  $('#pt-any', m.el).addEventListener('click', () => { m.close(); PC.downloadDeck(snap); UI.toast('Saved. Linked pictures stay linked.'); });
+  $('#pt-embed', m.el).addEventListener('click', async () => {
+    const b = $('#pt-embed', m.el); b.disabled = true; b.textContent = 'Embedding…';
+    const r = await PC.embedLinked(snap, p.links); m.close(); PC.downloadDeck(r.deck);
+    UI.toast(r.failed.length ? `Saved. Embedded ${r.embedded} of ${n}; ${r.failed.length} stay linked (${r.failed[0].slice(0, 60)}).` : `Saved with ${r.embedded} picture${r.embedded === 1 ? '' : 's'} embedded.`, r.failed.length ? 'bad' : undefined);
+  });
+  return false;
+};
 /** True when there is nothing worth saving: the deck is one of the shipped decks exactly as shipped, or it matches the last downloaded file. */
 let shippedSet = null;
 PC.isPristine = function () {
@@ -31,7 +50,7 @@ PC.newDeckFlow = function () {
   const foot = document.createElement('div'); foot.style.display = 'contents';
   foot.innerHTML = `<button class="btn" data-close>Cancel</button><button class="btn" id="nd-skip">Start new without saving</button><button class="btn primary" id="nd-save">${icon('download', 16)} Download file, then start new</button>`;
   const m = UI.modal({ title: 'Start a new deck?', body, footer: foot });
-  $('#nd-save', m.el).addEventListener('click', () => { PC.exportDeck(); m.close(); PC.newDeck(); UI.toast('File downloaded. New deck started.'); });
+  $('#nd-save', m.el).addEventListener('click', () => { const done = PC.exportDeck(); m.close(); if (done) { PC.newDeck(); UI.toast('File downloaded. New deck started.'); } });
   $('#nd-skip', m.el).addEventListener('click', () => { m.close(); PC.newDeck(); UI.toast('New deck started. Ctrl+Z brings the old one back.'); });
   return m;
 };
@@ -60,7 +79,7 @@ PC.importPptxFile = async function (file, mode) {
 };
 PC.importReport = function (r, name) {
   const w = r.warnings;
-  UI.modal({ title: 'PowerPoint imported', body: `<p><b>${esc(name || 'The file')}</b> became ${r.report.slides} HTML slide${r.report.slides === 1 ? '' : 's'}${r.report.pictures ? ` with ${r.report.pictures} picture${r.report.pictures === 1 ? '' : 's'}` : ''}. Double-click text on a slide to edit it in place; the Code tab has the HTML and CSS.</p>
+  UI.modal({ title: 'PowerPoint file opened', body: `<p><b>${esc(name || 'The file')}</b> became ${r.report.slides} HTML slide${r.report.slides === 1 ? '' : 's'}${r.report.pictures ? ` with ${r.report.pictures} picture${r.report.pictures === 1 ? '' : 's'}` : ''}. Double-click text on a slide to edit it in place; the Code tab has the HTML and CSS.</p>
     ${r.report.fonts.length ? `<p><b>Fonts used:</b> ${r.report.fonts.slice(0, 12).map(esc).join(', ')}. Fonts this computer lacks are replaced by a similar one.</p>` : ''}
     ${w.length ? `<div class="lp-group">Needs a look</div><ul class="plain">${w.slice(0, 14).map(x => `<li>${esc(x)}</li>`).join('')}</ul>${w.length > 14 ? `<p class="hint">…and ${w.length - 14} more.</p>` : ''}` : '<p>Nothing needed attention.</p>'}`,
     footer: '<button class="btn primary" type="button" data-close>Done</button>' });
@@ -82,18 +101,18 @@ PC.templatesDialog = function () {
 
 PC.importDialog = function (prefill, pptxFile) {
   const body = document.createElement('div');
-  body.innerHTML = `<p>Drop a <code>.pitchcraft</code> file or a <b>PowerPoint (.pptx)</b> file, or paste deck JSON (from an AI chat, or a file you exported). Older Pitchcraft decks are upgraded automatically. <button class="linkish" id="imp-ai" type="button">Need an AI to write one?</button></p>
+  body.innerHTML = `<p>Open a <code>.pitchcraft</code> file or a <b>PowerPoint (.pptx)</b> file, or paste deck JSON (from an AI chat, or a file you saved). Older Pitchcraft decks are upgraded automatically. <button class="linkish" id="imp-ai" type="button">Need an AI to write one?</button></p>
     <div class="drop" id="imp-drop">Drop a <b>.pitchcraft</b>, <b>.json</b> or <b>.pptx</b> file here, or <button class="btn sm" id="imp-pick">choose a file</button><input type="file" id="imp-file" accept=".json,.pitchcraft,.pptx,.potx,application/json,text/plain,application/vnd.openxmlformats-officedocument.presentationml.presentation" hidden></div>
     <label class="lbl" for="imp-text">Deck JSON</label><textarea class="txt mono" id="imp-text" rows="10" spellcheck="false" placeholder='{ "meta": { "name": "My deck" }, "slides": [ … ] }' data-autofocus></textarea><div class="err" id="imp-err" role="alert"></div>`;
   const foot = document.createElement('div'); foot.style.display = 'contents';
-  foot.innerHTML = `<button class="btn" data-close>Cancel</button><button class="btn" id="imp-add">Add to this deck</button><button class="btn primary" id="imp-replace">Replace deck</button>`;
-  const m = UI.modal({ title: 'Import a deck', body, footer: foot, size: 'mid' });
+  foot.innerHTML = `<button class="btn" data-close>Cancel</button><button class="btn" id="imp-add">Add slides to this deck</button><button class="btn primary" id="imp-replace">Open as the deck</button>`;
+  const m = UI.modal({ title: 'Open a deck', body, footer: foot, size: 'mid' });
   const ta = $('#imp-text', m.el), err = $('#imp-err', m.el), drop = $('#imp-drop', m.el); if (prefill) ta.value = prefill;
   $('#imp-ai', m.el).addEventListener('click', () => { m.close(); PC.ai.dialog('chat'); });
   let pending = null;
-  const setPending = f => { pending = f; ta.value = ''; ta.disabled = true; err.textContent = ''; ta.placeholder = `${f.name} (${Math.round(f.size / 1024)} KB) is ready. Choose Add to this deck or Replace deck: each slide becomes an HTML slide you can edit.`; };
-  const run = async mode => { if (pending) { try { m.close(); await PC.importPptxFile(pending, mode); } catch (ex) { UI.toast('The PowerPoint import failed: ' + (ex && ex.message || ex), 'err'); log('pptx import failed', ex); } return; } try { const { warnings } = PC.importText(ta.value, mode); m.close(); UI.toast(warnings.length ? `Imported with ${warnings.length} note(s): ${warnings[0]}` : 'Deck imported'); } catch (ex) { err.textContent = ex.message; ta.focus(); } };
-  const read = f => { if (!f) return; if (/\.(pptx|potx|ppsx)$/i.test(f.name)) { setPending(f); return; } if (f.size > 8 * 1024 * 1024) { err.textContent = 'That file is over 8 MB.'; return; } const r = new FileReader(); r.onload = () => { ta.value = String(r.result); err.textContent = ''; }; r.readAsText(f); };
+  const setPending = f => { pending = f; ta.value = ''; ta.disabled = true; err.textContent = ''; ta.placeholder = `${f.name} (${Math.round(f.size / 1024)} KB) is ready. Choose Open as the deck or Add slides to this deck.`; };
+  const run = async mode => { if (pending) { try { m.close(); if (/\.(pptx|potx|ppsx)$/i.test(pending.name)) await PC.importPptxFile(pending, mode); else { const { warnings } = PC.importText(await pending.text(), mode); UI.toast(warnings.length ? `Opened with ${warnings.length} note(s): ${warnings[0]}` : 'Deck opened'); } } catch (ex) { UI.toast('Could not open the file: ' + (ex && ex.message || ex), 'err'); log('pptx open failed', ex); } return; } try { const { warnings } = PC.importText(ta.value, mode); m.close(); UI.toast(warnings.length ? `Opened with ${warnings.length} note(s): ${warnings[0]}` : 'Deck opened'); } catch (ex) { err.textContent = ex.message; ta.focus(); } };
+  const read = f => { if (!f) return; if (/\.(pptx|potx|ppsx)$/i.test(f.name)) { setPending(f); return; } if (f.size > 100 * 1024 * 1024) { err.textContent = 'That file is over 100 MB.'; return; } if (f.size > 1.5 * 1024 * 1024) { setPending(f); return; } const r = new FileReader(); r.onload = () => { ta.value = String(r.result); err.textContent = ''; }; r.readAsText(f); };
   $('#imp-replace', m.el).addEventListener('click', () => run('replace')); $('#imp-add', m.el).addEventListener('click', () => run('append'));
   $('#imp-pick', m.el).addEventListener('click', () => $('#imp-file', m.el).click()); $('#imp-file', m.el).addEventListener('change', e => read(e.target.files[0]));
   ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
@@ -104,7 +123,7 @@ PC.importDialog = function (prefill, pptxFile) {
 
 PC.exportMenu = function (anchor) {
   UI.menu(anchor, [
-    { icon: 'download', label: 'Download deck file', hint: '.pitchcraft · re-import any time', run: PC.exportDeck },
+    { icon: 'download', label: 'Save deck file', hint: '.pitchcraft · Ctrl+S · open it again any time', run: PC.exportDeck },
     { icon: 'copy', label: 'Copy deck JSON', hint: 'Paste into an AI or a repo', run: () => UI.copy(deckJson(), 'Deck JSON copied') },
     { icon: 'printer', label: 'Save as PDF', hint: 'Opens the print dialog · one slide per page', run: () => PC.print() },
     { icon: 'sparkles', label: 'Build with AI…', hint: 'Prompts for chat windows and browser AIs', run: () => PC.ai.dialog() },
@@ -333,7 +352,7 @@ PC.act = function (act, btn) {
     case 'bold': return E.format('**'); case 'italic': return E.format('*'); case 'hl': return E.format('=='); case 'code': return E.format('`'); case 'clearfmt': return E.clearFormat();
     case 'templates': return PC.templatesDialog();
     case 'newdeck': return PC.newDeckFlow();
-    case 'import': return PC.importDialog();
+    case 'open': case 'import': return PC.importDialog();
     case 'export': return PC.exportMenu(btn || $('.rb[data-act="export"]'));
     case 'print': return PC.print();
     case 'inspect': E.inspect = !E.inspect; $('#canvas-inner').classList.toggle('inspect', E.inspect); E.syncRibbon(); if (Ins.tab === 'code') Ins.render(); return;
@@ -379,7 +398,7 @@ function bindGlobal() {
   });
   ['dragover', 'drop'].forEach(ev => window.addEventListener(ev, e => {
     if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return; e.preventDefault();
-    if (ev === 'drop' && !e.target.closest('#imp-drop')) { const f = e.dataTransfer.files[0]; if (!f || /^image\//.test(f.type)) return; if (/\.(pptx|potx|ppsx)$/i.test(f.name)) { UI.closeModals(); PC.importDialog('', f); return; } const r = new FileReader(); r.onload = () => { UI.closeModals(); PC.importDialog(String(r.result)); }; r.readAsText(f); }
+    if (ev === 'drop' && !e.target.closest('#imp-drop')) { const f = e.dataTransfer.files[0]; if (!f || /^image\//.test(f.type)) return; if (/\.(pptx|potx|ppsx)$/i.test(f.name) || f.size > 1.5 * 1024 * 1024) { UI.closeModals(); PC.importDialog('', f); return; } const r = new FileReader(); r.onload = () => { UI.closeModals(); PC.importDialog(String(r.result)); }; r.readAsText(f); }
   }));
   $('#btn-present').addEventListener('click', () => PC.act('present'));
   $('#btn-help').addEventListener('click', () => PC.act('help'));

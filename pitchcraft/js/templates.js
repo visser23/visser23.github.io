@@ -32,11 +32,11 @@ const tour = {
         { step: '01', icon: 'sparkles', title: 'Click AI', body: 'Top bar, then Build with AI.' },
         { step: '02', icon: 'edit', title: 'Describe it', body: 'Topic, audience, slide count. Then copy the prompt.' },
         { step: '03', icon: 'wand', title: 'Paste into a chat', body: 'ChatGPT, Claude or Gemini replies with a .pitchcraft file.' },
-        { step: '04', icon: 'upload', title: 'Import', body: 'Drop the file on this page, then fix details by hand.' }
+        { step: '04', icon: 'folder-open', title: 'Open', body: 'Drop the file on this page, then fix details by hand.' }
       ] },
     { id: 'tour-ai', layout: 'split', kicker: 'Two routes', headline: 'Which AI are you ==using==?',
       columns: [
-        { icon: 'sparkles', headline: 'A chat window', body: 'ChatGPT, Claude, Gemini. The AI cannot see this page, so the prompt carries the full guide. It replies with a file and you import it.' },
+        { icon: 'sparkles', headline: 'A chat window', body: 'ChatGPT, Claude, Gemini. The AI cannot see this page, so the prompt carries the full guide. It replies with a file and you open it.' },
         { icon: 'globe', headline: 'An AI in your browser', body: 'Comet, Atlas, Claude for Chrome, Cursor. Open this page and let the agent use the tab. It edits the deck directly, and Ctrl+Z undoes it.' }],
       notes: 'The chat route works with any AI. The browser route is quicker for small edits because the agent changes the live deck.' },
     { id: 'tour-prompt', layout: 'bullets', kicker: 'The prompt', headline: 'Where the ==prompt== is', body: 'Click AI in the top bar. The dialog holds everything an AI needs.',
@@ -232,7 +232,7 @@ const blank = {
   slides: [
     { id: 'new-start', layout: 'split', kicker: 'New deck', headline: 'Ask an ==AI== to build this deck',
       columns: [
-        { icon: 'sparkles', headline: 'AI in a chat window', body: 'Click AI in the top bar, then Build with AI. Describe the deck, copy the prompt, paste it into ChatGPT, Claude or Gemini, then import the .pitchcraft file it sends back.' },
+        { icon: 'sparkles', headline: 'AI in a chat window', body: 'Click AI in the top bar, then Build with AI. Describe the deck, copy the prompt, paste it into ChatGPT, Claude or Gemini, then open the .pitchcraft file it sends back.' },
         { icon: 'globe', headline: 'AI in your browser', body: 'Open this page in Comet, Atlas, Claude for Chrome or Cursor. Click AI, switch to the browser tab, copy the agent prompt and paste it into the agent. It edits this deck directly.' }],
       objects: [
         { id: 'where', type: 'text', x: 80, y: 626, w: 1120, text: 'The stock prompt is under **AI** in the top bar. It names this site and carries the full guide. Replace this slide when you are done.', size: 24, color: 'var(--muted)' }

@@ -3,7 +3,7 @@
 
    Two very different situations, two different flows:
      1. CHAT WINDOW (ChatGPT, Claude, Gemini...): the AI cannot see this page. It is given the guide and a brief, and
-        returns a `.pitchcraft` file (or one JSON block) that the user imports.
+        returns a `.pitchcraft` file (or one JSON block) that the user opens.
      2. BROWSER AI (Comet, Atlas, Claude for Chrome, Cursor's browser...): the AI can run JavaScript in this tab, so it
         edits the live deck through `window.Pitchcraft` (see PC.API_DOCS). Everything is validated and undoable.
 
@@ -101,7 +101,7 @@ ${siteLine()}
 START HERE
 1. Run \`Pitchcraft.guide()\` and read the result. It is the complete specification (deck format, layouts, free-form objects, custom HTML/CSS/JS slides, design rules, writing style). \`Pitchcraft.guide(9)\` returns just section 9. If your tool mangles URLs or equals signs in long output, fetch the plain text copy instead: ${u.guide}
 2. Run \`Pitchcraft.getDeck()\` to see the current deck, or \`Pitchcraft.getSlide("s1")\` for one slide.
-3. \`Pitchcraft.schema()\` is the JSON Schema of a deck and \`Pitchcraft.manifest()\` lists the API with quickstart recipes. There is no separate import button to find: \`Pitchcraft.importText(json)\` loads a whole deck.
+3. \`Pitchcraft.schema()\` is the JSON Schema of a deck and \`Pitchcraft.manifest()\` lists the API with quickstart recipes. There is no Open button to find: \`Pitchcraft.importText(json)\` loads a whole deck.
 
 THE API
 ${api}
@@ -196,7 +196,7 @@ AI.manifest = function () {
   return {
     name: 'Pitchcraft', version: PC.VERSION, guideVersion: g.version,
     guide: { url: g.url, rawUrl: g.rawUrl, page: g.pageUrl, inPage: 'Pitchcraft.guide()' },
-    file: { extension: '.pitchcraft', format: 'pitchcraft', version: 3, how: 'JSON. Import with the Import dialog, drop the file on the page, or call Pitchcraft.importText(json).' },
+    file: { extension: '.pitchcraft', format: 'pitchcraft', version: 3, how: 'JSON. Open it with the Open dialog, drop the file on the page, or call Pitchcraft.importText(json).' },
     schema: { url: AI.urls().schema, inPage: 'Pitchcraft.schema()' },
     site: AI.urls().site,
     plainText: { guideMarkdown: AI.urls().guide, guideAndApiOneFile: AI.urls().full, oneSection: 'Pitchcraft.guide(9)   // or a word from a heading, e.g. Pitchcraft.guide("custom")', why: 'Plain files with no scripts. Use them if your browser tool rewrites URLs or equals signs in long output.' },
@@ -223,7 +223,7 @@ AI.manifest = function () {
 
 /* ── copy helpers ── */
 const KINDS = {
-  chat: { fn: (b, o) => AI.promptChat(b, o), msg: 'Prompt copied. Paste it into your chat, then import the .pitchcraft file it returns.' },
+  chat: { fn: (b, o) => AI.promptChat(b, o), msg: 'Prompt copied. Paste it into your chat, then open the .pitchcraft file it returns.' },
   link: { fn: (b, o) => AI.promptLink(b, o), msg: 'Short prompt copied. Paste it into an AI that can open web pages.' },
   agent: { fn: (b, o) => AI.promptAgent(b, o), msg: 'Prompt copied. Paste it into the AI that lives in your browser.' },
   slide: { fn: b => AI.promptSlide(null, b), msg: 'Slide prompt copied. Paste it into your AI.' },
@@ -259,8 +259,8 @@ AI.dialog = function (tab) {
             <label><input type="radio" name="ai-mode" value="link"> <span><b>Short with a link</b> for AIs that can open web pages (they read the published guide)</span></label>
           </div>
           <div class="row wrap"><button class="btn primary" id="ai-copy">${icon('copy', 16)} Copy prompt</button><span class="hint" id="ai-size"></span></div></li>
-        <li><b>Import what comes back.</b> The AI returns a <code>.pitchcraft</code> file (or one JSON block). Drop the file on this page, or:
-          <div class="row wrap"><button class="btn" id="ai-import">${icon('upload', 16)} Import the reply…</button></div></li>
+        <li><b>Open what comes back.</b> The AI returns a <code>.pitchcraft</code> file (or one JSON block). Drop the file on this page, or:
+          <div class="row wrap"><button class="btn" id="ai-import">${icon('folder-open', 16)} Open the reply…</button></div></li>
       </ol>
       <details class="ai-prev"><summary>Preview the prompt</summary><textarea class="txt mono" id="ai-preview" rows="9" readonly spellcheck="false" aria-label="Prompt preview"></textarea></details>
     </div>

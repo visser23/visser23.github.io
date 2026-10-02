@@ -1,8 +1,8 @@
 # Pitchcraft: guide for AI assistants
 
-Version 3.6.0 · canonical copy: https://visser23.github.io/pitchcraft/ai-guide.md · also inside the app: `Pitchcraft.guide()`
+Version 3.7.0 · canonical copy: https://visser23.github.io/pitchcraft/ai-guide.md · also inside the app: `Pitchcraft.guide()`
 
-Pitchcraft is a browser presentation studio. A deck is **plain JSON**. You write or edit that JSON, the user opens it in Pitchcraft, edits it visually and presents it. There is no server: everything is validated and rendered in the user's browser. This guide is generated from the same specs the app runs on, so it is always accurate for version 3.6.0.
+Pitchcraft is a browser presentation studio. A deck is **plain JSON**. You write or edit that JSON, the user opens it in Pitchcraft, edits it visually and presents it. There is no server: everything is validated and rendered in the user's browser. This guide is generated from the same specs the app runs on, so it is always accurate for version 3.7.0.
 
 **Plain-text routes.** If your tool rewrites URLs, equals signs or long output, fetch this guide as plain markdown (https://visser23.github.io/pitchcraft/ai-guide.md) or together with the schema in one file (https://visser23.github.io/pitchcraft/llms-full.txt). In the page, `Pitchcraft.guide(9)` returns one section at a time.
 
@@ -19,8 +19,8 @@ Pitchcraft is a browser presentation studio. A deck is **plain JSON**. You write
 
 ## 2. Delivering a deck (chat windows)
 
-- Preferred: create a downloadable file named `<deck-name>.pitchcraft` whose entire content is the deck JSON. The user drops it onto Pitchcraft (Import, or drag it anywhere on the page).
-- If you cannot create files: reply with the JSON alone in a single ```` ```json ```` code block, with no commentary inside it. The user copies it and uses Import, then Paste.
+- Preferred: create a downloadable file named `<deck-name>.pitchcraft` whose entire content is the deck JSON. The user drops it onto Pitchcraft (Open, or drag it anywhere on the page).
+- If you cannot create files: reply with the JSON alone in a single ```` ```json ```` code block, with no commentary inside it. The user copies it and uses Open, then pastes it.
 - Output valid JSON only: double quotes, no comments, no trailing commas, no `...` placeholders.
 - The importer sanitises everything (unknown layouts become "statement", bad colours and URLs are dropped, limits are enforced) and reports warnings. It never runs code from the deck outside a sandbox.
 
@@ -356,8 +356,8 @@ When Pitchcraft is open in the tab you control, use the global `Pitchcraft` obje
 - `Pitchcraft.setDeck(deckOrJson)`: Replace the whole deck (object or JSON string). Returns {slides, warnings}. Undoable. The deck it replaced is kept in backups().
 - `Pitchcraft.backups()`: The last few decks that were replaced or undone away: [{index, title, slides, reason, t}]. They survive a reload.
 - `Pitchcraft.restoreBackup(index)`: Put one of those decks back. Undoable. Returns true on success.
-- `Pitchcraft.importPptx(base64OrBytes, mode?, name?)`: Async. Import a PowerPoint (.pptx) file as HTML slides. data = base64 string or Uint8Array; mode "replace" (default) or "append". Every slide becomes a custom HTML slide (text, shapes, pictures, tables and simple charts positioned on the 1280x720 stage). Returns {deck, warnings, report}; warnings list what could not be carried over.
-- `Pitchcraft.importText(text, mode?)`: Import deck JSON text. mode "replace" (default) or "append". Returns {deck, warnings}.
+- `Pitchcraft.importPptx(base64OrBytes, mode?, name?)`: Async. Open a PowerPoint (.pptx) file as HTML slides. data = base64 string or Uint8Array; mode "replace" (default) or "append". Every slide becomes a custom HTML slide (text, shapes, pictures, tables and simple charts positioned on the 1280x720 stage). Returns {deck, warnings, report}; warnings list what could not be carried over.
+- `Pitchcraft.importText(text, mode?)`: Open deck JSON text (what the Open dialog does with pasted or dropped text). mode "replace" (default) or "append". Returns {deck, warnings}.
 - `Pitchcraft.setMeta(patch)`: Patch deck meta: {name, theme, numbers, transition, css}.
 - `Pitchcraft.setTheme(theme)`: Set the deck theme key.
 - `Pitchcraft.newDeck()`: Replace the deck with a fresh one-slide deck (the starter). Undoable. The New deck button asks the user to save first; this call does not.
@@ -431,7 +431,7 @@ Pitchcraft.setPath("s3", "items.0.value", "42");
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://visser23.github.io/pitchcraft/pitchcraft.schema.json",
   "title": "Pitchcraft deck (.pitchcraft file)",
-  "description": "A Pitchcraft deck. Import it with the Import dialog, by dropping the file on the page, or with Pitchcraft.importText(json). Full guide: https://visser23.github.io/pitchcraft/ai-guide.md",
+  "description": "A Pitchcraft deck. Open it with the Open dialog, by dropping the file on the page, or with Pitchcraft.importText(json). Full guide: https://visser23.github.io/pitchcraft/ai-guide.md",
   "type": "object",
   "required": [
     "format",

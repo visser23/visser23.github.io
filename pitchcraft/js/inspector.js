@@ -151,7 +151,7 @@ function expandEditor(path, kind, label) {
   big.focus();
 }
 function recoverSec() {
-  const list = S.backups(); if (!list.length) return `<div class="ins-sec"><h4>Recover an earlier deck</h4><p class="note">When a whole deck is replaced (a template, an import, an AI building a new one) or undone away, a copy is kept here. Nothing is saved yet.</p></div>`;
+  const list = S.backups(); if (!list.length) return `<div class="ins-sec"><h4>Recover an earlier deck</h4><p class="note">When a whole deck is replaced (a template, a file you opened, an AI building a new one) or undone away, a copy is kept here. Nothing is saved yet.</p></div>`;
   const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
   return `<div class="ins-sec" data-recover><h4>Recover an earlier deck <span class="hint">${list.length}</span></h4><p class="note" style="margin:0 0 8px">Copies of decks that were replaced or undone away. Restoring one is itself undoable.</p><div class="sel-list">${list.map((b, i) => `<button class="sel-item" data-restore="${i}"><span>${esc(b.title)} <small class="hint">${b.slides} slide${b.slides === 1 ? '' : 's'} · ${esc(b.reason)} · ${ago(b.t)}</small></span></button>`).join('')}</div></div>`;
 }
@@ -222,7 +222,7 @@ function panelDeck() {
     <div class="ins-sec"><h4>Defaults</h4>${fSelect('Transition', 'meta.transition', m.transition, PC.TRANSITIONS)}<label class="switch"><span>Show slide numbers</span><input type="checkbox" data-meta="numbers" ${m.numbers ? 'checked' : ''}></label><p class="note">Numbers appear in a footer strip at the bottom of each slide, so they never fight your content.</p></div>
     <div class="ins-sec"><h4>Brand CSS</h4><p class="note" style="margin:0 0 10px">Shared CSS for every custom slide is edited in the Code tab.</p><button class="btn sm" data-act="open-brand">${icon('code', 14)} Open Brand CSS</button></div>
     ${recoverSec()}
-    <div class="ins-sec"><h4>Share and export</h4><div class="row wrap"><button class="btn sm" data-act="newdeck">${icon('file', 14)} New deck</button><button class="btn sm" data-act="export">${icon('download', 14)} Export</button><button class="btn sm" data-act="import">${icon('upload', 14)} Import</button><button class="btn sm" data-act="print">${icon('printer', 14)} PDF</button><button class="btn sm" data-act="templates">${icon('layers', 14)} Templates</button></div></div>
+    <div class="ins-sec"><h4>Share and export</h4><div class="row wrap"><button class="btn sm" data-act="newdeck">${icon('file', 14)} New deck</button><button class="btn sm" data-act="export">${icon('download', 14)} Export</button><button class="btn sm" data-act="open">${icon('folder-open', 14)} Open</button><button class="btn sm" data-act="print">${icon('printer', 14)} PDF</button><button class="btn sm" data-act="templates">${icon('layers', 14)} Templates</button></div></div>
     <div class="ins-sec"><h4>AI</h4><button class="btn sm primary" data-act="ai">${icon('sparkles', 14)} Open AI assistant</button><p class="note" style="margin-top:8px">Build a whole deck with any AI chat, or let an AI that lives in your browser edit this deck directly.</p></div>`;
 }
 

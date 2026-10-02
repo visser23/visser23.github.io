@@ -76,19 +76,19 @@
 
     ['ai', 'Working with an AI', 'sparkles', () => `
       ${grid(
-        card('In a chat window', '(ChatGPT, Claude, Gemini…) Click <b>AI</b> in the top bar, then <i>Build with AI</i>. Copy the prompt into your chat. The AI answers with a <code>.pitchcraft</code> file or a JSON block: drop it on this page, or use <i>Import</i>.'),
+        card('In a chat window', '(ChatGPT, Claude, Gemini…) Click <b>AI</b> in the top bar, then <i>Build with AI</i>. Copy the prompt into your chat. The AI answers with a <code>.pitchcraft</code> file or a JSON block: drop it on this page, or use <i>Open</i>.'),
         card('An AI in your browser', '(Comet, Atlas, Claude for Chrome…) Choose <i>AI in your browser</i> and copy the agent prompt. The AI edits this open deck live through the <code>Pitchcraft</code> API, including objects and lines. <b>Ctrl+Z</b> undoes it.')
       )}
       <p>Both use one guide generated from the app, so it always matches this version (${esc(ver())}): <a href="${esc(PC.GUIDE ? PC.GUIDE.pageUrl : '#')}" target="_blank" rel="noopener noreferrer">the Pitchcraft guide for AI assistants</a>. Agents can check their work with <code>await Pitchcraft.auditAll()</code>, which measures every slide, custom ones included, and reports <i>unknown</i> rather than <i>fine</i> if a slide could not be measured.</p>
-      <p>Pitchcraft never contacts an AI service itself. Importing validates everything: anything invalid is dropped or corrected, and you get a warning.</p>`],
+      <p>Pitchcraft never contacts an AI service itself. Opening a file validates everything: anything invalid is dropped or corrected, and you get a warning.</p>`],
 
-    ['pptximport', 'Import from PowerPoint', 'upload', () => `
-      <p>Click <b>Import</b> and choose a <code>.pptx</code> file, or drop one anywhere on the page. Choose <b>Add to this deck</b> or <b>Replace deck</b>.</p>
+    ['pptximport', 'Open a PowerPoint file', 'folder-open', () => `
+      <p>Click <b>Open</b> and choose a <code>.pptx</code> file, or drop one anywhere on the page. Choose <b>Open as the deck</b> or <b>Add slides to this deck</b>.</p>
       <ul><li>Every PowerPoint slide becomes an <b>HTML slide</b>: text, shapes, lines, pictures, tables and simple charts, placed where they were. Double-click text to edit it in place; the <b>Code</b> tab has the HTML and CSS if you want to go further.</li>
       <li>Speaker notes and hidden slides carry across. Theme colours, fonts and bullet styles are resolved for you. Fonts this computer does not have are replaced by a similar one.</li>
       <li>A report tells you what could not be carried over (for example SmartArt, embedded objects, animations, links and videos). The slide itself is never left blank because of one of these.</li>
       <li>It never leaves your browser. Nothing in the file is run: no macros, scripts or links come across, and pictures are re-encoded.</li></ul>
-      <p>Round trip: export to PowerPoint, edit there, and import it back. It will not be pixel-identical, but it is close.</p>`],
+      <p>Round trip: export to PowerPoint, edit there, and open it again here. It will not be pixel-identical, but it is close.</p>`],
 
     ['export', 'Export and share', 'download', () => `
       <p>Open <b>Export</b> in the ribbon.</p>
@@ -98,7 +98,7 @@
 
     ['safety', 'Undo, backups and recovery', 'refresh', () => `
       <ul><li><b>Undo and redo</b> (<kbd>Ctrl</kbd> <kbd>Z</kbd>, <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Z</kbd>, or the top-bar arrows) step through your edits, typing included.</li>
-      <li><b>Whole-deck changes</b> (loading a template, importing, an AI replacing the deck) are marked. Undo goes back to your previous deck in one step, and a message with <b>Redo</b> tells you it happened, so one mispress can't lose your work.</li>
+      <li><b>Whole-deck changes</b> (loading a template, opening a file, an AI replacing the deck) are marked. Undo goes back to your previous deck in one step, and a message with <b>Redo</b> tells you it happened, so one mispress can't lose your work.</li>
       <li><b>Recover an earlier deck</b> (Deck tab) lists the decks that were replaced. Restore one with a click.</li>
       <li><b>Autosave</b> writes to this browser every few seconds. Clearing your browser data removes it, so download a <code>.pitchcraft</code> file for anything important.</li></ul>`],
 

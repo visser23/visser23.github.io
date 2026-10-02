@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://visser23.github.io/pitchcraft/pitchcraft.schema.json",
   "title": "Pitchcraft deck (.pitchcraft file)",
-  "description": "A Pitchcraft deck. Import it with the Import dialog, by dropping the file on the page, or with Pitchcraft.importText(json). Full guide: https://visser23.github.io/pitchcraft/ai-guide.md",
+  "description": "A Pitchcraft deck. Open it with the Open dialog, by dropping the file on the page, or with Pitchcraft.importText(json). Full guide: https://visser23.github.io/pitchcraft/ai-guide.md",
   "type": "object",
   "required": [
     "format",

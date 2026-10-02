@@ -169,7 +169,7 @@ E.buildRibbon = function () {
        <label class="rsel">Background<select id="rb-bg" aria-label="Slide background">${opts(PC.BGS, '')}</select></label>
        <div class="rsel acc">Accent<div class="tone-row" id="rb-tones" role="group" aria-label="Accent colour">${Object.keys(PC.TONES).map(k => `<button class="tone-dot${k === '' ? ' none' : ''}" data-tone="${k}" title="${esc(PC.TONES[k])}" aria-label="Accent ${esc(PC.TONES[k])}" style="--c:${PC.TONE_HEX[k] || '#ddd'}"></button>`).join('')}</div></div>
        <label class="rsel">Transition<select id="rb-tr" aria-label="Slide transition"><option value="">Deck default</option>${opts(PC.TRANSITIONS, '')}</select></label></div>
-     <div class="rg" data-g="deck" role="group" aria-label="Deck">${rb('newdeck', 'file', 'New deck')}${rb('templates', 'layers', 'Templates')}${rb('import', 'upload', 'Import')}${rb('export', 'download', 'Export')}${rb('print', 'printer', 'PDF')}</div>
+     <div class="rg" data-g="deck" role="group" aria-label="Deck">${rb('newdeck', 'file', 'New deck')}${rb('templates', 'layers', 'Templates')}${rb('open', 'folder-open', 'Open')}${rb('export', 'download', 'Export')}${rb('print', 'printer', 'PDF')}</div>
      <div class="rg" data-g="view" role="group" aria-label="View">${rb('inspect', 'eye', 'Inspect')}${rb('numbers', 'type', 'Numbers')}${rb('toggle-side', 'sidebar', 'Slides', 'no-mobile')}${rb('toggle-insp', 'panel', 'Panel')}</div>`;
   $('#ribbon').dataset.rtab = E.rtab;
 };

@@ -440,7 +440,7 @@ PC.buildSchema = function (siteUrl) {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
     $id: siteUrl + 'pitchcraft.schema.json',
     title: 'Pitchcraft deck (.pitchcraft file)',
-    description: 'A Pitchcraft deck. Import it with the Import dialog, by dropping the file on the page, or with Pitchcraft.importText(json). Full guide: ' + siteUrl + 'ai-guide.md',
+    description: 'A Pitchcraft deck. Open it with the Open dialog, by dropping the file on the page, or with Pitchcraft.importText(json). Full guide: ' + siteUrl + 'ai-guide.md',
     type: 'object', required: ['format', 'version', 'slides'],
     properties: {
       format: { const: 'pitchcraft' }, version: { const: 3 },
