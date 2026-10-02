@@ -29,24 +29,19 @@
     return { links: Array.from(links), fonts: Array.from(fonts).map(n => n.replace(/\b\w/g, c => c.toUpperCase())) };
   };
 
-  function toData(url) {
-    return new Promise(resolve => {
-      if (/\.svg(\?|#|$)/i.test(url)) return resolve(null);
-      const im = new Image(), t = setTimeout(() => resolve(null), 15000); im.crossOrigin = 'anonymous';
-      im.onload = () => {
-        clearTimeout(t);
-        try {
-          const k = Math.min(1, 1920 / Math.max(im.naturalWidth || 1, im.naturalHeight || 1)), cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(im.naturalWidth * k)); cv.height = Math.max(1, Math.round(im.naturalHeight * k));
-          cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
-          let d = cv.toDataURL('image/png'); if (d.length > 900 * 1024) d = cv.toDataURL('image/jpeg', .86);
-          resolve(d.length > 3.2 * 1024 * 1024 ? null : d);
-        } catch (e) { resolve(null); }   // a tainted canvas: the site did not allow it
-      };
-      im.onerror = () => { clearTimeout(t); resolve(null); };
-      im.src = new URL(url, document.baseURI).href;
-    });
+  async function toData(url) {
+    if (/\.svg(\?|#|$)/i.test(url)) return null;
+    const im = await PC.loadCorsImage(new URL(url, document.baseURI).href);   // asks normally, then once more as a fresh address (see pptx.js)
+    if (!im) return null;
+    try {
+      const k = Math.min(1, 1920 / Math.max(im.naturalWidth || 1, im.naturalHeight || 1)), cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(im.naturalWidth * k)); cv.height = Math.max(1, Math.round(im.naturalHeight * k));
+      cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+      let d = cv.toDataURL('image/png'); if (d.length > 900 * 1024) d = cv.toDataURL('image/jpeg', .86);
+      return d.length > 3.2 * 1024 * 1024 ? null : d;
+    } catch (e) { return null; }   // a tainted canvas: the site did not allow it
   }
   PC.embedLinked = async function (deck, urls) {
+    if (PC.loadCorsImage && PC.loadCorsImage.reset) PC.loadCorsImage.reset();
     const out = PC.clone(deck), map = new Map(), failed = [];
     for (const u of urls.slice(0, 60)) { const d = await toData(u); if (d) map.set(u, d); else failed.push(u); }
     const lim = (PC.LIMITS && PC.LIMITS.custom) || 300000, swap = t => { let r = t; map.forEach((d, u) => { r = r.split(u).join(d); }); return r; };

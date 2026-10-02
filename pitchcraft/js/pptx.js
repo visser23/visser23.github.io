@@ -231,11 +231,35 @@ function lineX(sl, it) {
 /* ── pictures ── */
 const imgCache = new Map();
 function dataBytes(u) { const m = u.match(/^data:([^;,]+)(;base64)?,(.*)$/s); if (!m) return null; try { const bin = m[2] ? atob(m[3]) : decodeURIComponent(m[3]); const b = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i); return { mime: m[1], bytes: b }; } catch (e) { return null; } }
-function loadImg(src) {
+/* A picture can be SHOWN from any web address, but a page may only READ its pixels when the site allows it (CORS). Two honest causes of "could not be copied":
+   (1) the site never sends the permission, (2) it does, but only when asked with an Origin header, and the browser reuses the copy it cached when it first
+   showed the picture without one. We ask once normally, once more as a fresh address (fixes 2), and if both fail we check whether it still shows (tells 1 from "gone"). */
+const picLoads = new Map(), picWhy = new Map();
+function loadOnce(src, cors) {
   return new Promise(res => {
-    const im = new Image(); im.crossOrigin = 'anonymous'; let t = setTimeout(() => res(null), 12000);
+    const im = new Image(); if (cors) im.crossOrigin = 'anonymous'; const t = setTimeout(() => res(null), 15000);
     im.onload = () => { clearTimeout(t); res(im); }; im.onerror = () => { clearTimeout(t); res(null); }; im.src = src;
   });
+}
+function loadImg(src) {
+  if (picLoads.has(src)) return picLoads.get(src);
+  const p = (async () => {
+    let im = await loadOnce(src, true);
+    if (!im && /^https?:/i.test(src)) {
+      im = await loadOnce(src + (src.includes('?') ? '&' : '?') + '_pc=' + Date.now().toString(36), true);
+      if (!im) picWhy.set(src, (await loadOnce(src, false)) ? 'blocked' : 'gone');
+    }
+    return im;
+  })();
+  picLoads.set(src, p); return p;
+}
+PC.loadCorsImage = loadImg; PC.loadCorsImage.reset = () => { picLoads.clear(); picWhy.clear(); }; PC.loadFailReason = src => picWhy.get(src) || '';
+/** Fetch every linked picture the deck names, a few at a time, before the slides are read (so the progress bar can say so, and a slow site costs seconds once). */
+async function preloadLinked(deck, say) {
+  const urls = new Set(); deck.slides.forEach(s => { [s.bgImage, s.image && s.image.src].forEach(u => { if (/^https?:/i.test(u || '')) urls.add(u); }); (s.objects || []).forEach(o => { if (o.type === 'image' && /^https?:/i.test(o.src || '')) urls.add(o.src); }); });
+  const list = Array.from(urls).slice(0, 80); let done = 0; if (!list.length) return;
+  say(`Fetching ${list.length} linked picture${list.length === 1 ? '' : 's'}`, 0);
+  const q = list.slice(); await Promise.all(Array.from({ length: Math.min(4, q.length) }, async () => { while (q.length) { const u = q.shift(); await loadImg(u); say(`Fetching linked pictures (${++done} of ${list.length})`, .1 * done / list.length); } }));
 }
 function canvasPng(im, w, h) {
   return new Promise(res => {
@@ -249,7 +273,14 @@ async function getImage(pkg, src) {
   const im = await loadImg(src);
   if (d && /^image\/(png|jpeg|gif)$/.test(d.mime) && im) rec = { bytes: d.bytes, ext: d.mime === 'image/jpeg' ? 'jpeg' : d.mime.slice(6), w: im.naturalWidth, h: im.naturalHeight };
   else if (im) { const w = im.naturalWidth || 1024, h = im.naturalHeight || 768, b = await canvasPng(im, w, h); if (b) rec = { bytes: b, ext: 'png', w, h }; }
-  if (!rec) { pkg.warn.push(`A picture could not be embedded (${src.startsWith('data:') ? 'unreadable data' : src.slice(0, 80)}). The site hosting it may block copying; upload the picture instead.`); return null; }
+  if (!rec) {
+    const why = picWhy.get(src), where = src.startsWith('data:') ? '' : src.replace(/^https?:\/\//, '').slice(0, 70);
+    pkg.warn.push(src.startsWith('data:') ? 'A picture could not be embedded (unreadable data).'
+      : why === 'blocked' ? `The picture at ${where} shows in Pitchcraft but its website does not let other pages copy it, so it could not go into the file (browsers only allow copying when the site gives permission). Save the picture to your computer and drop it onto the slide; then it travels with the deck.`
+      : why === 'gone' ? `The picture at ${where} could not be loaded (offline, moved, or blocked), so it is a grey placeholder in the file.`
+      : `A picture could not be embedded (${where}). Save it to your computer and drop it onto the slide instead.`);
+    return null;
+  }
   rec.name = `image${pkg.media.size + 1}.${rec.ext}`; rec.key = rec.name; pkg.media.set(rec.key, rec); imgCache.set(src, rec); return rec;
 }
 function cropFor(it, nw, nh) {
@@ -457,7 +488,7 @@ async function settle(host, ms) {
  * report: { slides, warnings[], fonts[], objects } so the caller can tell the user what to check.
  */
 PC.pptx = async function (deck, opt) {
-  opt = opt || {}; deck = deck || S.deck; fontMode = opt.fonts === 'keep' ? 'keep' : 'similar'; const say = opt.progress || (() => {});
+  opt = opt || {}; deck = deck || S.deck; fontMode = opt.fonts === 'keep' ? 'keep' : 'similar'; const say = opt.progress || (() => {}); picLoads.clear(); picWhy.clear();
   const host = document.createElement('div'); host.id = 'export-host'; host.setAttribute('aria-hidden', 'true');
   host.style.cssText = 'position:fixed;left:-20000px;top:0;width:1280px;height:720px;pointer-events:none;overflow:hidden'; document.body.appendChild(host);
   const pkg = { media: new Map(), warn: [], walks: [], slideIds: deck.slides.map(s => s.id), fonts: new Set() };
@@ -470,8 +501,9 @@ PC.pptx = async function (deck, opt) {
     for (let n = 1; n <= 6; n++) colours['c' + n] = cc(`var(--c${n})`) || '5b4bff';
     const fam = n => { const e = document.createElement('i'); e.style.fontFamily = `var(${n})`; probe.appendChild(e); const f = getComputedStyle(e).fontFamily.split(',')[0].trim().replace(/^["']|["']$/g, ''); e.remove(); return f || 'Arial'; };
     const majorFont = PC.pptxFont(fam('--font-d')).name, minorFont = PC.pptxFont(fam('--font-b')).name;
+    await preloadLinked(deck, say);
     for (let i = 0; i < deck.slides.length; i++) {
-      const s = deck.slides[i]; say(`Reading slide ${i + 1} of ${deck.slides.length}`);
+      const s = deck.slides[i]; say(`Reading slide ${i + 1} of ${deck.slides.length}`, .1 + .8 * i / deck.slides.length);
       host.innerHTML = PC.renderSlide(s, { editable: false, index: i, total: deck.slides.length, deck, mode: 'thumb' });
       await settle(host);
       const slideEl = host.firstElementChild; let res = PC.walk(slideEl);
@@ -485,11 +517,11 @@ PC.pptx = async function (deck, opt) {
       pkg.walks.push(res);
       pkg.walks[i].host = null;
       // build immediately while this slide is still the one in the host (object colours resolve through its theme scope)
-      say(`Building slide ${i + 1} of ${deck.slides.length}`);
+      say(`Building slide ${i + 1} of ${deck.slides.length}`, .1 + .8 * (i + .5) / deck.slides.length);
       const built = await buildSlide(pkg, s, i, host, deck.meta);
       pkg.walks[i] = Object.assign({}, res, { built });
     }
-    say('Packing the file');
+    say('Packing the file', .92);
     const files = [], N = deck.slides.length, title = deck.meta.name || deck.meta.title || 'Presentation';
     const ct = [`<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>`, `<Default Extension="xml" ContentType="application/xml"/>`, '<Default Extension="png" ContentType="image/png"/>', '<Default Extension="jpeg" ContentType="image/jpeg"/>', '<Default Extension="gif" ContentType="image/gif"/>',
       '<Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>', '<Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/>',

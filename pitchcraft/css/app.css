@@ -458,3 +458,12 @@ body.st-drawing .stage.editing, body.st-drawing .stage.editing * { touch-action:
 .frame-hint { margin-left: 10px; font-size: 12px; color: var(--ui-muted); opacity: 0; transition: opacity .15s; white-space: nowrap; }
 .frame:hover .frame-hint, .frame.sel .frame-hint { opacity: 1; }
 @media (max-width: 860px) { .frame-hint { display: none; } }
+
+/* progress dialog (UI.progress) */
+.modal.busy { width: min(460px, 100%); } .modal.busy .modal-h .icon-btn { display: none; }
+.pg-bar { height: 10px; border-radius: 99px; background: var(--ui-line); overflow: hidden; margin: 4px 0 10px; position: relative; }
+.pg-bar > i { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(135deg, #5b4bff, #7a4dff); transition: width .25s ease; }
+.pg-bar.ind > i { width: 38%; position: absolute; animation: pgSlide 1.2s ease-in-out infinite; transition: none; }
+@keyframes pgSlide { from { left: -40%; } to { left: 102%; } }
+.pg-sub { margin: 0; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .pg-bar.ind > i { animation: none; left: 31%; } }

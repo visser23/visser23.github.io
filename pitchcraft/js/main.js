@@ -65,17 +65,17 @@ PC.importText = function (text, mode) {
   return { deck, warnings };
 };
 /** Import a PowerPoint file (.pptx) as custom HTML slides. bytes: Uint8Array/ArrayBuffer; mode 'replace' | 'append'. Returns { deck, warnings, report }. */
-PC.importPptxBytes = async function (bytes, mode, name) {
-  const r = await PC.importPptx(bytes, { name, progress: m => log('pptx import:', m) });
+PC.importPptxBytes = async function (bytes, mode, name, onProgress) {
+  const r = await PC.importPptx(bytes, { name, progress: (m, f) => { log('pptx import:', m); if (onProgress) onProgress(m, f); } });
   const { warnings } = PC.importText(JSON.stringify(r.deck), mode); r.warnings = r.warnings.concat(warnings.filter(w => !r.warnings.includes(w)));
   log(`pptx imported: ${r.report.slides} slides, ${r.report.pictures} pictures, ${r.warnings.length} notes`);
   return r;
 };
 PC.importPptxFile = async function (file, mode) {
   if (file.size > 120 * 1024 * 1024) throw new Error('That PowerPoint file is over 120 MB.');
-  const note = UI.toast('Reading the PowerPoint file…', 'ok');
-  try { const r = await PC.importPptxBytes(new Uint8Array(await file.arrayBuffer()), mode, file.name); PC.importReport(r, file.name); return r; }
-  finally { if (note && note.remove) note.remove(); }
+  const pg = UI.progress('Opening your PowerPoint file'); pg.set('Reading ' + file.name);
+  let r; try { await frame(); r = await PC.importPptxBytes(new Uint8Array(await file.arrayBuffer()), mode, file.name, (t, f) => pg.set(t, f)); } finally { pg.close(); }
+  PC.importReport(r, file.name); return r;
 };
 PC.importReport = function (r, name) {
   const w = r.warnings;
@@ -133,12 +133,17 @@ PC.exportMenu = function (anchor) {
   ]);
 };
 
+/** Let the browser paint (a dialog just opened) before heavy synchronous work starts. */
+const frame = () => new Promise(res => requestAnimationFrame(() => setTimeout(res, 0)));
+
 /** Build the PowerPoint file, offer it for download, and say plainly what to check. */
 PC.exportPptx = async function (opt) {
   opt = opt || {};
-  const note = UI.toast('Building the PowerPoint file…', 'ok');
+  const pg = opt.returnBytes ? null : UI.progress('Building your PowerPoint file');
   try {
-    const t0 = performance.now(), r = await PC.pptx(S.deck, { progress: m => log('pptx:', m), fonts: opt.fonts });
+    if (pg) { pg.set('Starting…'); await frame(); }
+    const t0 = performance.now(), r = await PC.pptx(S.deck, { progress: (m, f) => { log('pptx:', m); if (pg) pg.set(m, f); }, fonts: opt.fonts });
+    if (pg) { pg.set('Handing you the file', 1); pg.close(); }
     log('pptx built in', Math.round(performance.now() - t0), 'ms,', r.bytes.length, 'bytes,', r.report.warnings.length, 'warnings');
     if (opt.returnBytes) return r;
     const url = URL.createObjectURL(new Blob([r.bytes], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' })), a = document.createElement('a');
@@ -156,7 +161,7 @@ PC.exportPptx = async function (opt) {
   } catch (e) {
     log('pptx failed', e); UI.toast('The PowerPoint export failed: ' + (e && e.message || e), 'bad');
     if (opt.returnBytes) throw e;
-  } finally { if (note && note.remove) note.remove(); }
+  } finally { if (pg) pg.close(); }
 };
 
 /** Settings: appearance now; fonts and privacy are added by their own modules through PC.settingsExtras. */

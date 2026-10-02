@@ -831,7 +831,7 @@ PC.importPptx = async function (input, opt) {
   const tstyles = {}; let tableStylesRoot = null; if (zip.has('ppt/tableStyles.xml')) tableStylesRoot = await readXml(zip, 'ppt/tableStyles.xml');
   const masters = {};
   for (let si = 0; si < ids.length; si++) {
-    say(`Reading slide ${si + 1} of ${ids.length}`);
+    say(`Reading slide ${si + 1} of ${ids.length}`, .05 + .85 * si / ids.length);
     try {
     const sPart = ids[si].part, sRoot = await readXml(zip, sPart), sRels = await readRels(zip, sPart);
     const lay = Object.values(sRels).find(r => r.type === 'slideLayout'), layRoot = lay && await readXml(zip, lay.part), layRels = lay ? await readRels(zip, lay.part) : {};
@@ -872,7 +872,7 @@ PC.importPptx = async function (input, opt) {
       slideOut.push({ S: { out: [], imgCss: new Map() }, bgCss: 'background:#ffffff', notes: '', hidden: false, title: `Slide ${si + 1}`, fontsUsed: new Set() });
     }
   }
-  say('Preparing pictures');
+  say('Preparing pictures', .92);
   const uris = await pics.build(200000, warn, report), slides = [];
   slideOut.forEach((o, i) => {
     const cssParts = [SLIDE_CSS, `.slide{${o.bgCss}}`];

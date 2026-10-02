@@ -36,7 +36,25 @@ UI.download = function (name, text, mime) {
 
 /* ── modal ── */
 let modalStack = [];
-UI.modal = function ({ title, body, footer, size, onClose, cls }) {
+/** A dialog that stays up while something slow runs: a message, a bar that fills (or slides when the amount is unknown) and the seconds so far.
+ *  const p = UI.progress('Building…'); p.set('Reading slide 2 of 9', 0.2); … p.close(). It cannot be dismissed by accident. */
+UI.progress = function (title) {
+  const body = document.createElement('div');
+  body.innerHTML = '<p class="pg-msg" role="status" aria-live="polite">Starting…</p><div class="pg-bar ind" role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="100"><i></i></div><p class="hint pg-sub"></p>';
+  const m = UI.modal({ title, body, cls: 'busy', locked: true }), msg = body.querySelector('.pg-msg'), bar = body.querySelector('.pg-bar'), fill = bar.firstChild, sub = body.querySelector('.pg-sub');
+  const t0 = performance.now(); let extra = '';
+  const tick = () => { sub.textContent = (extra ? extra + ' · ' : '') + Math.round((performance.now() - t0) / 1000) + ' s'; }, iv = setInterval(tick, 500); tick();
+  return {
+    set(text, frac, more) {
+      if (text) msg.textContent = text; extra = more || '';
+      if (typeof frac === 'number') { const p = Math.max(0, Math.min(1, frac)); bar.classList.remove('ind'); fill.style.width = Math.round(p * 100) + '%'; bar.setAttribute('aria-valuenow', String(Math.round(p * 100))); } else { bar.classList.add('ind'); bar.removeAttribute('aria-valuenow'); fill.style.width = ''; }
+      tick();
+    },
+    close() { clearInterval(iv); m.close(); }
+  };
+};
+
+UI.modal = function ({ title, body, footer, size, onClose, cls, locked }) {
   const back = document.createElement('div'); back.className = 'modal-back'; back.dataset.modal = '1';
   const id = PC.uid('mt');
   back.innerHTML = `<div class="modal ${size || ''} ${cls || ''}" role="dialog" aria-modal="true" aria-labelledby="${id}"><div class="modal-h"><h2 id="${id}">${esc(title)}</h2><button class="icon-btn" data-close aria-label="Close dialog">${icon('x', 20)}</button></div><div class="modal-b"></div>${footer ? '<div class="modal-f"></div>' : ''}</div>`;
@@ -45,10 +63,10 @@ UI.modal = function ({ title, body, footer, size, onClose, cls }) {
   const f = back.querySelector('.modal-f'); if (f && footer) { if (typeof footer === 'string') f.innerHTML = footer; else f.appendChild(footer); }
   const prev = document.activeElement;
   const api = { el: back, body: b, footer: f, close() { if (!back.isConnected) return; back.remove(); modalStack = modalStack.filter(m => m !== api); if (onClose) onClose(); if (prev && prev.focus && prev.isConnected) try { prev.focus(); } catch (e) { /* noop */ } } };
-  back.addEventListener('mousedown', e => { if (e.target === back) api.close(); });
+  back.addEventListener('mousedown', e => { if (!locked && e.target === back) api.close(); });
   back.addEventListener('click', e => { if (e.target.closest('[data-close]')) api.close(); });
   back.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { e.stopPropagation(); api.close(); }
+    if (e.key === 'Escape') { e.stopPropagation(); if (!locked) api.close(); }
     if (e.key === 'Tab') { // focus trap
       const f2 = UI.$$('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])', back).filter(x => !x.disabled && x.offsetParent !== null);
       if (!f2.length) return; const first = f2[0], last = f2[f2.length - 1];
