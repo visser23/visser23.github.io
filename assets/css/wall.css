@@ -1,0 +1,554 @@
+/* ─────────────────────────────────────────────
+   The Wall — room, rope, polaroids, reader
+   (Amstrad + desk live in amstrad.css)
+   ───────────────────────────────────────────── */
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: 56px; }
+
+/* ── Tokens ── */
+:root {
+  --wall:       #f0ebe0;
+  --wall2:      #e8e2d6;
+  --rope:       #7a5c2e;
+  --peg:        #5c3d1a;
+  --card:       #faf8f2;
+  --card-edge:  #e8e2d4;
+  --shadow:     rgba(40,28,12,0.14);
+  --shadow2:    rgba(40,28,12,0.28);
+  --phosphor:   #4dff6e;
+  --phosphor2:  #1a8c32;
+  --screen-bg:  #040d04;
+  --amstrad:    #ccc8b8;
+  --amstrad-dk: #3a3228;
+  --text:       #2a2318;
+  --muted:      #7a6e5e;
+  --accent:     #8b4513;
+  --wood-lt:    #d9b583;
+  --wood:       #b08246;
+  --wood-dk:    #6d4724;
+  --serif:      'Spectral', Georgia, 'Times New Roman', serif;
+  --mono:       'Share Tech Mono', 'Courier New', monospace;
+  --card-w:     230px;
+  --card-gap:   34px;
+}
+
+/* ── Base: a warm, slightly papered wall ── */
+body {
+  background-color: var(--wall);
+  background-image:
+    /* faint vertical wallpaper stripe */
+    repeating-linear-gradient(90deg, transparent 0 54px, rgba(122,92,46,0.035) 54px 55px, transparent 55px 56px),
+    /* paper grain */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  font-family: var(--serif);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Room vignette — the corners of the room are always a bit darker */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  background: radial-gradient(ellipse 90% 80% at 50% 38%, transparent 55%, rgba(70,45,15,0.17) 100%);
+}
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* ── Nav ── */
+#nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(to bottom, rgba(240,235,224,0.95), rgba(240,235,224,0));
+  pointer-events: none;
+  transition: background 0.3s, box-shadow 0.3s, padding 0.3s;
+}
+#nav.scrolled {
+  padding: 10px 28px;
+  background: rgba(240,235,224,0.86);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 1px 0 rgba(122,92,46,0.18);
+}
+#nav-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+  text-decoration: none;
+  pointer-events: all;
+}
+#nav-links { display: flex; gap: 22px; pointer-events: all; }
+#nav-links a {
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  padding: 2px 0;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+#nav-links a:hover { color: var(--text); border-bottom-color: var(--rope); }
+
+/* ── Hero ── */
+#intro {
+  padding: 112px 24px 4px;
+  max-width: 820px;
+  margin: 0 auto;
+  text-align: center;
+}
+#intro h1 {
+  font-size: clamp(2.5rem, 7.2vw, 4.4rem);
+  font-weight: 300;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+#intro h1 em {
+  font-style: italic;
+  font-weight: 300;
+  color: var(--accent);
+}
+#intro p {
+  font-size: clamp(1rem, 2.4vw, 1.2rem);
+  font-style: italic;
+  color: var(--muted);
+  line-height: 1.7;
+  font-weight: 300;
+}
+#intro-hint {
+  display: block;
+  margin-top: 20px;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(122,110,94,0.75);
+}
+
+/* ── Story ── */
+#story {
+  padding: 26px 0 40px;
+  position: relative;
+}
+/* Afternoon light through the blinds — you'd only notice if it were gone */
+#story::before {
+  content: '';
+  position: absolute;
+  inset: -40px 0 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      104deg,
+      transparent 0 70px,
+      rgba(255,248,226,0.34) 70px 118px,
+      transparent 118px 190px
+    );
+  -webkit-mask-image: linear-gradient(115deg, #000 0%, rgba(0,0,0,0.5) 35%, transparent 62%);
+  mask-image: linear-gradient(115deg, #000 0%, rgba(0,0,0,0.5) 35%, transparent 62%);
+  opacity: 0.8;
+}
+
+#rail-outer {
+  position: relative;
+  overflow: hidden;
+  padding-top: 18px;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+}
+#rail-outer:active { cursor: grabbing; }
+#rail-outer:focus-visible { outline-offset: -3px; }
+
+/* The rope: twisted strands, a lit top edge, a shadow thrown on the wall */
+#rope {
+  position: absolute;
+  left: 0; right: 0;
+  top: 25px;
+  height: 9px;
+  z-index: 1;
+  border-radius: 5px;
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,0.28), transparent 45%, rgba(0,0,0,0.22)),
+    repeating-linear-gradient(118deg, #94703a 0 4px, #6a4a20 4px 8px);
+  box-shadow: 0 5px 6px -2px rgba(40,28,12,0.38), 0 1px 0 rgba(255,255,255,0.35);
+}
+
+#rail-track {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--card-gap);
+  padding: 0 50vw 44px;
+  will-change: transform;
+  transition: none;
+}
+#rail-track.smooth { transition: transform 0.55s cubic-bezier(0.22, 0.8, 0.28, 1); }
+
+/* ── Card wrapper ── */
+.card-wrap {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: var(--card-w);
+  transform-origin: top center;
+  transition: transform 0.45s cubic-bezier(0.22, 0.8, 0.28, 1), opacity 0.4s ease, filter 0.4s ease;
+  filter: saturate(0.88) brightness(0.98);
+  cursor: pointer;
+}
+.card-wrap.active { transform: scale(1.07); filter: none; z-index: 3; }
+.card-wrap.distant { opacity: 0.5; }
+.card-wrap:not(.active):hover { transform: translateY(-4px); }
+.card-wrap:focus-visible { outline-offset: 6px; }
+
+/* Everything hangs from the peg and swings around it */
+.hang {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: 50% 12px;
+  transform: rotate(calc(var(--rot, 0deg) + var(--lean, 0deg)));
+  transition: transform 0.3s ease-out;
+}
+#rail-track.swaying .hang {
+  animation: sway 1.5s cubic-bezier(0.3, 0.1, 0.3, 1) both;
+  animation-delay: calc(var(--d, 0) * 42ms);
+}
+@keyframes sway {
+  0%   { transform: rotate(calc(var(--rot, 0deg) + var(--kick, 0deg))); }
+  18%  { transform: rotate(calc(var(--rot, 0deg) - var(--kick, 0deg) * 0.62)); }
+  38%  { transform: rotate(calc(var(--rot, 0deg) + var(--kick, 0deg) * 0.38)); }
+  58%  { transform: rotate(calc(var(--rot, 0deg) - var(--kick, 0deg) * 0.2)); }
+  78%  { transform: rotate(calc(var(--rot, 0deg) + var(--kick, 0deg) * 0.08)); }
+  100% { transform: rotate(var(--rot, 0deg)); }
+}
+
+/* ── Clips ── */
+.clip { position: relative; z-index: 3; flex-shrink: 0; }
+
+/* Wooden peg */
+.clip-peg {
+  width: 17px; height: 40px;
+  border-radius: 3px 3px 6px 6px;
+  background: linear-gradient(90deg, #b3854d 0%, #dcb67f 42%, #a67a44 100%);
+  box-shadow: 1px 3px 4px rgba(40,20,0,0.4), inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.clip-peg::before { /* the split */
+  content: ''; position: absolute; left: 50%; top: 17px; bottom: 0; width: 1.5px;
+  background: rgba(60,35,10,0.55);
+}
+.clip-peg::after { /* the spring */
+  content: ''; position: absolute; left: -2px; right: -2px; top: 13px; height: 5px;
+  border-radius: 2px;
+  background: linear-gradient(#cfcfcf, #7a7a7a);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.35);
+}
+
+/* Binder clip */
+.clip-binder, .clip-brass {
+  width: 42px; height: 26px;
+  filter: drop-shadow(1px 3px 2px rgba(30,15,0,0.45));
+}
+.clip-binder::before, .clip-brass::before {
+  content: ''; position: absolute; inset: 0;
+  clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
+}
+.clip-binder::before { background: linear-gradient(105deg, #444 0%, #1a1a1a 30%, #0d0d0d 100%); }
+.clip-brass::before  { background: linear-gradient(105deg, #f6e3a1 0%, #c19a3a 40%, #8a6a1e 100%); }
+.clip-binder::after, .clip-brass::after { /* wire handle */
+  content: ''; position: absolute; left: 7px; right: 7px; top: -9px; height: 14px;
+  border: 2px solid #b9b9b9; border-bottom: none; border-radius: 10px 10px 0 0;
+}
+
+/* ── Polaroid ── */
+.polaroid {
+  position: relative;
+  width: 100%;
+  margin-top: -24px;
+  background: var(--card);
+  padding: 10px 10px 14px;
+  box-shadow:
+    2px 5px 14px var(--shadow),
+    0 1px 3px var(--shadow2);
+  border: 1px solid var(--card-edge);
+  transition: box-shadow 0.4s ease;
+}
+.card-wrap.active .polaroid {
+  box-shadow: 3px 12px 26px rgba(40,28,12,0.3), 0 2px 5px rgba(40,28,12,0.3);
+}
+/* a barely-there sheen so the print feels glossy */
+.polaroid::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(128deg, rgba(255,255,255,0.28) 0%, transparent 36%, transparent 70%, rgba(255,255,255,0.08) 100%);
+}
+
+.polaroid-photo {
+  width: 100%;
+  aspect-ratio: 19 / 16;
+  overflow: hidden;
+  background: #c8bfac;
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08), inset 0 2px 10px rgba(0,0,0,0.16);
+}
+.polaroid-photo svg, .polaroid-photo img { display: block; width: 100%; height: 100%; }
+.polaroid-photo img { object-fit: cover; filter: sepia(0.14) saturate(0.92) contrast(1.02); -webkit-user-drag: none; }
+.polaroid-photo::after { /* inner vignette */
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  box-shadow: inset 0 0 28px rgba(40,25,5,0.2);
+}
+
+.polaroid-caption { padding: 11px 4px 0; min-height: 76px; }
+.polaroid-year {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-bottom: 3px;
+  letter-spacing: 0.1em;
+}
+.polaroid-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+/* ── Card types ── */
+
+/* note — ruled notebook paper on a binder clip */
+.card-type-note .polaroid {
+  background: #fefdf5;
+  border-color: #e0d9b8;
+  background-image: linear-gradient(90deg, transparent 17px, rgba(210,90,80,0.35) 17px 18px, transparent 18px);
+}
+.card-type-note .polaroid-photo { background: #f5f2e4; }
+.card-type-note .polaroid-caption {
+  background: repeating-linear-gradient(transparent 0 20px, rgba(90,130,180,0.2) 20px 21px);
+  margin-top: 4px;
+  padding-top: 7px;
+}
+.card-type-note .polaroid-title { font-style: italic; font-weight: 400; }
+
+/* cassette — a real tape, label on the front */
+.card-type-cassette .polaroid {
+  background: linear-gradient(160deg, #3a3631, #1f1c19);
+  border-color: #121110;
+  border-radius: 6px;
+  padding: 10px;
+}
+.card-type-cassette .polaroid::before { /* screws */
+  content: ''; position: absolute; left: 6px; right: 6px; bottom: 6px; height: 4px;
+  background:
+    radial-gradient(circle at 3px 2px, #8a8478 1.5px, transparent 2px),
+    radial-gradient(circle at calc(100% - 3px) 2px, #8a8478 1.5px, transparent 2px);
+}
+.card-type-cassette .polaroid-photo { background: #0a0a0a; border-radius: 2px; }
+.card-type-cassette .polaroid-caption {
+  background: #f3ead2;
+  margin: 8px 0 10px;
+  padding: 8px 9px 8px;
+  min-height: 70px;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12);
+  border-top: 5px solid #c0392b;
+}
+.card-type-cassette .polaroid-year { color: #8b4513; }
+.card-type-cassette .polaroid-title { color: #1d1a14; font-style: italic; font-weight: 500; }
+
+/* terminal — a little phosphor window */
+.card-type-terminal .polaroid {
+  background: var(--screen-bg);
+  border-color: #1a3a1a;
+  box-shadow: 2px 5px 14px var(--shadow), 0 0 0 1px #0d2410, 0 0 22px rgba(77,255,110,0.08);
+}
+.card-type-terminal .polaroid::after {
+  background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,0.18) 2px 4px);
+}
+.card-type-terminal .polaroid-year { color: var(--phosphor2); }
+.card-type-terminal .polaroid-title {
+  color: #3fd465; font-family: var(--mono); font-size: 0.78rem; font-weight: 400;
+  text-shadow: 0 0 6px rgba(77,255,110,0.45);
+}
+.card-type-terminal .polaroid-title::before { content: '> '; color: var(--phosphor2); }
+.card-type-terminal .polaroid-photo { background: var(--screen-bg); box-shadow: inset 0 0 0 1px #14301a; }
+
+/* certificate — cream stock, gilt frame, wax seal */
+.card-type-certificate .polaroid {
+  background: #fdf8ed;
+  border-color: #d4b870;
+  outline: 1px solid rgba(200,168,64,0.55);
+  outline-offset: -6px;
+}
+.card-type-certificate .polaroid-photo { background: #f8f0d8; }
+.card-type-certificate .polaroid-title { color: #7a5010; font-variant: small-caps; letter-spacing: 0.04em; font-size: 0.95rem; }
+.card-type-certificate .polaroid-caption { position: relative; }
+.card-type-certificate .polaroid-caption::after { /* seal */
+  content: '★'; position: absolute; right: 2px; bottom: -4px;
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; color: #f8e9b0;
+  background: radial-gradient(circle at 35% 30%, #c8473a, #8c2218);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4), inset 0 0 0 2px rgba(255,255,255,0.12);
+}
+
+/* ── Reader: the card on the wall that says what you're looking at ── */
+#story-reader {
+  position: relative;
+  max-width: 660px;
+  margin: 6px auto 0;
+  padding: 24px 32px 26px;
+  min-height: 188px;
+  background: #fbf8ee;
+  border: 1px solid var(--card-edge);
+  box-shadow: 2px 6px 18px var(--shadow), 0 1px 2px var(--shadow2);
+  transform: rotate(-0.4deg);
+  /* the tape holding it up */
+}
+#story-reader::before {
+  content: '';
+  position: absolute;
+  top: -11px; left: 50%;
+  width: 96px; height: 24px;
+  transform: translateX(-50%) rotate(1.5deg);
+  background: linear-gradient(180deg, rgba(235,224,185,0.85), rgba(222,208,160,0.78));
+  box-shadow: 0 1px 2px rgba(40,28,12,0.2);
+  clip-path: polygon(0 8%, 4% 0, 8% 10%, 12% 0, 16% 8%, 20% 0, 80% 0, 84% 8%, 88% 0, 92% 10%, 96% 0, 100% 8%, 100% 92%, 96% 100%, 92% 90%, 88% 100%, 84% 92%, 80% 100%, 20% 100%, 16% 92%, 12% 100%, 8% 90%, 4% 100%, 0 92%);
+}
+#reader-inner { animation: read-in 0.5s ease both; }
+@keyframes read-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+#reader-meta {
+  display: flex; align-items: baseline; gap: 12px;
+  font-family: var(--mono);
+  margin-bottom: 8px;
+}
+#reader-year { font-size: 1.15rem; color: var(--accent); letter-spacing: 0.06em; }
+#reader-chapter {
+  font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted);
+  padding-left: 12px; border-left: 1px solid var(--card-edge);
+}
+#reader-title { font-size: clamp(1.25rem, 3.4vw, 1.6rem); font-weight: 600; line-height: 1.25; margin-bottom: 10px; }
+#reader-text { font-size: clamp(0.98rem, 2.4vw, 1.08rem); font-weight: 300; line-height: 1.75; color: #4a3f30; }
+
+/* ── Story controls ── */
+#story-controls {
+  display: flex; justify-content: center; align-items: center; gap: 20px;
+  padding: 28px 0 14px;
+}
+.story-arrow {
+  background: rgba(250,248,242,0.6);
+  border: 1.5px solid var(--rope);
+  color: var(--rope);
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.05rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+  flex-shrink: 0;
+}
+.story-arrow:hover:not(:disabled) { background: var(--rope); color: white; }
+.story-arrow:active:not(:disabled) { transform: scale(0.92); }
+.story-arrow:disabled { opacity: 0.25; cursor: default; }
+#story-pos { font-family: var(--mono); font-size: 0.74rem; color: var(--muted); min-width: 64px; text-align: center; letter-spacing: 0.08em; }
+
+/* Chapter markers — label-maker tape */
+#chapter-bar { display: flex; justify-content: center; gap: 9px; padding: 4px 16px 0; flex-wrap: wrap; }
+.chapter-dot {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 5px 10px;
+  border-radius: 2px;
+  cursor: pointer;
+  background: rgba(250,248,242,0.55);
+  border: 1px dashed rgba(122,110,94,0.5);
+  transition: background 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.chapter-dot:nth-child(odd)  { transform: rotate(-0.8deg); }
+.chapter-dot:nth-child(even) { transform: rotate(0.7deg); }
+.chapter-dot:hover { color: var(--text); border-color: var(--muted); }
+.chapter-dot.active {
+  background: #2b2723; color: #f4ecd6; border: 1px solid #14110f;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.14);
+  text-shadow: 0 -1px 0 rgba(0,0,0,0.6);
+}
+
+/* ── Footer + skirting ── */
+#footer {
+  position: relative;
+  padding: 44px 0 0;
+  text-align: center;
+  margin-top: 0;
+}
+#footer p { font-size: 0.82rem; color: var(--muted); font-style: italic; margin-bottom: 16px; line-height: 1.7; padding: 0 24px; }
+#contact-links { display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; padding: 0 24px 46px; }
+#contact-links a {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 1px;
+  transition: color 0.2s, border-color 0.2s;
+}
+#contact-links a:hover { color: var(--text); border-bottom-color: var(--accent); }
+#skirting {
+  height: 44px;
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,0.7) 0 2px, transparent 2px),
+    linear-gradient(to bottom, #f6f1e4, #e6dfcf);
+  border-top: 1px solid rgba(122,92,46,0.25);
+  box-shadow: 0 -6px 10px -6px rgba(40,28,12,0.2);
+}
+
+/* Cookie banner (third-party CSS) must never widen the page on phones */
+.cc-window.cc-banner { box-sizing: border-box; max-width: 100%; }
+.cc-window.cc-banner .cc-message { min-width: 0; flex: 1 1 auto; }
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .card-wrap, .hang, #rail-track.smooth, #reader-inner { transition: none !important; animation: none !important; }
+  #rail-track.swaying .hang { animation: none !important; }
+}
+
+/* ── Small screens ── */
+@media (max-width: 900px) {
+  :root { --card-w: 200px; --card-gap: 26px; }
+}
+@media (max-width: 600px) {
+  :root { --card-w: 184px; --card-gap: 22px; }
+  #nav { padding: 12px 18px; }
+  #nav-links { gap: 16px; }
+  #nav-links a.hide-sm { display: none; }
+  #intro { padding: 92px 20px 0; }
+  #story { padding-top: 18px; }
+  #story-reader { margin: 4px 16px 0; padding: 22px 22px 22px; min-height: 230px; }
+  .polaroid-title { font-size: 0.84rem; }
+}

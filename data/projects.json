@@ -12,6 +12,18 @@
     "featured": true
   },
   {
+    "title": "Pitchcraft",
+    "slug": "pitchcraft",
+    "category": "product",
+    "status": "live",
+    "year": "2026",
+    "summary": "Free browser presentation studio. A deck is plain JSON, so any AI assistant can write it and you just present.",
+    "link": "/pitchcraft/",
+    "external": false,
+    "icon": "slides",
+    "featured": true
+  },
+  {
     "title": "OYO",
     "slug": "oyo",
     "category": "product",
