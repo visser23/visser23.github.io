@@ -111,7 +111,9 @@ function pcWalk(root, opt) {
   function runStyle(el) {
     var cs = gcs(el), size = num(cs.fontSize) || 16, c = col(cs.color), fill = cs.webkitTextFillColor, f = family(cs), hl = col(cs.backgroundColor);
     if (fill && (fill === 'transparent' || /rgba\(\s*\d+,\s*\d+,\s*\d+,\s*0\s*\)/.test(fill))) {
-      var gl = layers(cs.backgroundImage).filter(function (l) { return l.grad; })[0]; c = gl ? { c: gl.grad.stops[0].c, a: 1 } : c;   // gradient text: PowerPoint gets the first colour
+      var gl = null;   // gradient text: PowerPoint gets the first colour; a child span inherits the clip from the ancestor that holds the gradient
+      for (var ge = el; ge && ge.nodeType === 1 && !gl; ge = ge.parentElement) { var gcs0 = gcs(ge); if (ge !== el && !/text/.test(gcs0.webkitBackgroundClip || gcs0.backgroundClip || '')) break; gl = layers(gcs0.backgroundImage).filter(function (l) { return l.grad; })[0]; }
+      c = gl ? { c: gl.grad.stops[0].c, a: 1 } : c;
     }
     fonts[f] = 1; var td = cs.textDecorationLine || '';
     var op = num(cs.opacity); if (op > 0 && op < 1 && c) c = { c: c.c, a: c.a * op };
@@ -134,13 +136,23 @@ function pcWalk(root, opt) {
     return true;
   }
   var hasText = function (el) { return /\S/.test(el.textContent || ''); };
+  /** the width (px, on one line) these words take in the slide's own font: the exporter compares it with the stand-in font it will use and sizes the text to match */
+  var mctx = null;
+  function textW(el, t, st) {
+    try {
+      mctx = mctx || document.createElement('canvas').getContext('2d'); var cs = gcs(el);
+      mctx.font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+      try { mctx.letterSpacing = cs.letterSpacing === 'normal' ? '0px' : cs.letterSpacing; } catch (e) { /* older browser: no letter-spacing on canvas */ }
+      return Math.round(mctx.measureText(st.cap ? t.toUpperCase() : t).width * 10) / 10;
+    } catch (e) { return 0; }
+  }
   function collectRuns(el, out, link) {
     var cs = gcs(el), pre = /^pre/.test(cs.whiteSpace);
     for (var n = el.firstChild; n; n = n.nextSibling) {
       if (n.nodeType === 3) {
         var t = n.nodeValue; if (!t) continue;
-        if (pre) { var segs = t.split('\n'); segs.forEach(function (sg, i) { if (i) out.push({ pb: 1 }); if (sg) out.push(Object.assign({ t: tcase(sg, runStyle(el)), link: link || undefined }, runStyle(el))); }); }
-        else { t = t.replace(/[\t\n\r\f ]+/g, ' '); if (t) { var st = runStyle(el); out.push(Object.assign({ t: tcase(t, st), link: link || undefined }, st)); } }
+        if (pre) { var segs = t.split('\n'); segs.forEach(function (sg, i) { if (i) out.push({ pb: 1 }); if (sg) { var ps = runStyle(el), pt = tcase(sg, ps); out.push(Object.assign({ t: pt, link: link || undefined, mw: textW(el, pt, ps) }, ps)); } }); }
+        else { t = t.replace(/[\t\n\r\f ]+/g, ' '); if (t) { var st = runStyle(el), tt = tcase(t, st); out.push(Object.assign({ t: tt, link: link || undefined, mw: textW(el, tt, st) }, st)); } }
       } else if (n.nodeType === 1) {
         if (n.tagName === 'BR') { out.push({ br: 1 }); continue; }
         var ccs = gcs(n); if (ccs.display === 'none' || ccs.visibility === 'hidden') continue;
@@ -202,6 +214,11 @@ function pcWalk(root, opt) {
     if (cs.display === 'flex' || cs.display === 'inline-flex' || cs.display === 'grid') return isTextBlock(n);
     return true;
   }
+  /** a ::before / ::after that is a positioned shape (a list dot, a dash): content "" counts, unlike for hasDeco */
+  function hasPseudoBox(n) {
+    if (n.hasAttribute && n.hasAttribute('data-mk')) return false;                      // list markers become real bullets
+    return ['::before', '::after'].some(function (w) { var c = gcs(n, w); return c.content && c.content !== 'none' && c.content !== 'normal' && c.display !== 'none' && (c.position === 'absolute' || c.position === 'fixed'); });
+  }
   function hasDeco(n) {
     if (n.hasAttribute && n.hasAttribute('data-mk')) return false;                      // list markers become real bullets
     var b = gcs(n, '::before').content, a = gcs(n, '::after').content;
@@ -210,6 +227,7 @@ function pcWalk(root, opt) {
   /** stacked text elements -> one list of paragraphs, with the gaps between them as paragraph spacing. null when they are not simple stacked text. */
   function mergeKids(kids, g, acc) {
     acc = acc || { last: null, paras: [] };
+    var cl = acc.cl != null ? acc.cl : g.x, cw = acc.cw != null ? acc.cw : g.w;   // the content box: indents and centring are measured from inside the padding, which the text frame's own insets already carry
     for (var k = 0; k < kids.length; k++) {
       var c = kids[k], cg = rel(c.getBoundingClientRect());
       if (!cg.h) continue;
@@ -217,14 +235,16 @@ function pcWalk(root, opt) {
       if (cg.x < g.x - 2 || cg.x + cg.w > g.x + g.w + 2) return null;
       var ps;
       if (isTextBlock(c)) ps = textParas(c);
-      else { var sub = { last: acc.last, paras: [] }; if (!mergeParas(c, g, sub)) return null; sub.paras.forEach(function (p) { acc.paras.push(p); }); acc.last = sub.last; continue; }
+      else { var sub = { last: acc.last, paras: [], cl: cl, cw: cw }; if (!mergeParas(c, g, sub)) return null; sub.paras.forEach(function (p) { acc.paras.push(p); }); acc.last = sub.last; continue; }
       if (!ps.length) continue;
       var gap = acc.last === null ? 0 : Math.max(0, cg.y - acc.last);
       if (gap > 2.4 * Math.max(ps[0].sz || 16, 16)) return null;                         // far apart: separate pieces of the design, not one run of text
       var cs2 = gcs(c), padL = num(cs2.paddingLeft);
+      if (hasPseudoBox(c)) return null;                                                  // a list item with its own dot: each item is its own frame, so one more wrapped line cannot push the next item's text off its dot
       ps.forEach(function (p, pi) {
-        var lm = cg.x - g.x; if (p.al === 'l' && lm > 3) p.ml = r1(lm);
-        if (cg.w < g.w - 8 && p.al === 'l' && Math.abs((cg.x - g.x) - (g.x + g.w - cg.x - cg.w)) < 4 && lm > 12 && p.bu === undefined) p.al = 'ctr';
+        var lm = cg.x - cl + padL; if (p.al === 'l' && lm > 3) p.ml = r1(lm);   // padding-left of the item is part of the indent
+        if (cg.w < cw - 8 && p.al === 'l' && Math.abs((cg.x - cl) - (cl + cw - cg.x - cg.w)) < 4 && lm - padL > 12 && p.bu === undefined) p.al = 'ctr';
+        var rm = Math.max(0, (cl + cw) - (cg.x + cg.w)) + num(cs2.paddingRight); if ((p.al === 'l' || p.al === 'just') && rm > 2 && cg.h > (p.sz || 16) * (p.lh || 1.2) * 1.6) p.mr = r1(rm);   // a narrower or padded item wraps earlier than the frame is wide
         p.sb = pi === 0 ? r1(gap) : 0; p.pl = padL;
       });
       acc.last = cg.y + cg.h; ps.forEach(function (p) { acc.paras.push(p); });
@@ -340,7 +360,9 @@ function pcWalk(root, opt) {
       if (anchor === 't') ins[1] = Math.max(0, rr.y - g.y);
       paras.forEach(function (p) { p.lh = 1.2; });
     }
-    return { ins: ins.map(r1), anchor: anchor, wrap: oneLine ? 'none' : 'square', rr: rr };
+    var ln = 0;   // how many lines the browser set this text in (distinct line tops): the exporter picks a box width that gives the stand-in font the same count
+    try { var tops = {}, tw = root.ownerDocument.createTreeWalker(el, NodeFilter.SHOW_TEXT); for (var tn; (tn = tw.nextNode());) { if (!/\S/.test(tn.nodeValue)) continue; var tr = root.ownerDocument.createRange(); tr.selectNodeContents(tn); Array.prototype.forEach.call(tr.getClientRects(), function (q) { if (q.width >= 1 && q.height >= 3) tops[Math.round(q.top / 3)] = 1; }); } ln = Object.keys(tops).length; } catch (e) { ln = 0; }
+    return { ins: ins.map(r1), anchor: anchor, wrap: oneLine ? 'none' : 'square', rr: rr, ln: ln };
   }
   function pushBox(el, cs, g, op, paras) {
     var b = bgFor(cs, op), sd = sides(cs, g), rad = radiusOf(cs, g), sh = shadowOf(cs);
@@ -355,7 +377,7 @@ function pcWalk(root, opt) {
     if (b.img && op < .04) b.img = null;
     if (b.img) emit({ k: 'img', x: r1(g.x), y: r1(g.y), w: r1(g.w), h: r1(g.h), rot: g.rot, src: b.img.src, size: b.img.size, pos: b.img.pos, rad: rad.r, circle: rad.circle, clip: curClip, decor: true, name: nameOf(el) + ' picture', alt: '', op: op });
     var it = { k: 'box', x: r1(g.x), y: r1(g.y), w: r1(g.w), h: r1(g.h), rot: g.rot, fill: raster || b.over ? null : b.fill, grad: raster ? null : b.grad, raster: raster, line: line, rad: rad.r, radMode: rad.mode, circle: rad.circle, shadow: hasFace ? sh : null, clip: curClip, name: nameOf(el), op: op };
-    if (paras) { var tf = textFrame(el, g, cs, paras, true); it.paras = paras; it.ins = tf.ins; it.anchor = tf.anchor; it.wrap = tf.wrap; }
+    if (paras) { var tf = textFrame(el, g, cs, paras, true); it.paras = paras; it.ins = tf.ins; it.anchor = tf.anchor; it.wrap = tf.wrap; it.ln = tf.ln; }
     if (hasFace || paras) { if (!hasFace && !paras) return null; emit(it); }
     else if (b.img) { /* picture only */ }
     // one-sided borders (a coloured bar on the left of a card, a rule under a heading) become thin rectangles
@@ -538,7 +560,8 @@ function pcWalk(root, opt) {
       }
       if (!isRoot) {
         var role = null, dp = el.getAttribute && el.getAttribute('data-path');
-        var paras = null; if (isTextBlock(el)) paras = textParas(el); else if (!el.classList.contains('deco')) paras = mergeParas(el, g);
+        var paras = null, macc = { last: null, paras: [], cl: g.x + num(cs.borderLeftWidth) + num(cs.paddingLeft), cw: g.w - num(cs.borderLeftWidth) - num(cs.borderRightWidth) - num(cs.paddingLeft) - num(cs.paddingRight) };
+        if (isTextBlock(el)) paras = textParas(el); else if (!el.classList.contains('deco')) paras = mergeParas(el, g, macc);
         if (paras && !paras.length) paras = null;
         var bx = !promoted && (boxy(cs) || (shadowOf(cs) && col(cs.backgroundColor)));
         pseudo(el, '::before', g, op);
@@ -546,7 +569,7 @@ function pcWalk(root, opt) {
         else if (paras) {
           var lead = hasDeco(el) ? pseudoInline(el, g, cs, op, paras) : 0;
           var tf = textFrame(el, g, cs, paras, false, lead);
-          emit({ k: 'text', x: r1(g.x), y: r1(g.y), w: r1(g.w), h: r1(g.h), rot: g.rot, paras: paras, ins: tf.ins, anchor: tf.anchor, wrap: tf.wrap, name: nameOf(el), role: roleOf(el, dp), tag: el.tagName, op: op });
+          emit({ k: 'text', x: r1(g.x), y: r1(g.y), w: r1(g.w), h: r1(g.h), rot: g.rot, paras: paras, ins: tf.ins, anchor: tf.anchor, wrap: tf.wrap, ln: tf.ln, name: nameOf(el), role: roleOf(el, dp), tag: el.tagName, op: op });
           return;
         }
       }
@@ -569,8 +592,10 @@ function pcWalk(root, opt) {
           flush();
           var rng = root.ownerDocument.createRange(); rng.selectNode(n); var rr = rel(rng.getBoundingClientRect());
           var st = runStyle(el), t = n.nodeValue.replace(/[\t\n\r\f ]+/g, ' ').trim(); if (!t) continue;
-          var pb = Object.assign({ t: tcase(t, st) }, st);
-          emit({ k: 'text', x: r1(rr.x), y: r1(rr.y), w: r1(rr.w + 2), h: r1(rr.h), rot: 0, paras: [Object.assign({ runs: [pb] }, paraBase(el))], ins: [0, 0, 0, 0], anchor: 't', wrap: 'none', name: 'text', op: op });
+          var pt = tcase(t, st), pb = Object.assign({ t: pt, mw: textW(el, pt, st) }, st), tops = {};
+          Array.prototype.forEach.call(rng.getClientRects(), function (q) { if (q.width >= 1 && q.height >= 3) tops[Math.round(q.top / 3)] = 1; });
+          var lines = Object.keys(tops).length || 1;   // words that wrap stay a wrapping box; only a single line is told not to wrap
+          emit({ k: 'text', x: r1(rr.x), y: r1(rr.y), w: r1(rr.w + 2), h: r1(rr.h), rot: 0, paras: [Object.assign({ runs: [pb] }, paraBase(el))], ins: [0, 0, 0, 0], anchor: 't', wrap: lines > 1 ? 'square' : 'none', ln: lines, name: 'text', op: op });
         }
       }
       flush();

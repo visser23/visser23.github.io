@@ -94,6 +94,73 @@ const PITCH = { arial: 34, 'arial narrow': 34, 'century gothic': 34, impact: 34,
 let fontMode = 'similar';
 PC.pptxFont = (f, mode) => { f = String(f || 'Arial'); const m = (mode || fontMode) === 'keep' ? null : SIMILAR[f.toLowerCase()]; return { name: m ? m.to : f, pf: m ? m.pf : (PITCH[f.toLowerCase()] || 34) }; };
 const fontTag = (tag, f) => { const r = PC.pptxFont(f); return `<a:${tag} typeface="${xe(r.name)}" pitchFamily="${r.pf}" charset="0"/>`; };
+/** Sizes text to the stand-in font. A web font swapped for Arial or Georgia is often wider (a serif display face by a quarter), so the same words overflow their box or wrap onto
+    another line. The walker measured each run in the slide's own font (`mw`); here the same words are measured in the stand-in, the size shrinks to match (never below 82%),
+    and what is still too wide is closed up with letter spacing. Never makes text bigger. */
+let fitCtx = null;
+function fitFonts(items) {
+  if (fontMode === 'keep') return;
+  try { fitCtx = fitCtx || document.createElement('canvas').getContext('2d'); } catch (e) { return; }
+  if (!fitCtx) return;
+  items.forEach(it => (it.paras || []).forEach(p => (p.runs || []).forEach(r => {
+    if (!r.t || !(r.mw > 0) || !(r.sz > 0)) return;
+    const name = PC.pptxFont(r.f || 'Arial').name;
+    fitCtx.font = `${r.i ? 'italic ' : ''}${r.b && name !== 'Arial Black' ? 'bold ' : ''}${r.sz}px "${name}"`;
+    try { fitCtx.letterSpacing = (r.sp || 0) + 'px'; } catch (e) { /* no letter-spacing on canvas */ }
+    const sw = fitCtx.measureText(r.cap ? r.t.toUpperCase() : r.t).width;
+    if (!(sw > 0) || r.mw >= sw) return;
+    const k = Math.max(.82, r.mw / sw * .985), left = r.mw - sw * k, n = Math.max(1, r.t.length);
+    r.sz = Math.round(r.sz * k * 100) / 100;
+    if (left < -.2 && n > 2) r.sp = (r.sp || 0) + Math.max(left / n, -r.sz * .06);
+  })));
+  items.forEach(it => {
+    if (!it.paras || !it.paras.length || it.wrap === 'none') return;
+    if (it.k === 'text' && it.ln > 0 && it.w > 20) {
+      const cap = Math.min(14, it.w * .06); let pick = null;
+      for (const s of [0, .01, .02, .035, .06]) { const e = Math.min(cap, it.w * s); if (wrapHeight(it, 1, e).lines <= it.ln) { pick = Math.min(cap, it.w * (s + .01)); break; } }
+      it.slack = pick == null ? cap : pick;
+    }
+    fitBox(it);
+  });
+}
+/** Extra width (px) a wrapping text frame is given. PowerPoint's line breaking is not the browser's, so a little room keeps a line that fitted from tipping over;
+    but too much room lets a word climb onto the line above and the text breaks in other places. When the browser's line count is known (`ln`) the smallest room
+    that does not need more lines is used (plus a little margin). */
+const slackOf = it => it.paras && it.paras[0] && it.paras[0].al !== 'ctr' && it.k === 'text' && it.slack == null ? Math.min(14, it.w * .035) : (it.slack != null ? it.slack : 0);
+/** How tall this text becomes when wrapped in its box in the stand-in fonts, at a fraction f of the current size (greedy word wrap, like PowerPoint's). */
+function wrapHeight(it, f, extra) {
+  const ins = it.ins || [0, 0, 0, 0], W0 = it.w + (extra == null ? slackOf(it) : extra) - ins[0] - ins[2];
+  let H = 0, lines = 0;
+  it.paras.forEach((p, pi) => {
+    const W = Math.max(8, W0 - (p.ml || 0) - (p.bu ? 24 : 0) - (p.mr || 0)), lh = (p.lh || 1.2) * .96;
+    let x = 0, cur = 0, ph = 0, any = false;
+    const endLine = () => { ph += (cur || (p.sz || 16)) * f * lh; lines++; cur = 0; x = 0; any = false; };
+    (p.runs || []).forEach(r => {
+      if (r.br) { endLine(); return; }
+      const name = PC.pptxFont(r.f || 'Arial').name;
+      fitCtx.font = `${r.i ? 'italic ' : ''}${r.b && name !== 'Arial Black' ? 'bold ' : ''}${r.sz || 16}px "${name}"`;
+      try { fitCtx.letterSpacing = (r.sp || 0) + 'px'; } catch (e) { /* no letter-spacing on canvas */ }
+      (r.cap ? r.t.toUpperCase() : r.t).split(/(\s+)/).forEach(w => {
+        if (!w) return;
+        const wd = fitCtx.measureText(w).width * f;
+        if (/^\s+$/.test(w)) { if (any) x += wd; return; }
+        if (any && x + wd > W) endLine();
+        x += wd; any = true; cur = Math.max(cur, (r.sz || 16));
+      });
+      cur = Math.max(cur, r.sz || 16);
+    });
+    endLine(); H += ph + (pi ? p.sb || 0 : 0);
+  });
+  return { h: H, lines };
+}
+/** If the words need more lines than the box has room for, make the text a little smaller (never below 80%) until they fit. */
+function fitBox(it) {
+  const ins = it.ins || [0, 0, 0, 0], room = it.h - ins[1] - ins[3];
+  if (!(room > 0) || !(it.w > 20)) return;
+  const first = wrapHeight(it, 1); if (first.h <= room + .5 * (first.h / Math.max(1, first.lines))) return;
+  let f = 1; for (const t of [.97, .94, .91, .88, .85, .82, .8]) { f = t; const q = wrapHeight(it, t); if (q.h <= room + .5 * (q.h / Math.max(1, q.lines))) break; }
+  it.paras.forEach(p => { p.sz = (p.sz || 16) * f; (p.runs || []).forEach(r => { if (r.sz) { r.sz = Math.round(r.sz * f * 100) / 100; if (r.sp) r.sp *= f; } }); });
+}
 function runX(r, ctx, op) {
   if (r.br) return `<a:br><a:rPr lang="en-GB" sz="${clampN(Math.round((r.sz || 16) * 75), 100, 400000)}"/></a:br>`;
   const sz = clampN(Math.round((r.sz || 16) * 75), 100, 400000), f = r.f || 'Arial';
@@ -102,9 +169,9 @@ function runX(r, ctx, op) {
   const attrs = `lang="en-GB" sz="${sz}"${r.b && PC.pptxFont(f).name !== 'Arial Black' ? ' b="1"' : ''}${r.i ? ' i="1"' : ''}${r.u ? ' u="sng"' : ''}${r.s ? ' strike="sngStrike"' : ''}${r.cap ? ' cap="all"' : ''}${r.sp ? ` spc="${Math.round(r.sp * 75)}"` : ''}${r.sup ? ' baseline="30000"' : r.sub ? ' baseline="-25000"' : ''} dirty="0"`;
   return `<a:r><a:rPr ${attrs}>${solid(r.c, (r.a == null ? 1 : r.a) * (op == null ? 1 : op))}${r.hl ? `<a:highlight>${clr(r.hl)}</a:highlight>` : ''}${fontTag('latin', f)}${fontTag('cs', f)}${link}</a:rPr><a:t>${xe(r.t)}</a:t></a:r>`;
 }
-function paraX(p, ctx, op) {
-  const sz = p.sz || 16, ind = p.bu ? 24 : 0, marL = (p.ml || 0) + ind;
-  let ppr = `<a:pPr algn="${p.al || 'l'}"${marL ? ` marL="${px(marL)}" indent="${px(-ind)}"` : ''}>`;
+function paraX(p, ctx, op, anyMr) {
+  const sz = p.sz || 16, ind = p.bu ? 24 : 0, marL = (p.ml || 0) + ind, marR = p.mr > 0 ? p.mr : 0;   // explicit 0 on the others when one paragraph has a right margin: some readers carry it down to the next paragraph
+  let ppr = `<a:pPr algn="${p.al || 'l'}"${marL ? ` marL="${px(marL)}" indent="${px(-ind)}"` : ''}${marR || anyMr ? ` marR="${px(marR)}"` : ''}>`;
   ppr += `<a:lnSpc><a:spcPct val="${clampN(Math.round((p.lh || 1.2) / 1.2 * 100000), 40000, 300000)}"/></a:lnSpc>`;
   ppr += `<a:spcBef><a:spcPts val="${Math.round(clampN(p.sb || 0, 0, 400) * 75)}"/></a:spcBef><a:spcAft><a:spcPts val="0"/></a:spcAft>`;
   ppr += p.bu === 'num' ? '<a:buFont typeface="+mj-lt"/><a:buAutoNum type="arabicPeriod"/>' : p.bu ? '<a:buFont typeface="Arial"/><a:buChar char="&#8226;"/>' : '<a:buNone/>';
@@ -115,7 +182,7 @@ function paraX(p, ctx, op) {
 function bodyX(it, ctx, op, box) {
   const ins = it.ins || [0, 0, 0, 0], wrap = it.wrap === 'none' ? 'none' : 'square';
   const auto = box ? '<a:noAutofit/>' : (wrap === 'none' ? '<a:spAutoFit/>' : '<a:spAutoFit/>');
-  const paras = (it.paras && it.paras.length ? it.paras : [{ runs: [] }]).map(p => paraX(p, ctx, op)).join('');
+  const ps = it.paras && it.paras.length ? it.paras : [{ runs: [] }], anyMr = ps.some(p => p.mr > 0), paras = ps.map(p => paraX(p, ctx, op, anyMr)).join('');
   return `<p:txBody><a:bodyPr wrap="${wrap}" lIns="${px(ins[0])}" tIns="${px(ins[1])}" rIns="${px(ins[2])}" bIns="${px(ins[3])}" rtlCol="0" anchor="${it.anchor || 't'}">${auto}</a:bodyPr><a:lstStyle/>${paras}</p:txBody>`;
 }
 
@@ -133,7 +200,7 @@ const textWiden = (it) => {   // PowerPoint wraps with its own font metrics; a l
     if (al === 'r') { const nx = Math.max(0, it.x - slack); return { x: nx, w: it.x + it.w - nx }; }
     return { x: it.x, w: Math.min(it.w + slack, Math.max(it.w, SW - it.x)) };
   }
-  const extra = Math.min(14, it.w * .035);
+  const extra = it.slack != null ? it.slack : Math.min(14, it.w * .035);
   return al === 'ctr' ? { x: it.x - extra / 2, w: it.w + extra } : al === 'r' ? { x: it.x - extra, w: it.w + extra } : { x: it.x, w: it.w + extra };
 };
 const SHAPE_PRST = { rect: 'rect', round: 'roundRect', ellipse: 'ellipse', triangle: 'triangle', diamond: 'diamond', hexagon: 'hexagon', star: 'star5', arrow: 'rightArrow', chevron: 'chevron', arrowleft: 'leftArrow', arrowup: 'upArrow',
@@ -214,6 +281,7 @@ async function buildSlide(pkg, s, i, host, deckMeta, onWarn) {
   const items = res.items.slice();
   if (rasterWanted(res.bg)) { const uri = rasterBg(res.bg); if (uri) { items.unshift({ k: 'img', x: 0, y: 0, w: SW, h: SH, src: uri, size: '100% 100%', pos: '0 0', name: 'Background', alt: '' }); res.bg = Object.assign({}, res.bg, { grad: null }); } }
   if (res.bg && res.bg.img) items.unshift({ k: 'img', x: 0, y: 0, w: SW, h: SH, src: res.bg.img.src, size: res.bg.img.size, pos: res.bg.img.pos, name: 'Background', alt: '' });
+  fitFonts(items);
   const heading = t => items.findIndex(it => it.tag === t && it.k !== 'img' && it.paras && it.paras[0] && it.paras[0].runs.some(r => r.t));
   let titleIdx = items.findIndex(it => it.role === 'title' && it.k !== 'img' && it.paras);
   if (titleIdx < 0) titleIdx = heading('H1');
@@ -486,7 +554,7 @@ const notesXml = text => `${HDR}<p:notes ${NS}><p:cSld><p:spTree>${grpHead}<p:sp
 const HEX6 = /^[0-9a-f]{6}$/i, KEY_OK = /^[A-Za-z0-9_]{1,24}$/;
 const WALK_ENUM = { k: ['text', 'box', 'line', 'img', 'svg'], dash: ['solid', 'dash', 'sysDot', 'sysDash', 'dot', 'lgDash', 'dashDot'], al: ['l', 'ctr', 'r', 'just'], anchor: ['t', 'ctr', 'b'], wrap: ['square', 'none'], radMode: ['all', 'top'], role: ['body', 'title'] };
 const WALK_TEXT = new Set(['t', 'name', 'alt', 'warn']);
-const WALK_NUM = new Set(['x', 'y', 'w', 'h', 'x1', 'y1', 'x2', 'y2', 'rot', 'rad', 'op', 'a', 'p', 'ang', 'at', 'sz', 'sp', 'lh', 'ins', 'dx', 'dy', 'blur', 'sb', 'sb0', 'pl', 'ml', 'pad']);
+const WALK_NUM = new Set(['mr', 'ln', 'mw', 'x', 'y', 'w', 'h', 'x1', 'y1', 'x2', 'y2', 'rot', 'rad', 'op', 'a', 'p', 'ang', 'at', 'sz', 'sp', 'lh', 'ins', 'dx', 'dy', 'blur', 'sb', 'sb0', 'pl', 'ml', 'pad']);
 function cleanWalk(v, key, depth) {
   if (v == null || depth > 9) return v == null ? v : undefined;
   if (typeof v === 'number') return Number.isFinite(v) ? Math.max(-1e6, Math.min(1e6, v)) : 0;
