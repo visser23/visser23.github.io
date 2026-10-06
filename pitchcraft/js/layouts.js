@@ -216,6 +216,9 @@ const R = {
      only images/fonts from https:, data: or this site; inline script/style only.
    • thumbnails and print use sandbox="" (no scripts at all) and script-src 'none'.
    The Pitchcraft look (theme variables + kit classes) is pulled in with <link>s to the same two stylesheets the editor uses. */
+/* Export mode: the slide's script is told the visitor prefers reduced motion, which well-written slides answer by not arming their entrance
+   animations, so they are read in the state they come to rest in. (Slides that animate regardless are run to their end by pcSettle.) */
+const EXPORT_MOTION = `(function(){var m=window.matchMedia;if(!m)return;window.matchMedia=function(q){var r=m.call(window,q);var s=String(q);if(/prefers-reduced-motion/.test(s)){var v=/no-preference/.test(s)?false:/reduce/.test(s);try{Object.defineProperty(r,'matches',{value:v})}catch(e){}}return r}})();`;
 const KIT_CSS = ['css/base.css', 'css/fonts.css', 'css/slides.css'];
 const KIT_JS = `(function(){var P=function(m){try{parent.postMessage(m,'*')}catch(e){}};
 window.pc={next:function(){P({pc:'nav',d:1})},prev:function(){P({pc:'nav',d:-1})}};
@@ -224,7 +227,12 @@ addEventListener('unhandledrejection',function(e){P({pc:'error',msg:String((e.re
 addEventListener('keydown',function(e){if(e.ctrlKey||e.metaKey||e.altKey)return;var t=e.target,g=t&&t.tagName;if(e.key!=='Escape'&&((/^(INPUT|TEXTAREA|SELECT)$/.test(g))||(t&&t.isContentEditable)||(/^(BUTTON|A)$/.test(g)&&(e.key===' '||e.key==='Enter'))))return;if(['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','PageDown','PageUp',' ','Enter','Escape','Home','End','Backspace','f','F','n','N'].indexOf(e.key)>-1)P({pc:'key',key:e.key})});
 document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('.rv').forEach(function(e,k){e.style.setProperty('--i',k)})});
 /* layout check: the editor asks, we measure the rendered text and answer. Nothing here can read the editor. */
-var pcWalk=${PC.walkSrc};var pcXd={};addEventListener('message',function(ev){var d=ev.data;if(ev.source!==parent||!d||d.pc!=='export')return;if(pcXd[d.id])return;pcXd[d.id]=1;var go=function(){if(pcXd[d.id]!==1)return;pcXd[d.id]=2;var r;try{r=pcWalk(document.querySelector('.slide'))}catch(x){r={error:String(x&&x.message||x)}}P({pc:'export-result',id:d.id,result:r})};if(document.fonts&&document.fonts.ready){document.fonts.ready.then(go,go);setTimeout(go,3500)}else go()});
+/* Before the slide is read for PowerPoint it must be at rest: entrance animations and transitions are run to their end (a slide that fades its
+   text in from opacity 0 would otherwise be read as having no text), and the slide's own timers and counters get time to finish. */
+function pcSettle(cb){var t0=Date.now(),last='',same=0;(function tick(){var an=[];try{an=document.getAnimations?document.getAnimations():[]}catch(e){}an.forEach(function(a){try{a.finish()}catch(e){try{a.cancel()}catch(x){}}});
+var sig=(document.body.innerText||'')+'|'+document.getElementsByTagName('*').length+'|'+(document.body.className||'')+'|'+(document.querySelector('.slide')||document.body).className;
+var wait=[].some.call(document.images,function(i){return !i.complete});if(sig===last&&!an.length&&!wait)same++;else same=0;last=sig;if(same>=4||Date.now()-t0>6000)cb();else setTimeout(tick,120)})()}
+var pcWalk=${PC.walkSrc};var pcXd={};addEventListener('message',function(ev){var d=ev.data;if(ev.source!==parent||!d||d.pc!=='export')return;if(pcXd[d.id])return;pcXd[d.id]=1;var go=function(){if(pcXd[d.id]!==1)return;pcXd[d.id]=2;pcSettle(function(){var r;try{r=pcWalk(document.querySelector('.slide'))}catch(x){r={error:String(x&&x.message||x)}}P({pc:'export-result',id:d.id,result:r})})};if(document.fonts&&document.fonts.ready){document.fonts.ready.then(go,go);setTimeout(go,3500)}else go()});
 var pcDone={};addEventListener('message',function(ev){var d=ev.data;if(ev.source!==parent||!d||d.pc!=='audit')return;if(pcDone[d.id]){if(pcDone[d.id]!==1)P({pc:'audit-result',id:d.id,result:pcDone[d.id]});return}pcDone[d.id]=1;var go=function(w){if(pcDone[d.id]!==1)return;var r;try{r=pcAudit();r.fontsReady=w!==false}catch(x){r={error:String(x&&x.message||x)}}pcDone[d.id]=r;P({pc:'audit-result',id:d.id,result:r})};if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){go(true)},function(){go(false)});setTimeout(function(){go(false)},3500)}else go(true)});
 function pcAudit(){var W=1280,H=720,out=[],items=[],tw=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),n;
 var name=function(el){var c=typeof el.className==='string'?el.className.trim().split(' ')[0]:'';return el.tagName.toLowerCase()+(c?'.'+c:'')};
@@ -275,13 +283,13 @@ const inStyle = t => String(t || '').replace(/<\/style/gi, '<\\/style');
 const inScript = t => String(t || '').replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');
 
 PC.customDoc = function (s, meta, mode) {
-  const c = s.custom || {}, run = mode === 'live' || mode === 'present', still = !run;
+  const c = s.custom || {}, run = mode === 'live' || mode === 'present' || mode === 'export', still = !run;
   const origin = location.origin && location.origin !== 'null' ? location.origin : 'file:';
   const csp = ["default-src 'none'", run ? "script-src 'unsafe-inline'" : "script-src 'none'", `style-src 'unsafe-inline' ${origin}`, `img-src data: https: ${origin}`, `font-src data: https: ${origin}`,
     'media-src data: https:', "connect-src 'none'", "frame-src 'none'", "form-action 'none'", "base-uri 'none'"].join('; ');
   const mode2 = PC.fillMode(s, meta), attrs = `data-theme="${esc(meta.theme || 'studio')}"${mode2 ? ` data-bg="${esc(mode2)}"` : ''}${s.tone ? ` data-tone="${esc(s.tone)}"` : ''}${s.fill && PC.okColor(s.fill) ? ` style="--slide-bg:${esc(s.fill)}"` : ''}`;
   const links = KIT_CSS.map(p => `<link rel="stylesheet" href="${esc(new URL(p, document.baseURI).href)}">`).join('');
-  return `<!doctype html><html lang="en"${mode === 'present' ? ' class="anim"' : ''}><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${csp}">${links}`
+  return `<!doctype html><html lang="en"${mode === 'present' ? ' class="anim"' : mode === 'export' ? ' class="pc-export"' : ''}><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${csp}">${mode === 'export' ? `<script>${EXPORT_MOTION}</script>` : ''}${links}`
     + `<style>html,body{margin:0;padding:0;width:1280px;height:720px;overflow:hidden;background:transparent}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{-webkit-font-smoothing:antialiased}.slide{width:1280px;height:720px}${still ? '*,*::before,*::after{animation:none!important;transition:none!important}' : ''}</style>`
     + `<style>${inStyle(meta.css)}</style><style>${inStyle(c.css)}</style></head>`
     + `<body><div class="slide layout-${esc(c.base || 'custom')}" data-pc-custom="1" ${attrs}>${c.html || ''}</div>`

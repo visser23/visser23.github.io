@@ -12,4 +12,4 @@
 
 ## App
 
-- [Pitchcraft](https://visser23.github.io/pitchcraft/): the studio itself. Version 3.9.1.
+- [Pitchcraft](https://visser23.github.io/pitchcraft/): the studio itself. Version 3.9.2.

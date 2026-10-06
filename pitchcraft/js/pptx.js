@@ -60,10 +60,17 @@ function gradFill(g, op) {
 }
 const fillX = (it, op) => it.grad ? gradFill(it.grad, op) : it.fill ? solid(it.fill.c, it.fill.a * (op == null ? 1 : op)) : '<a:noFill/>';
 const lnX = (l, op) => l ? `<a:ln w="${px(l.w)}">${solid(l.c, (l.a == null ? 1 : l.a) * (op == null ? 1 : op))}<a:prstDash val="${l.dash || 'solid'}"/><a:miter lim="800000"/></a:ln>` : '<a:ln><a:noFill/></a:ln>';
-const shadowX = s => {
+const shadowX = (s, it) => {
   if (!s) return '';
-  const dx = Number(s.dx) || 0, dy = Number(s.dy) || 0, dist = Math.hypot(dx, dy), dir = ((Math.atan2(dy, dx) * 180 / Math.PI) + 360) % 360;
-  return `<a:effectLst><a:outerShdw blurRad="${px(s.blur)}" dist="${px(dist)}" dir="${Math.round(dir * 60000)}" algn="tl" rotWithShape="0">${clr(s.c, s.a)}</a:outerShdw></a:effectLst>`;
+  const dx = Number(s.dx) || 0, dy = Number(s.dy) || 0, dist = Math.hypot(dx, dy), dir = ((Math.atan2(dy, dx) * 180 / Math.PI) + 360) % 360, sp = Number(s.spread) || 0;
+  // CSS spread grows or shrinks the shadow's own rectangle (a card's "0 12px 30px -20px" is a small, soft shadow); PowerPoint scales it about its centre
+  const scale = sp && it && it.w > 1 && it.h > 1 ? ` sx="${Math.round(clampN((it.w + 2 * sp) / it.w, .02, 3) * 100000)}" sy="${Math.round(clampN((it.h + 2 * sp) / it.h, .02, 3) * 100000)}"` : '';
+  return `<a:effectLst><a:outerShdw blurRad="${px(s.blur)}" dist="${px(dist)}" dir="${Math.round(dir * 60000)}"${scale} algn="${scale ? 'ctr' : 'tl'}" rotWithShape="0">${clr(s.c, s.a)}</a:outerShdw></a:effectLst>`;
+};
+/** a polygon outline (points as fractions of the shape's box) for a clipped or skewed shape */
+const custGeomX = (pts, w, h) => {
+  const W = Math.max(1, px(w)), H = Math.max(1, px(h)), P = q => `<a:pt x="${Math.round(clampN(q[0], -2, 3) * W)}" y="${Math.round(clampN(q[1], -2, 3) * H)}"/>`;
+  return `<a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/><a:rect l="0" t="0" r="r" b="b"/><a:pathLst><a:path w="${W}" h="${H}"><a:moveTo>${P(pts[0])}</a:moveTo>${pts.slice(1).map(q => `<a:lnTo>${P(q)}</a:lnTo>`).join('')}<a:close/></a:path></a:pathLst></a:custGeom>`;
 };
 
 /* ── text ── */
@@ -118,8 +125,15 @@ function xfrm(x, y, w, h, rot, fh, fv) {
   return `<a:xfrm${r}${fh ? ' flipH="1"' : ''}${fv ? ' flipV="1"' : ''}><a:off x="${px(x)}" y="${px(y)}"/><a:ext cx="${Math.max(0, px(w))}" cy="${Math.max(0, px(h))}"/></a:xfrm>`;
 }
 const textWiden = (it) => {   // PowerPoint wraps with its own font metrics; a little slack keeps a line that fits in the browser on one line here
-  if (it.wrap === 'none' || !it.paras || it.paras.length === 0) return { x: it.x, w: it.w };
-  const al = it.paras[0].al, extra = Math.min(14, it.w * .035);
+  if (!it.paras || it.paras.length === 0) return { x: it.x, w: it.w };
+  const al = it.paras[0].al;
+  if (it.wrap === 'none') {   // a one-line label must never break: the stand-in font is often wider than the web font, so give it room on the side(s) it may grow into
+    const slack = Math.min(260, Math.max(8, it.w * .5));
+    if (al === 'ctr') return { x: it.x - slack / 2, w: it.w + slack };
+    if (al === 'r') { const nx = Math.max(0, it.x - slack); return { x: nx, w: it.x + it.w - nx }; }
+    return { x: it.x, w: Math.min(it.w + slack, Math.max(it.w, SW - it.x)) };
+  }
+  const extra = Math.min(14, it.w * .035);
   return al === 'ctr' ? { x: it.x - extra / 2, w: it.w + extra } : al === 'r' ? { x: it.x - extra, w: it.w + extra } : { x: it.x, w: it.w + extra };
 };
 const SHAPE_PRST = { rect: 'rect', round: 'roundRect', ellipse: 'ellipse', triangle: 'triangle', diamond: 'diamond', hexagon: 'hexagon', star: 'star5', arrow: 'rightArrow', chevron: 'chevron', arrowleft: 'leftArrow', arrowup: 'upArrow',
@@ -159,11 +173,12 @@ class Slide {
 
 /** Stacked or see-through gradients (a glow on a dark colour) have no faithful PowerPoint equivalent, so they are painted once into a picture that sits behind everything. */
 const rasterWanted = bg => { const L = bg && bg.layers || []; return L.length > 1 || (L.length === 1 && (L[0].radial || L[0].stops.some(t => (t.a == null ? 1 : t.a) < .99))); };
-function rasterBg(bg) {
-  const K = .625, W = Math.round(SW * K), H = Math.round(SH * K), cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'); if (!g) return null;
+function rasterLayers(layers, fill, bw, bh, rad) {
+  const K = Math.min(1, 800 / Math.max(bw, bh, 1)), W = Math.max(2, Math.round(bw * K)), H = Math.max(2, Math.round(bh * K)), cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'); if (!g) return null;
   const rgba = (c, a) => `rgba(${parseInt(c.slice(0, 2), 16)},${parseInt(c.slice(2, 4), 16)},${parseInt(c.slice(4, 6), 16)},${a == null ? 1 : a})`;
-  g.fillStyle = bg.fill ? rgba(bg.fill.c, 1) : '#ffffff'; g.fillRect(0, 0, W, H);
-  bg.layers.slice().reverse().forEach(L => {                       // CSS lists the top layer first, so paint the last one first
+  if (rad && rad.r > .5) { g.beginPath(); if (rad.circle) g.ellipse(W / 2, H / 2, W / 2, H / 2, 0, 0, 7); else if (g.roundRect) g.roundRect(0, 0, W, H, Math.min(rad.r * K, Math.min(W, H) / 2)); else g.rect(0, 0, W, H); g.clip(); }
+  if (fill) { g.fillStyle = rgba(fill.c, fill.a); g.fillRect(0, 0, W, H); }
+  layers.slice().reverse().forEach(L => {                       // CSS lists the top layer first, so paint the last one first
     let gr;
     if (L.radial) {
       const cx = (L.at ? L.at[0] : 50) / 100 * W, cy = (L.at ? L.at[1] : 50) / 100 * H;
@@ -185,20 +200,34 @@ function rasterBg(bg) {
   });
   return cv.toDataURL('image/png');
 }
+const rasterBg = bg => rasterLayers(bg.layers, bg.fill ? { c: bg.fill.c, a: 1 } : { c: 'ffffff', a: 1 }, SW, SH, null);
+/** a box whose background is stacked glows or fades: the picture goes in first, the box (outline, shadow, words) on top */
+async function rasterBox(sl, it) {
+  const uri = rasterLayers(it.raster.layers, it.raster.fill, it.w, it.h, { r: it.rad || 0, circle: it.circle }); if (!uri) return '';
+  const rec = await getImage(sl.pkg, uri); if (!rec) return '';
+  return picXrec(sl, { x: it.x, y: it.y, w: it.w, h: it.h, rot: it.rot, name: (it.name || 'Box') + ' glow', alt: '', op: it.op, clip: it.clip }, rec);
+}
 
 async function buildSlide(pkg, s, i, host, deckMeta, onWarn) {
   const sl = new Slide(pkg, i), res = pkg.walks[i], objsInfo = res.objs || {}, ctx = sl;
+  { const c = res.bg && res.bg.fill && /^[0-9a-f]{6}$/i.test(res.bg.fill.c || '') ? res.bg.fill.c : null; sl.dark = !!c && (parseInt(c.slice(0, 2), 16) * .299 + parseInt(c.slice(2, 4), 16) * .587 + parseInt(c.slice(4, 6), 16) * .114) < 110; }   // lets a stand-in picture suit a dark slide
   const items = res.items.slice();
   if (rasterWanted(res.bg)) { const uri = rasterBg(res.bg); if (uri) { items.unshift({ k: 'img', x: 0, y: 0, w: SW, h: SH, src: uri, size: '100% 100%', pos: '0 0', name: 'Background', alt: '' }); res.bg = Object.assign({}, res.bg, { grad: null }); } }
   if (res.bg && res.bg.img) items.unshift({ k: 'img', x: 0, y: 0, w: SW, h: SH, src: res.bg.img.src, size: res.bg.img.size, pos: res.bg.img.pos, name: 'Background', alt: '' });
+  const heading = t => items.findIndex(it => it.tag === t && it.k !== 'img' && it.paras && it.paras[0] && it.paras[0].runs.some(r => r.t));
   let titleIdx = items.findIndex(it => it.role === 'title' && it.k !== 'img' && it.paras);
+  if (titleIdx < 0) titleIdx = heading('H1');
+  if (titleIdx < 0) titleIdx = heading('H2');
   if (titleIdx < 0) {   // no marked heading: the largest text in the top half, if it is heading-sized
     let best = 0; items.forEach((it, k) => { if (it.k !== 'text' || !it.paras || !it.paras[0] || !it.paras[0].runs.some(r => r.t) || it.y > 360) return; const sz = it.paras[0].sz || 0; if (sz >= 30 && sz > best) { best = sz; titleIdx = k; } });
   }
   const out = [];
   for (let k = 0; k < items.length; k++) {
     const it = items[k], op = it.op == null ? 1 : it.op;
-    if (it.k === 'box') out.push(boxX(sl, it, k === titleIdx));
+    if (it.k === 'box') {
+      if (it.raster) { out.push(await rasterBox(sl, it)); if (!it.line && !it.paras && !it.shadow) continue; }
+      out.push(boxX(sl, it, k === titleIdx));
+    }
     else if (it.k === 'text') out.push(textX(sl, it, k === titleIdx));
     else if (it.k === 'line') out.push(lineX(sl, it));
     else if (it.k === 'img') out.push(await picX(sl, it));
@@ -215,7 +244,7 @@ function boxX(sl, it, isTitle) {
   const av = rad === 'roundRect' ? `<a:gd name="adj" fmla="val ${Math.round(clampN(it.rad / Math.max(1, Math.min(it.w, it.h)) * 100000, 0, 50000))}"/>` : rad === 'round2SameRect' ? `<a:gd name="adj1" fmla="val ${Math.round(clampN(it.rad / Math.max(1, Math.min(it.w, it.h)) * 100000, 0, 50000))}"/><a:gd name="adj2" fmla="val 0"/>` : '';
   const ph = isTitle && it.paras && !sl.titleDone ? (sl.titleDone = true, '<p:nvPr><p:ph type="title"/></p:nvPr>') : '<p:nvPr/>';
   const txt = it.paras ? bodyX(it, sl, it.op == null ? 1 : it.op, true) : '<p:txBody><a:bodyPr rtlCol="0" anchor="ctr"/><a:lstStyle/><a:p><a:endParaRPr lang="en-GB"/></a:p></p:txBody>';
-  return `<p:sp><p:nvSpPr><p:cNvPr id="${id}" name="${nameFor(it.name)}"/><p:cNvSpPr/>${ph}</p:nvSpPr><p:spPr>${xfrm(it.x, it.y, it.w, it.h, it.rot)}<a:prstGeom prst="${rad}"><a:avLst>${av}</a:avLst></a:prstGeom>${fillX(it)}${lnX(it.line)}${shadowX(it.shadow)}</p:spPr>${txt}</p:sp>`;
+  return `<p:sp><p:nvSpPr><p:cNvPr id="${id}" name="${nameFor(it.name)}"/><p:cNvSpPr/>${ph}</p:nvSpPr><p:spPr>${xfrm(it.x, it.y, it.w, it.h, it.rot)}${it.clip ? custGeomX(it.clip, it.w, it.h) : `<a:prstGeom prst="${rad}"><a:avLst>${av}</a:avLst></a:prstGeom>`}${fillX(it)}${lnX(it.line)}${shadowX(it.shadow, it)}</p:spPr>${txt}</p:sp>`;
 }
 function textX(sl, it, isTitle) {
   const id = sl.id(), w = textWiden(it), ph = isTitle && !sl.titleDone ? (sl.titleDone = true, true) : false;
@@ -284,26 +313,40 @@ async function getImage(pkg, src) {
   rec.name = `image${pkg.media.size + 1}.${rec.ext}`; rec.key = rec.name; pkg.media.set(rec.key, rec); imgCache.set(src, rec); return rec;
 }
 function cropFor(it, nw, nh) {
+  const F = it.full || it;   // a picture that a container clips is measured against its whole (uncropped) box, then windowed
   const fit = it.fit || (/contain/.test(it.size || '') ? 'contain' : /^100%( 100%)?$/.test(it.size || '') ? 'fill' : 'cover');
   const pos = (it.pos || '50% 50%').split(/\s+/).map(v => v.endsWith('%') ? parseFloat(v) / 100 : .5), pxl = isNaN(pos[0]) ? .5 : pos[0], pyl = isNaN(pos[1]) ? .5 : pos[1];
-  let box = { x: it.x, y: it.y, w: it.w, h: it.h }, src = '';
-  if (fit === 'fill' || !nw || !nh) return { box, src };
-  const sc = fit === 'contain' || fit === 'scale-down' ? Math.min(it.w / nw, it.h / nh) : Math.max(it.w / nw, it.h / nh);
-  if (fit === 'contain' || fit === 'scale-down') { const bw = nw * sc, bh = nh * sc; box = { x: it.x + (it.w - bw) * pxl, y: it.y + (it.h - bh) * pyl, w: bw, h: bh }; }
-  else { const fw = it.w / (nw * sc), fh = it.h / (nh * sc), l = (1 - fw) * pxl, t = (1 - fh) * pyl; src = `<a:srcRect l="${Math.round(l * 100000)}" t="${Math.round(t * 100000)}" r="${Math.round((1 - fw - l) * 100000)}" b="${Math.round((1 - fh - t) * 100000)}"/>`; }
-  return { box, src };
+  let box = { x: F.x, y: F.y, w: F.w, h: F.h }, src = '', lr = { l: 0, t: 0, r: 0, b: 0 };
+  const same = box;
+  if (fit === 'fill' || !nw || !nh) return { box, src, same, lr };
+  const sc = fit === 'contain' || fit === 'scale-down' ? Math.min(F.w / nw, F.h / nh) : Math.max(F.w / nw, F.h / nh);
+  if (fit === 'contain' || fit === 'scale-down') { const bw = nw * sc, bh = nh * sc; box = { x: F.x + (F.w - bw) * pxl, y: F.y + (F.h - bh) * pyl, w: bw, h: bh }; }
+  else { const fw = F.w / (nw * sc), fh = F.h / (nh * sc), l = (1 - fw) * pxl, t = (1 - fh) * pyl; lr = { l, t, r: 1 - fw - l, b: 1 - fh - t }; src = srcRectX(lr); }
+  return { box, src, same, lr };
+}
+const srcRectX = lr => `<a:srcRect l="${Math.round(lr.l * 100000)}" t="${Math.round(lr.t * 100000)}" r="${Math.round(lr.r * 100000)}" b="${Math.round(lr.b * 100000)}"/>`;
+/** show only the part of a picture that its container leaves visible (the walker puts that rectangle in it.x/y/w/h) */
+function windowOf(c, it) {
+  if (!it.full) return c;
+  const D = c.box, x0 = Math.max(D.x, it.x), y0 = Math.max(D.y, it.y), x1 = Math.min(D.x + D.w, it.x + it.w), y1 = Math.min(D.y + D.h, it.y + it.h);
+  if (x1 - x0 < .5 || y1 - y0 < .5 || D.w < .5 || D.h < .5) return null;
+  const b = c.lr, bw = 1 - b.l - b.r, bh = 1 - b.t - b.b;
+  const lr = { l: b.l + (x0 - D.x) / D.w * bw, r: b.r + (D.x + D.w - x1) / D.w * bw, t: b.t + (y0 - D.y) / D.h * bh, b: b.b + (D.y + D.h - y1) / D.h * bh };
+  return { box: { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }, src: srcRectX(lr), same: null, lr };
 }
 async function picX(sl, it, extra) {
   const rec = await getImage(sl.pkg, it.src); extra = extra || {};
-  if (!rec) return placeholderX(sl, it);
-  const id = sl.id(), rid = sl.media(rec), c = cropFor(it, rec.w, rec.h), prst = it.circle ? 'ellipse' : it.rad > .5 ? 'roundRect' : 'rect';
-  const av = prst === 'roundRect' ? `<a:gd name="adj" fmla="val ${Math.round(clampN(it.rad / Math.max(1, Math.min(c.box.w, c.box.h)) * 100000, 0, 50000))}"/>` : '';
+  if (!rec) return it.decor ? '' : placeholderX(sl, it);   // a missing background texture is left out (the warning says so); a missing <img> keeps a labelled placeholder
+  const id = sl.id(), rid = sl.media(rec), c = windowOf(cropFor(it, rec.w, rec.h), it); if (!c) return '';
+  const prst = it.circle ? 'ellipse' : it.rad > .5 ? (it.radMode === 'top' ? 'round2SameRect' : 'roundRect') : 'rect';
+  const adjV = Math.round(clampN(it.rad / Math.max(1, Math.min(c.box.w, c.box.h)) * 100000, 0, 50000));
+  const av = prst === 'roundRect' ? `<a:gd name="adj" fmla="val ${adjV}"/>` : prst === 'round2SameRect' ? `<a:gd name="adj1" fmla="val ${adjV}"/><a:gd name="adj2" fmla="val 0"/>` : '';
   const link = extra.link ? sl.link(extra.link) : '';
-  return `<p:pic><p:nvPicPr><p:cNvPr id="${id}" name="${xe(it.name || 'Picture')}" descr="${xe(it.alt || '')}">${link ? `<a:hlinkClick r:id="${link}"${extra.link[0] === '#' ? ' action="ppaction://hlinksldjump"' : ''}/>` : ''}</p:cNvPr><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="${rid}"${it.op != null && it.op < 1 ? `><a:alphaModFix amt="${Math.round(it.op * 100000)}"/></a:blip>` : '/>'}${c.src}<a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr>${xfrm(c.box.x, c.box.y, c.box.w, c.box.h, it.rot, extra.flipH, extra.flipV)}<a:prstGeom prst="${prst}"><a:avLst>${av}</a:avLst></a:prstGeom>${extra.line || it.line ? lnX(extra.line || it.line) : ''}</p:spPr></p:pic>`;
+  return `<p:pic><p:nvPicPr><p:cNvPr id="${id}" name="${xe(it.name || 'Picture')}" descr="${xe(it.alt || '')}">${link ? `<a:hlinkClick r:id="${link}"${extra.link[0] === '#' ? ' action="ppaction://hlinksldjump"' : ''}/>` : ''}</p:cNvPr><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="${rid}"${it.op != null && it.op < 1 ? `><a:alphaModFix amt="${Math.round(it.op * 100000)}"/></a:blip>` : '/>'}${c.src}<a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr>${xfrm(c.box.x, c.box.y, c.box.w, c.box.h, it.rot, extra.flipH, extra.flipV)}${it.clip && c.box === c.same ? custGeomX(it.clip, c.box.w, c.box.h) : `<a:prstGeom prst="${prst}"><a:avLst>${av}</a:avLst></a:prstGeom>`}${extra.line || it.line ? lnX(extra.line || it.line) : ''}</p:spPr></p:pic>`;
 }
 function placeholderX(sl, it) {
   const id = sl.id(), label = it.alt || 'Picture';
-  return `<p:sp><p:nvSpPr><p:cNvPr id="${id}" name="Missing picture" descr="${xe(it.alt || '')}"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr>${xfrm(it.x, it.y, it.w, it.h, it.rot)}<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>${solid('E5E7EB')}${lnX({ w: 1, c: '9CA3AF', dash: 'dash' })}</p:spPr><p:txBody><a:bodyPr anchor="ctr"><a:noAutofit/></a:bodyPr><a:lstStyle/><a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="en-GB" sz="1400"><a:solidFill><a:srgbClr val="6B7280"/></a:solidFill></a:rPr><a:t>${xe(label)}</a:t></a:r></a:p></p:txBody></p:sp>`;
+  return `<p:sp><p:nvSpPr><p:cNvPr id="${id}" name="Missing picture" descr="${xe(it.alt || '')}"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr>${xfrm(it.x, it.y, it.w, it.h, it.rot)}<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>${solid(sl.dark ? '262A33' : 'E5E7EB')}${lnX({ w: 1, c: sl.dark ? '5B6270' : '9CA3AF', dash: 'dash' })}</p:spPr><p:txBody><a:bodyPr anchor="ctr"><a:noAutofit/></a:bodyPr><a:lstStyle/><a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="en-GB" sz="1400"><a:solidFill><a:srgbClr val="${sl.dark ? 'A3A9B5' : '6B7280'}"/></a:solidFill></a:rPr><a:t>${xe(label)}</a:t></a:r></a:p></p:txBody></p:sp>`;
 }
 async function rasterSvg(markup, w, h) {
   const k = clampN(2, 1, 4096 / Math.max(1, w, h)), url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(markup), im = await loadImg(url);
@@ -313,16 +356,17 @@ async function rasterSvg(markup, w, h) {
   const b = await new Promise(r => c.toBlob(r, 'image/png')); return b ? new Uint8Array(await b.arrayBuffer()) : null;
 }
 async function svgX(sl, it, op, extra) {
-  const bytes = await rasterSvg(it.markup, it.w, it.h);
+  const F = it.full || it, bytes = await rasterSvg(it.markup, F.w, F.h);
   if (!bytes) { sl.pkg.warn.push('A graphic could not be converted to a picture.'); return ''; }
-  const key = 'svg' + sl.pkg.media.size + '_' + bytes.length, rec = { bytes, ext: 'png', w: it.w * 2, h: it.h * 2, name: `image${sl.pkg.media.size + 1}.png`, key };
+  const key = 'svg' + sl.pkg.media.size + '_' + bytes.length, rec = { bytes, ext: 'png', w: F.w * 2, h: F.h * 2, name: `image${sl.pkg.media.size + 1}.png`, key };
   sl.pkg.media.set(key, rec);
-  return picXrec(sl, { x: it.x, y: it.y, w: it.w, h: it.h, name: it.name, alt: it.alt || it.name, op: op, rot: 0 }, rec, extra);
+  const crop = it.full ? { l: (it.x - F.x) / F.w, t: (it.y - F.y) / F.h, r: (F.x + F.w - it.x - it.w) / F.w, b: (F.y + F.h - it.y - it.h) / F.h } : null;
+  return picXrec(sl, { x: it.x, y: it.y, w: it.w, h: it.h, name: it.name, alt: it.alt || it.name, op: op, rot: 0, crop }, rec, extra);
 }
 // picX variant for a record that is already in the package
 const picXrec = (sl, it, rec, extra) => {
   extra = extra || {}; const id = sl.id(), rid = sl.media(rec), link = extra.link ? sl.link(extra.link) : '';
-  return `<p:pic><p:nvPicPr><p:cNvPr id="${id}" name="${xe(it.name || 'Graphic')}" descr="${xe(it.alt || '')}">${link ? `<a:hlinkClick r:id="${link}"${extra.link[0] === '#' ? ' action="ppaction://hlinksldjump"' : ''}/>` : ''}</p:cNvPr><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="${rid}"${it.op != null && it.op < 1 ? `><a:alphaModFix amt="${Math.round(it.op * 100000)}"/></a:blip>` : '/>'}<a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr>${xfrm(it.x, it.y, it.w, it.h, it.rot, extra.flipH, extra.flipV)}<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>`;
+  return `<p:pic><p:nvPicPr><p:cNvPr id="${id}" name="${xe(it.name || 'Graphic')}" descr="${xe(it.alt || '')}">${link ? `<a:hlinkClick r:id="${link}"${extra.link[0] === '#' ? ' action="ppaction://hlinksldjump"' : ''}/>` : ''}</p:cNvPr><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="${rid}"${it.op != null && it.op < 1 ? `><a:alphaModFix amt="${Math.round(it.op * 100000)}"/></a:blip>` : '/>'}${it.crop ? srcRectX(it.crop) : ''}<a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr>${xfrm(it.x, it.y, it.w, it.h, it.rot, extra.flipH, extra.flipV)}${it.clip ? custGeomX(it.clip, it.w, it.h) : '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>'}</p:spPr></p:pic>`;
 };
 
 /* ── free-form objects, from the model ── */
@@ -454,6 +498,7 @@ function cleanWalk(v, key, depth) {
     if (key === 'src') return /^data:image\/(png|jpe?g|gif|webp|svg\+xml);/i.test(v) ? v.slice(0, 12e6) : /^https?:\/\//i.test(v) && v.length < 2000 ? v : '';
     if (key === 'markup' || key === 'svg') return v.slice(0, 2e6);
     if (key === 'fonts') return PC.cleanFont(v) || 'Arial';
+    if (key === 'size' || key === 'pos') return /^[\w%\s.,()-]{0,60}$/.test(v) ? v : '';   // background-size / -position, e.g. "66% 30%"
     if (WALK_ENUM[key]) return WALK_ENUM[key].includes(v) ? v : WALK_ENUM[key][0];
     if (WALK_TEXT.has(key)) return v.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').slice(0, 50000);
     if (WALK_NUM.has(key)) { const n = Number(v); return Number.isFinite(n) ? n : 0; }
@@ -467,13 +512,16 @@ PC.cleanWalk = r => cleanWalk(r, '', 0);
 function frameWalk(s, deck) {
   return new Promise(resolve => {
     const f = document.createElement('iframe'), id = 'x' + Math.random().toString(36).slice(2); let done = false, poke = 0;
-    f.setAttribute('sandbox', 'allow-scripts'); f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1; f.style.cssText = 'position:fixed;left:-20000px;top:0;width:1280px;height:720px;border:0;pointer-events:none';
+    f.setAttribute('sandbox', 'allow-scripts'); f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
+    // On screen but underneath everything and see-through: a frame that is scrolled out of view is throttled by the browser (no animation frames, slow timers),
+    // which freezes a slide's own counters and charts halfway.
+    f.style.cssText = 'position:fixed;left:0;top:0;width:1280px;height:720px;border:0;pointer-events:none;z-index:-1;opacity:.001';
     const finish = r => { if (done) return; done = true; window.removeEventListener('message', onMsg); clearTimeout(to); clearInterval(poke); f.remove(); resolve(r); };
     const onMsg = e => { if (e.source !== f.contentWindow || !e.data || e.data.pc !== 'export-result' || e.data.id !== id) return; const r = e.data.result; finish(r && typeof r === 'object' && !r.error && Array.isArray(r.items) ? PC.cleanWalk(r) : { error: String((r && r.error) || 'no usable result').slice(0, 200) }); };
     const to = setTimeout(() => finish({ error: 'the slide did not answer within 20s' }), 20000);
     window.addEventListener('message', onMsg);
     f.addEventListener('load', () => setTimeout(() => { const ask = () => { try { f.contentWindow.postMessage({ pc: 'export', id }, '*'); } catch (x) { finish({ error: String(x) }); } }; ask(); poke = setInterval(ask, 2000); }, 700));
-    f.srcdoc = PC.customDoc(s, deck.meta, 'live'); document.body.appendChild(f);
+    f.srcdoc = PC.customDoc(s, deck.meta, 'export'); document.body.appendChild(f);
   });
 }
 async function settle(host, ms) {
