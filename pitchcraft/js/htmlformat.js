@@ -72,6 +72,10 @@ H.onMessage = function (d, f, i, s) {
     const r = PC.design.applyStyles(s.custom && s.custom.html, d.changes);
     if (!r) { UI.toast('Could not match that change to the slide code. Edit it in the Code tab.', 'bad'); E.renderFrame(i); return; }
     if (r.html !== s.custom.html) S.mutate(i, sl => { sl.custom.html = r.html; }, 'cs:' + s.id + ':' + keyOf(d.key), 'frame');
+  } else if (d.pc === 'clip') {
+    if (cur() && cur().id === s.id) H.copy(typeof d.token === 'string' ? d.token : '', d.op === 'cut');
+  } else if (d.pc === 'paste') {
+    S.select(i, 'click'); H.paste(str(d.text, 450000), i);
   } else if (d.pc === 'struct') {
     if (['delete', 'dup'].includes(d.op)) { S.select(i, 'click'); H.struct(d.op); }
   } else if (d.pc === 'cmd') {
@@ -82,13 +86,57 @@ H.onMessage = function (d, f, i, s) {
 };
 
 /** delete / dup / front / back / forward / backward on the selected elements: rewrites the HTML and reloads the frame, then reselects. */
-H.struct = function (op) {
+H.struct = function (op, quiet) {
   const hs = cur(); if (!hs) return; const i = slideIdx(hs.id), s = S.slide(i);
   const r = PC.design.structure(s.custom && s.custom.html, op, hs.info.items);
   if (!r) { UI.toast('Could not match that element to the slide code. Edit it in the Code tab.', 'bad'); E.renderFrame(i); return; }
   H.pending = { id: s.id, sel: r.sel, t: Date.now() };
   S.mutate(i, sl => { sl.custom.html = r.html; }, '', 'struct');
-  UI.toast(op === 'delete' ? 'Deleted. Ctrl+Z brings it back.' : op === 'dup' ? 'Duplicated.' : 'Moved.');
+  if (!quiet) UI.toast(op === 'delete' ? 'Deleted. Ctrl+Z brings it back.' : op === 'dup' ? 'Duplicated.' : 'Moved.');
+};
+
+/* ── copy, cut, paste ──
+   The clipboard text is a marker (and a token) from the frame, or the whole HTML from the editor when the browser lets it write. The editor keeps the
+   copied HTML itself, taken from the stored slide (never from what the frame says), and every paste is cleaned again by PC.design.insert. */
+const TOKEN = /^[a-z0-9]{6,32}$/;
+const payload = snippets => JSON.stringify({ 'pitchcraft/html': 1, html: snippets });
+H.clip = null; H.ext = null;
+H.copy = function (token, cut) {
+  const hs = cur(); if (!hs) return false; const i = slideIdx(hs.id), s = S.slide(i);
+  const r = PC.design.extract(s.custom && s.custom.html, hs.info.items);
+  if (!r) { UI.toast('Could not match that element to the slide code, so it was not copied. Edit it in the Code tab.', 'bad'); E.renderFrame(i); return false; }
+  H.clip = { token: TOKEN.test(token || '') ? token : '', snippets: r.snippets, id: s.id, items: hs.info.items.map(x => ({ i: x.i, sig: x.sig })), parent: cut ? r.parentCut : r.parent, cut: !!cut, cnt: {} };
+  try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(payload(r.snippets)).catch(() => { /* the token on the clipboard still works in this window */ }); } catch (e) { /* no clipboard API */ }
+  if (cut) H.struct('delete', true);
+  UI.toast(`${cut ? 'Cut' : 'Copied'} ${r.snippets.length === 1 ? 'the element' : r.snippets.length + ' elements'}. Paste with Ctrl+V.`);
+  return true;
+};
+/** Paste what the clipboard text describes into slide i. Returns false when the text is not ours. */
+H.paste = function (text, i) {
+  const s = S.slide(i); if (!s || s.layout !== 'custom' || typeof text !== 'string') return false;
+  let j; try { j = JSON.parse(text); } catch (e) { return false; }
+  if (!j || typeof j !== 'object' || j['pitchcraft/html'] !== 1) return false;
+  let clip = null;
+  if (typeof j.token === 'string' && H.clip && H.clip.token && H.clip.token === j.token) clip = H.clip;
+  else if (Array.isArray(j.html)) {
+    const sn = j.html.filter(x => typeof x === 'string').slice(0, 50);
+    if (H.clip && text === payload(H.clip.snippets)) clip = H.clip;
+    else { const key = sn.length + ':' + sn.join('').length + ':' + (sn[0] || '').slice(0, 60); clip = H.ext && H.ext.key === key ? H.ext : (H.ext = { key, snippets: sn, id: null, items: null, parent: null, cut: false, cnt: {} }); }
+  }
+  if (!clip || !clip.snippets.length) { UI.toast('Nothing to paste: that copy was made in another window. Copy the elements again here.'); return true; }
+  const here = clip.id === s.id, k = clip.cnt[s.id] == null ? (here && !clip.cut ? 1 : 0) : clip.cnt[s.id] + 1; clip.cnt[s.id] = k;
+  const r = PC.design.insert(s.custom && s.custom.html, clip.snippets, { after: here ? clip.items : null, parent: here ? clip.parent : null, offset: 24 * k });
+  if (!r) { UI.toast('Could not paste that: the slide would be too big, or the copy is not valid.', 'bad'); return true; }
+  if (here && r.items.length) clip.items = r.items;                       // the next paste goes after this one
+  if (i !== S.sel) S.select(i, 'click');
+  H.pending = { id: s.id, sel: r.sel, t: Date.now() };
+  S.mutate(i, sl => { sl.custom.html = r.html; }, '', 'struct');
+  UI.toast('Pasted.'); return true;
+};
+H.pasteButton = function () {
+  if (H.clip) { H.paste(payload(H.clip.snippets), S.sel); return; }
+  if (navigator.clipboard && navigator.clipboard.readText) navigator.clipboard.readText().then(t => { if (!H.paste(t, S.sel)) UI.toast('Copy an element first (select it, then Ctrl+C).'); }).catch(() => UI.toast('Copy an element first (select it, then Ctrl+C).'));
+  else UI.toast('Copy an element first (select it, then Ctrl+C).');
 };
 
 /* ── writing to the selected elements (the frame applies, then reports what to store) ── */
@@ -162,7 +210,7 @@ const hint = 'Click anything on the slide to select it. Drag to move, use the ha
 H.html = function (s) {
   const hs = cur(), add = sec('Add to this slide', `<div class="row wrap"><button class="btn sm" data-act="ins-text">${icon('type', 14)} Text box</button><button class="btn sm" data-act="ins-image">${icon('image', 14)} Image</button><button class="btn sm" data-act="ins-shape">${icon('shapes', 14)} Shape</button><button class="btn sm" data-act="ins-icon">${icon('star', 14)} Icon</button></div>`);
   if (!hs) {
-    return PC.inspector.panelBuild(s) + sec('Design this slide', `<p class="note">${hint}</p><p class="note">Moves and resizes are saved on the element as <code>translate</code>, <code>left</code>/<code>top</code> and <code>width</code>/<code>height</code>; colours, fonts and sizes as inline styles. The Code tab shows exactly what was written.</p><div class="row wrap"><button class="btn sm primary" data-build="custom">${icon('code', 14)} Open the code editors</button><button class="btn sm" data-act="ai">${icon('sparkles', 14)} Ask an AI</button></div>`)
+    return PC.inspector.panelBuild(s) + sec('Design this slide', `<p class="note">${hint}</p><p class="note">Moves and resizes are saved on the element as <code>translate</code>, <code>left</code>/<code>top</code> and <code>width</code>/<code>height</code>; colours, fonts and sizes as inline styles. The Code tab shows exactly what was written.</p><div class="row wrap"><button class="btn sm primary" data-build="custom">${icon('code', 14)} Open the code editors</button><button class="btn sm" data-act="ai">${icon('sparkles', 14)} Ask an AI</button>${H.clip ? btn('paste', 'Paste copied elements', 'copy') : ''}</div>`)
       + `<div class="ins-sec">${treeList(s, true) || '<p class="note">Elements appear here once the slide has loaded.</p>'}</div>` + add;
   }
   const i = hs.info, c = i.cs, many = i.n > 1, ink = i.inl, deco = new Set((c.deco || '').split(' ')), text = i.hasText || i.kind === 'text', isImg = i.kind === 'img';
@@ -187,7 +235,8 @@ H.html = function (s) {
     <label class="switch"><span>Shadow</span><input type="checkbox" data-hx-check="shadow" ${c.shadow ? 'checked' : ''}></label>`);
   h += sec('Arrange', `<div class="row wrap">${btn('front', 'To front', 'front')}${btn('forward', 'Forward', 'forward')}${btn('backward', 'Backward', 'backward')}${btn('back', 'To back', 'back')}</div>
     <div class="lbl" style="margin:10px 0 6px">Align ${many ? 'to each other' : 'to the slide'}</div><div class="row wrap">${['left', 'center', 'right', 'top', 'middle', 'bottom'].map(a => btn('align:' + a, a === 'center' ? 'Centre' : a[0].toUpperCase() + a.slice(1))).join('')}</div>
-    <div class="row wrap" style="margin-top:12px">${btn('dup', 'Duplicate', 'copy')}${btn('del', 'Delete', 'trash')}</div>`, 'Ctrl+D · Delete');
+    <div class="row wrap" style="margin-top:12px">${btn('dup', 'Duplicate', 'copy')}${btn('del', 'Delete', 'trash')}</div>
+    <div class="row wrap" style="margin-top:8px">${btn('copy', 'Copy', 'copy')}${btn('cut', 'Cut', 'trash')}${btn('paste', 'Paste', 'copy')}</div>`, 'Ctrl+C · X · V · D · Delete');
   h += sec('In the code', `<p class="note">Everything above is written as an inline <code>style</code> on this element in the slide's HTML, so an AI or a person editing the code sees it, and it carries into PDF and PowerPoint.</p><div class="row wrap"><button class="btn sm" data-build="custom">${icon('code', 14)} Open the code editors</button></div>`);
   return h + `<div class="ins-sec">${treeList(s, false)}</div>`;
 };
@@ -221,15 +270,28 @@ H.bind = function () {
   panel.addEventListener('click', e => {
     const t = e.target, hs = cur();
     const pk = t.closest('[data-hx-pick]'); if (pk) { const i = slideIdx(S.slide().id); post(i, { pc: 'select', i: [+pk.dataset.hxPick], add: e.shiftKey }); return; }
+    if (t.closest('[data-hx-op="paste"]')) { H.pasteButton(); return; }
     if (!hs) return;
     const tg = t.closest('[data-hx-toggle]'); if (tg) { H.toggle(tg.dataset.hxToggle); return; }
     const sc = t.closest('[data-hx-color]'); if (sc) { H.apply({ [sc.dataset.hxColor]: sc.dataset.v }, [], 'fmt:c:' + sc.dataset.hxColor); return; }
     const st = t.closest('[data-hx-set]'); if (st) { H.apply({ [st.dataset.hxSet]: st.dataset.v }, [], 'fmt:' + st.dataset.hxSet); return; }
     const sp = t.closest('[data-hx-step]'); if (sp) { H.apply({ 'font-size': clamp(Math.round(hs.info.cs.size) + +sp.dataset.hxStep, 4, 600) + 'px' }, [], 'fmt:size'); return; }
     const op = t.closest('[data-hx-op]'); if (!op) return; const o = op.dataset.hxOp, i = slideIdx(hs.id);
-    if (['front', 'back', 'forward', 'backward', 'dup'].includes(o)) H.struct(o); else if (o === 'del') H.struct('delete');
+    if (o === 'copy' || o === 'cut') H.copy('', o === 'cut'); else if (['front', 'back', 'forward', 'backward', 'dup'].includes(o)) H.struct(o); else if (o === 'del') H.struct('delete');
     else if (o.startsWith('align:')) post(i, { pc: 'cmd', cmd: o }); else if (['edit', 'parent', 'child'].includes(o)) post(i, { pc: 'cmd', cmd: o });
     else if (o === 'autosize') geom({ w: null, h: null }); else if (o === 'unmove') H.apply({}, ['translate'], 'unmove');
+  });
+  /* the browser's own copy / cut / paste, when the editor (not the frame) has focus */
+  const mine = e => !(UI.isTextTarget(e.target) || UI.hasModal() || PC.present.isOpen()) && !!e.clipboardData;
+  ['copy', 'cut'].forEach(ev => document.addEventListener(ev, e => {
+    const hs = cur(); if (!hs || hs.editing || !mine(e)) return;
+    const tk = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    e.clipboardData.setData('text/plain', JSON.stringify({ 'pitchcraft/html': 1, token: tk })); e.preventDefault(); H.copy(tk, ev === 'cut');
+  }));
+  document.addEventListener('paste', e => {
+    if (e.defaultPrevented || !mine(e)) return; const s = S.slide(); if (!s || s.layout !== 'custom') return;
+    const t = e.clipboardData.getData('text/plain') || ''; if (t.indexOf('pitchcraft/html') < 0) return;
+    e.preventDefault(); H.paste(t, S.sel);
   });
   /* the editor's own events */
   S.on('select', () => { const hs = E.htmlSel, s = S.slide(); if (hs && s && s.id !== hs.id) H.clear(); });

@@ -400,7 +400,7 @@ function bindGlobal() {
     }
   });
   document.addEventListener('paste', e => {
-    if (UI.isTextTarget(e.target) || UI.hasModal() || P.isOpen()) return;
+    if (e.defaultPrevented || UI.isTextTarget(e.target) || UI.hasModal() || P.isOpen()) return;
     const t = (e.clipboardData && e.clipboardData.getData('text/plain')) || '';
     if (/^\s*[\[{]/.test(t) && /"(slides|layout)"/.test(t)) { e.preventDefault(); PC.importDialog(t); }
   });

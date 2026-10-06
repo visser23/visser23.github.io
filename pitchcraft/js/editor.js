@@ -247,7 +247,7 @@ function bindCanvas() {
     e.preventDefault(); const t = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\s*\n\s*/g, ' '); document.execCommand('insertText', false, t);
   });
   cv.addEventListener('mousedown', e => { const fr = e.target.closest('.frame'); if (fr) S.select(+fr.dataset.i, 'click'); });
-  const FRAME_MSG = new Set(['sel', 'code', 'edit', 'ready', 'pick', 'style', 'struct', 'cmd', 'editing', 'tree']);
+  const FRAME_MSG = new Set(['sel', 'code', 'edit', 'ready', 'pick', 'style', 'struct', 'cmd', 'editing', 'tree', 'clip', 'paste']);
   /* what a live custom slide tells the editor: it was pressed (select it), asks for its code, or a text was edited inside it */
   window.addEventListener('message', e => {
     const d = e.data; if (!d || typeof d !== 'object' || !FRAME_MSG.has(d.pc)) return;

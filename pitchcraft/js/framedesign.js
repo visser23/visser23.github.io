@@ -121,6 +121,19 @@ D.applyStyles = function (html, changes) {
   const out = finish(doc); return out == null ? null : { html: out, applied, rejected };
 };
 
+/** Give a copy's ids (and its descendants') names that are not used in the document yet: id, id-copy, id-copy2 ... */
+function uniqueIds(doc, c) {
+  const used = id => !!doc.body.querySelector('[id="' + String(id).replace(/"/g, '') + '"]');
+  [c].concat(Array.from(c.querySelectorAll('[id]'))).forEach(n => { if (!n.getAttribute) return; const id = n.getAttribute('id'); if (id && used(id)) { let k = 2, nid = id + '-copy'; while (used(nid)) nid = id + '-copy' + (k++); n.setAttribute('id', nid); } });
+}
+/** Move a copy by d px on both axes through `translate` (composes with left/top and transform); left alone if its translate is not plain pixels. */
+function shiftCopy(c, d) {
+  if (!d) return;
+  const dec = splitDecls(c.getAttribute('style') || '').find(x => x.name === 'translate'), tv = dec ? dec.raw.slice(dec.raw.indexOf(':') + 1).trim() : '';
+  const m = /^(-?[\d.]+)px(?:\s+(-?[\d.]+)px)?$/.exec(tv);
+  if (!tv || m) c.setAttribute('style', D.mergeStyle(c.getAttribute('style') || '', { translate: ((m ? parseFloat(m[1]) : 0) + d) + 'px ' + ((m ? parseFloat(m[2] || 0) : 0) + d) + 'px' }));
+}
+
 /**
  * Structural edits: delete, dup (duplicate), front, back, forward, backward (order among siblings).
  * items: [{ i, sig }]. Returns { html, sel } where sel are the new indices to reselect, or null when anything does not match.
@@ -138,14 +151,7 @@ D.structure = function (html, op, items) {
   const made = [];
   if (op === 'delete') top.forEach(el => el.remove());
   else if (op === 'dup') {
-    top.forEach(el => {
-      const c = el.cloneNode(true), used = id => !!doc.body.querySelector('[id="' + String(id).replace(/"/g, '') + '"]');
-      [c].concat(Array.from(c.querySelectorAll('[id]'))).forEach(n => { if (!n.getAttribute) return; const id = n.getAttribute('id'); if (id) { let k = 2, nid = id + '-copy'; while (used(nid)) nid = id + '-copy' + (k++); n.setAttribute('id', nid); } });
-      const dec = splitDecls(c.getAttribute('style') || '').find(d => d.name === 'translate'), tv = dec ? dec.raw.slice(dec.raw.indexOf(':') + 1).trim() : '';
-      const m = /^(-?[\d.]+)px(?:\s+(-?[\d.]+)px)?$/.exec(tv);
-      if (!tv || m) c.setAttribute('style', D.mergeStyle(c.getAttribute('style') || '', { translate: ((m ? parseFloat(m[1]) : 0) + 24) + 'px ' + ((m ? parseFloat(m[2] || 0) : 0) + 24) + 'px' }));   // offset the copy so it is visible
-      el.after(c); made.push(c);
-    });
+    top.forEach(el => { const c = el.cloneNode(true); uniqueIds(doc, c); shiftCopy(c, 24); el.after(c); made.push(c); });   // the copy is offset so it is visible
   } else {
     top.forEach(el => {
       const p = el.parentNode; if (!p) return;
@@ -158,6 +164,52 @@ D.structure = function (html, op, items) {
   }
   const after = Array.from(doc.body.querySelectorAll('*')), out = finish(doc);
   return out == null ? null : { html: out, sel: made.map(el => after.indexOf(el)).filter(k => k >= 0) };
+};
+
+/* ── copy and paste of elements ── */
+const BAD_TAGS = 'script,style,link,meta,base,iframe,frame,frameset,object,embed,applet,form,noscript,template';
+const OK_URL = /^(?:#|https?:|mailto:|data:image\/(?:png|jpe?g|gif|webp|svg\+xml)[;,])/i;
+/** Parse a pasted snippet into elements of `doc`, dropping anything that can run or reach out (scripts, frames, forms, on* handlers, odd URLs). */
+function cleanSnippet(doc, str) {
+  if (typeof str !== 'string' || !str.trim() || str.length > 200000) return null;
+  const src = parse(str); src.body.querySelectorAll(BAD_TAGS).forEach(n => n.remove());
+  const all = src.body.querySelectorAll('*'); if (all.length > 600) return null;
+  all.forEach(n => Array.from(n.attributes).forEach(a => {
+    const nm = a.name.toLowerCase(), v = a.value.trim();
+    if (/^on/.test(nm) || /^(?:srcdoc|formaction|contenteditable|data-pc-.*)$/.test(nm)) n.removeAttribute(a.name);
+    else if (/^(?:href|src|xlink:href|poster)$/.test(nm) && !OK_URL.test(v)) n.removeAttribute(a.name);
+    else if (nm === 'style' && (/expression|@import|javascript:|behavior|-moz-binding/i.test(v) || /url\(\s*['"]?\s*(?!data:image\/|https:|#)/i.test(v))) n.removeAttribute(a.name);
+  }));
+  const out = Array.from(src.body.children).map(c => doc.importNode(c, true)); return out.length ? out : null;
+}
+/** The HTML of the picked elements (outermost only, in document order) and where they live. items: [{i, sig}]. */
+D.extract = function (html, items) {
+  if (typeof html !== 'string' || !Array.isArray(items) || !items.length || items.length > 50) return null;
+  const doc = parse(html), all = Array.from(doc.body.querySelectorAll('*')), picked = [];
+  for (const it of items) { if (!it || !Number.isInteger(it.i) || typeof it.sig !== 'string') return null; const el = all[it.i]; if (!el || sigOf(el) !== it.sig) return null; if (!picked.includes(el)) picked.push(el); }
+  const top = picked.filter(el => !picked.some(o => o !== el && o.contains(el))); top.sort((a, b) => (a.compareDocumentPosition(b) & 4 ? -1 : 1));
+  const snippets = top.map(el => el.outerHTML); if (snippets.some(t => t.length > 200000)) return null;
+  const p = top[0].parentElement, pi = p && p !== doc.body ? all.indexOf(p) : -1, sigNow = pi >= 0 ? sigOf(p) : '';
+  top.forEach(el => el.remove());                                    // after a cut the container has fewer children, which is part of its signature
+  return { snippets, parent: pi >= 0 ? { i: pi, sig: sigNow } : null, parentCut: pi >= 0 ? { i: pi, sig: sigOf(p) } : null };
+};
+/**
+ * Paste snippets into the slide's HTML. opts: { after:[{i,sig}] put the copies after those elements (same parent), parent:{i,sig} else append inside it,
+ * otherwise at the end of the slide; offset: px to shift the copies by }. Returns { html, sel } (new indices) or null. Snippets are cleaned first.
+ */
+D.insert = function (html, snippets, opts) {
+  opts = opts || {};
+  if (typeof html !== 'string' || !Array.isArray(snippets) || !snippets.length || snippets.length > 50) return null;
+  const doc = parse(html), all = Array.from(doc.body.querySelectorAll('*'));
+  const find = it => { if (!it || !Number.isInteger(it.i) || typeof it.sig !== 'string') return null; const el = all[it.i]; return el && sigOf(el) === it.sig ? el : null; };
+  const nodes = []; for (const sn of snippets) { const n = cleanSnippet(doc, sn); if (!n) return null; nodes.push(...n); }
+  if (!nodes.length || nodes.length > 60) return null;
+  const anchors = (Array.isArray(opts.after) ? opts.after : []).map(find).filter(Boolean), anchor = anchors.length ? anchors[anchors.length - 1] : null, par = opts.parent ? find(opts.parent) : null;
+  const off = typeof opts.offset === 'number' && isFinite(opts.offset) ? Math.max(-200, Math.min(200, opts.offset)) : 0;
+  let at = anchor;
+  nodes.forEach(n => { uniqueIds(doc, n); shiftCopy(n, off); if (at) { at.after(n); at = n; } else (par || doc.body).appendChild(n); });
+  const after = Array.from(doc.body.querySelectorAll('*')), out = finish(doc);
+  return out == null ? null : { html: out, sel: nodes.map(n => after.indexOf(n)).filter(k => k >= 0), items: nodes.map(n => ({ i: after.indexOf(n), sig: sigOf(n) })).filter(x => x.i >= 0) };
 };
 
 /* ── the part that runs inside the frame ─────────────────────────────────────────────────────────────────────────────────────── */
@@ -552,6 +604,20 @@ function pcDesign(cleanDecl, sigOf, PROPS) {
     if (els.indexOf(el) < 0) { P({ pc: 'code' }); return; }
     if (sel.length !== 1 || sel[0] !== el) setSel([el]);
     startEdit(el);
+  }, true);
+  /* copy, cut and paste of the selected elements: the clipboard carries a token and the editor holds the HTML (it has the stored source) */
+  var typingIn = function (t) { return !!(t && t.closest && t.closest('input,textarea,select,[contenteditable="true"]')); };
+  var onClip = function (e) {
+    if (cur || !sel.length || typingIn(e.target) || !e.clipboardData) return;
+    var tk = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    e.clipboardData.setData('text/plain', JSON.stringify({ 'pitchcraft/html': 1, token: tk })); e.preventDefault();
+    P({ pc: 'clip', op: e.type === 'cut' ? 'cut' : 'copy', token: tk });
+  };
+  addEventListener('copy', onClip, true); addEventListener('cut', onClip, true);
+  addEventListener('paste', function (e) {
+    if (cur || typingIn(e.target) || !e.clipboardData) return;
+    var t = e.clipboardData.getData('text/plain') || ''; if (t.indexOf('pitchcraft/html') < 0) return;
+    e.preventDefault(); P({ pc: 'paste', text: t.slice(0, 450000) });
   }, true);
   addEventListener('keydown', function (e) {
     if (cur) return;
