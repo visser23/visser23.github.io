@@ -444,10 +444,11 @@ Ins.act = function (act) {
 };
 
 Ins.init = function () {
-  bind(); PC.format.bind(); Ins.render();
+  bind(); PC.format.bind(); if (PC.htmlFormat) PC.htmlFormat.bind(); Ins.render();
   const typingInPanel = () => { const a = document.activeElement; return !!(a && $('#panel').contains(a) && a.matches('input[type=text], input:not([type]), textarea')); };
   ['deck', 'select'].forEach(ev => S.on(ev, () => Ins.render()));
-  S.on('history', () => { if (!typingInPanel()) Ins.render(); });   // every keystroke is a history step: rebuilding the panel under the caret dropped focus and swallowed typing
+  const busy = () => typingInPanel() || (PC.htmlFormat && PC.htmlFormat.busy());   // a field in the panel is in use: leave it be, and refresh once it is left
+  S.on('history', () => { if (busy()) { if (PC.editor.htmlSel) PC.editor.htmlSel.dirty = true; return; } Ins.render(); });   // every keystroke is a history step: rebuilding the panel under the caret dropped focus and swallowed typing
   let hadSel = false;
   S.on('stage', () => {   // clicking something on the slide brings up its formatting; Slide-tab users are moved across, Code/Deck are left alone
     const has = PC.stage.sel.length > 0;
@@ -455,7 +456,16 @@ Ins.init = function () {
     hadSel = has;
     if (Ins.tab === 'format' || Ins.tab === 'slide') Ins.render();
   });
-  S.on('slide', e => { if (e.src === 'inspector') { if (Ins.tab === 'code') Ins.refreshCode(); return; } Ins.render(); });
+  S.on('slide', e => { if (e.src === 'inspector') { if (Ins.tab === 'code') Ins.refreshCode(); return; } if (e.src === 'frame' && Ins.tab === 'format') return; Ins.render(); });   // 'frame': made in the live frame, which reports the new selection itself
+  let hadHtml = false;
+  S.on('htmlsel', () => {   // an element of an HTML slide was (de)selected: show its formatting, like an object on the stage
+    const has = !!PC.editor.htmlSel;
+    if (has && !hadHtml && Ins.tab === 'slide') Ins.tab = 'format';
+    hadHtml = has;
+    if (!(Ins.tab === 'format' || Ins.tab === 'slide')) return;
+    if (PC.htmlFormat.busy()) { PC.editor.htmlSel.dirty = true; return; }
+    Ins.render();
+  });
   S.on('meta', () => { if ($('#panel').contains(document.activeElement) && document.activeElement.matches('input[type=text], input:not([type]), textarea')) return; Ins.render(); });
   S.on('text', e => { if (e.src === 'canvas') Ins.syncField(e.path); else if (Ins.tab === 'code') Ins.refreshCode(); });
 };

@@ -389,6 +389,7 @@ function bindGlobal() {
     const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase(), text = UI.isTextTarget(e.target);
     if (mod && k === 's') { e.preventDefault(); PC.exportDeck(); return; }
     if (text) return;
+    if (PC.htmlFormat && PC.htmlFormat.key(e, mod)) return;   // an element of an HTML slide is selected: arrows nudge it, Delete removes it, Ctrl+D duplicates it
     if (mod && k === 'z') { e.preventDefault(); PC.act(e.shiftKey ? 'redo' : 'undo'); }
     else if (mod && k === 'y') { e.preventDefault(); PC.act('redo'); }
     else if (mod && k === 'd') { e.preventDefault(); PC.act('dup'); }

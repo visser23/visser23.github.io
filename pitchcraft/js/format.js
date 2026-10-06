@@ -128,10 +128,12 @@ function itemPanel(tg) {
     + sec('Position', `<p class="note" style="margin-bottom:10px">Drag the ${esc(L.noun)} on the slide to move it (or use the arrow keys). Click its text to change the font and size.</p><div class="row wrap"><button class="btn sm" type="button" data-fmt-act="reset-tweaks">${icon('refresh', 14)} Reset position</button></div>`, t.dx || t.dy ? `moved ${Math.round(t.dx || 0)}, ${Math.round(t.dy || 0)}` : 'not moved');
 }
 
+F.fontOptions = fontOptions;
 F.html = function () {
   const T = St.targets();
   if (!T.length) {
     const s = S.slide(), blank = s && s.layout === 'blank';
+    if (s && s.layout === 'custom' && PC.htmlFormat) return PC.htmlFormat.html(s);   // an HTML slide: its elements are selectable and formattable
     if (s && s.layout === 'custom') return Ins.panelBuild(s) + sec('Edit this slide', `<p class="note">This slide is code, so there is nothing on it to click and format. Open the code editors to change it, or ask an AI to.</p><div class="row wrap"><button class="btn sm primary" data-build="custom">${icon('code', 14)} Open the code editors</button><button class="btn sm" data-act="ai">${icon('sparkles', 14)} Ask an AI</button></div>`)
       + sec('Add to this slide', `<div class="row wrap"><button class="btn sm" data-act="ins-text">${icon('type', 14)} Text box</button><button class="btn sm" data-act="ins-image">${icon('image', 14)} Image</button><button class="btn sm" data-act="ins-shape">${icon('shapes', 14)} Shape</button><button class="btn sm" data-act="ins-icon">${icon('star', 14)} Icon</button></div>`);
     return (s ? Ins.panelBuild(s) : '') + sec('Format', `<p class="note">Click anything on the slide to format it. <b>Drag</b> to move, use the <b>handles</b> to resize and rotate, <b>double-click</b> a text box to type, arrow keys to nudge, <b>Shift</b> to select several.</p>`)

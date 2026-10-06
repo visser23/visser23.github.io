@@ -1,8 +1,8 @@
 # Pitchcraft: guide for AI assistants
 
-Version 3.8.1 · canonical copy: https://visser23.github.io/pitchcraft/ai-guide.md · also inside the app: `Pitchcraft.guide()`
+Version 3.9.0 · canonical copy: https://visser23.github.io/pitchcraft/ai-guide.md · also inside the app: `Pitchcraft.guide()`
 
-Pitchcraft is a browser presentation studio. A deck is **plain JSON**. You write or edit that JSON, the user opens it in Pitchcraft, edits it visually and presents it. There is no server: everything is validated and rendered in the user's browser. This guide is generated from the same specs the app runs on, so it is always accurate for version 3.8.1.
+Pitchcraft is a browser presentation studio. A deck is **plain JSON**. You write or edit that JSON, the user opens it in Pitchcraft, edits it visually and presents it. There is no server: everything is validated and rendered in the user's browser. This guide is generated from the same specs the app runs on, so it is always accurate for version 3.9.0.
 
 **Plain-text routes.** If your tool rewrites URLs, equals signs or long output, fetch this guide as plain markdown (https://visser23.github.io/pitchcraft/ai-guide.md) or together with the schema in one file (https://visser23.github.io/pitchcraft/llms-full.txt). In the page, `Pitchcraft.guide(9)` returns one section at a time.
 
@@ -188,6 +188,7 @@ Slides are read in seconds, so weak writing shows. Write the way a knowledgeable
 - Theme variables are available: `var(--fg)`, `var(--muted)`, `var(--acc)`, `var(--on-acc)`, `var(--slide-bg)`, `var(--card)`, `var(--line)`, `var(--radius)`, `var(--shadow)`, `var(--c1)` to `var(--c6)`, `var(--font-d)`, `var(--font-b)`, `var(--f-mono)`. Helper classes: `.kicker`, `.display`, `.h2`, `.lead`, `mark.hl`, `.rv` (fades up when presenting).
 - Shared brand CSS (colours, `@font-face`, logo classes) belongs in `meta.css`, not in each slide.
 - Set `interactive: true` only if the slide has buttons or inputs.
+- **The user can design your slide by hand.** In the editor they click any element of your HTML and move it, resize it, restyle it (font, size, bold, italic, colour, fill, border, shadow, opacity, order) or retype its words. Each change is saved as an **inline `style`** on that element (`translate` or `left`/`top`, `width`/`height`, `color`, `font-*`, `background-color` ...), so when you are later asked to edit the slide, read the `style` attributes and keep them. To make your slide pleasant to edit, build it from real elements: give the main blocks an `id` or a meaningful `class`, put each text in its own element (`h1`, `p`, `div`), prefer absolute or flex/grid layout over text tricks, and put repeated styling in `css` or `meta.css` rather than relying on `js` to restyle things. Elements a script creates have no place in the HTML, so they cannot be selected (their container can).
 - **Thumbnails and PDF export do not run `js`.** They draw the slide from html + css, so it must look complete before `js` runs. If something only appears after `js` runs (a canvas, ripples, counters), the sidebar thumbnail will not show it. That is expected.
 - Keep every important element 60 px from the edges, text at least 22 px, respect `prefers-reduced-motion`.
 
