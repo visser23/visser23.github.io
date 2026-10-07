@@ -8,6 +8,26 @@
 <title>Pitchcraft — presentations from JSON</title>
 <meta name="description" content="Pitchcraft is a free, private presentation studio. Write a deck as JSON (or ask an AI to), edit it visually, present it fullscreen and share it as one file.">
 <meta name="theme-color" content="#5b4bff">
+<link rel="canonical" href="https://visser23.github.io/pitchcraft/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pitchcraft">
+<meta property="og:url" content="https://visser23.github.io/pitchcraft/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Pitchcraft: presentations from JSON">
+<meta name="twitter:description" content="A free, private presentation studio. Write a deck as JSON or ask an AI to, edit it visually, present it fullscreen, export PDF or PowerPoint.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Pitchcraft",
+  "url": "https://visser23.github.io/pitchcraft/",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Any modern web browser",
+  "description": "A free, private presentation studio that runs in your browser. A deck is plain JSON (a .pitchcraft file): write it, ask an AI assistant to, or edit it visually, then present it fullscreen or export PDF and PowerPoint.",
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "GBP"},
+  "featureList": ["No account and no server storage", "AI assistants can read the guide and return a deck", "Opens PowerPoint files as editable HTML slides", "Exports PowerPoint (.pptx), PDF and a portable .pitchcraft file", "Fullscreen presenter with speaker notes"]
+}
+</script>
 <meta property="og:title" content="Pitchcraft">
 <meta property="og:description" content="Decks that are just data. Edit visually, present fullscreen, share as one file.">
 <!-- For AI assistants: the deck format, layouts, free-form objects and browser API are documented at the URLs below.
@@ -72,7 +92,9 @@
 
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <div id="print-root" aria-hidden="true"></div>
-<noscript><p style="padding:40px;font:16px system-ui">Pitchcraft needs JavaScript to run. It has no server and no tracking; everything happens in your browser.</p></noscript>
+<!-- seo:start -->
+<noscript><div style="padding:40px;font:16px/1.5 system-ui;max-width:46em"><h1>Pitchcraft: presentations from JSON</h1><p>Pitchcraft is a free, private presentation studio that runs in your browser. A deck is plain JSON (a .pitchcraft file): write it, ask an AI assistant to, or edit it visually, then present it fullscreen or export PDF and PowerPoint. It needs JavaScript to run. It has no server and no tracking; everything happens in your browser.</p><p><a href="ai-guide.html">Guide for AI assistants</a> · <a href="llms.txt">llms.txt</a></p></div></noscript>
+<!-- seo:end -->
 
 <script src="js/core.js"></script>
 <script src="js/beautify.js"></script>
