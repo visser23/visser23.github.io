@@ -1,8 +1,8 @@
 # Pitchcraft: guide for AI assistants
 
-Version 3.9.3 · canonical copy: https://visser23.github.io/pitchcraft/ai-guide.md · also inside the app: `Pitchcraft.guide()`
+Version 3.9.4 · canonical copy: https://visser23.github.io/pitchcraft/ai-guide.md · also inside the app: `Pitchcraft.guide()`
 
-Pitchcraft is a browser presentation studio. A deck is **plain JSON**. You write or edit that JSON, the user opens it in Pitchcraft, edits it visually and presents it. There is no server: everything is validated and rendered in the user's browser. This guide is generated from the same specs the app runs on, so it is always accurate for version 3.9.3.
+Pitchcraft is a browser presentation studio. A deck is **plain JSON**. You write or edit that JSON, the user opens it in Pitchcraft, edits it visually and presents it. There is no server: everything is validated and rendered in the user's browser. This guide is generated from the same specs the app runs on, so it is always accurate for version 3.9.4.
 
 **Plain-text routes.** If your tool rewrites URLs, equals signs or long output, fetch this guide as plain markdown (https://visser23.github.io/pitchcraft/ai-guide.md) or together with the schema in one file (https://visser23.github.io/pitchcraft/llms-full.txt). In the page, `Pitchcraft.guide(9)` returns one section at a time.
 
@@ -164,18 +164,31 @@ Every editable text in a template slide has a path (`headline`, `body`, `kicker`
 
 ### Writing style
 
-Slides are read in seconds, so weak writing shows. Write the way a knowledgeable person who has one point to make would write it.
+Slides are read in seconds, so weak writing shows. Write natural, precise British English, the way a knowledgeable person with one specific point to make would write it. Aim for clarity and accuracy, not polish, enthusiasm or impact. Swapping banned words for synonyms is not enough: avoid the patterns underneath (artificial contrast, neat triads, manufactured punchiness, inflated abstraction, repeated summaries).
 
-- State the point first. No scene-setting ("In today's fast-moving world"), no announcing ("Let's break this down"), no "In summary" or "The bottom line" slide unless the content needs one.
-- Plain words. Use "use" and not "leverage"; avoid "unlock", "seamless", "robust", "powerful", "game-changing", "holistic", "journey", "landscape", "ecosystem", "tangible value", "actionable insights".
-- Say what happens. Name who does what ("The team reviews each order") and avoid abstract nouns such as "alignment", "capability", "transformation" and "outcomes".
-- No "not X but Y" or "it's not just X, it's Y". No rhetorical question followed by its answer. No dramatic fragments ("The result? Chaos.").
-- Do not group everything in threes. Use as many points as the subject has. Do not invent frameworks, pillars or named models.
-- Few em dashes. Use commas, colons, brackets or a new sentence.
-- Do not overclaim. Skip "crucially", "importantly", "ultimately", and superlatives you cannot back up. Give a number or a source, or leave the claim out.
+**Titles and headings**
+- A title says what the slide shows or concludes, in literal words: "Pilots stall at the national specification" and not "Where the magic happens", "The elephant in the room" or "Bridging the gap". No puns, slogans, teasers or questions. No "The Bottom Line", "Key takeaway" or "In summary" slide or label unless the content needs one.
+- Kickers are plain topic labels ("Funding", "Part 2 of 5"). No heading for a single thought.
+
+**Start and end**
+- State the point first. No scene-setting ("In today's rapidly evolving landscape", "In an era where"), no announcing ("Let's break this down", "Here's the thing"), no definition of terms the audience knows.
+- End on the actual next step, decision or open question. No slogan, no "the future belongs to", no "Now is the time to", no offer of more help.
+
+**Words**
+- Plain words: "use", not "leverage", "harness" or "utilise". Avoid "unlock", "seamless", "robust", "holistic", "powerful", "game-changing", "transformative", "cutting-edge", "innovative", "meaningful", "tangible", "actionable insights", "strategic imperative", "journey", "landscape", "ecosystem", "navigate", "foundation", "catalyst", "paradigm shift", "future-proof", "data-driven" unless it is the most precise term.
+- Concrete verbs and actors: "The team reviews each order", not "enable alignment" or "drive outcomes". Replace "support", "facilitate", "empower", "enhance", "accelerate" with what actually happens. Prefer "implement" to "the implementation of". Name who does what rather than "will be ensured".
+- Say how, not just that: "improves collaboration" needs a mechanism or should go.
+
+**Sentences and structure**
+- No "not X but Y", "it's not just X, it's Y", "the question is no longer whether", "from X to Y" slogans, "whether you're X or Y". No rhetorical question followed by its answer. No dramatic fragments ("The result? Chaos."), fake suspense ("But there's a catch") or stock transitions ("That said", "With that in mind").
+- Do not group everything in threes or pairs of adjectives. Use as many points as the subject has. Do not invent frameworks, pillars, stages, maturity models or named concepts.
+- Vary sentence and bullet length. A slide where every bullet is a bold label, a colon and eight words reads as machine output. Bold sparingly. Few em dashes: use commas, colons, brackets or a new sentence.
+- Do not repeat the same point on the title, the body and the closing slide. Do not add "this means that" to a point that already speaks for itself.
+
+**Claims and tone**
+- Do not overclaim. Skip "crucially", "importantly", "ultimately", "fundamentally" and superlatives you cannot back up. Give a number and its source, or leave the claim out. No "research shows" or "experts agree" without naming them. No invented quotes, personas or analogies.
+- Make a judgement when the evidence supports one. No forced balance, no "it depends on your needs", no generic caveats or risk lists. If something is uncertain, say what and why, once.
 - Do not attribute feelings to the audience ("You may be wondering"), and do not reassure, cheer or sell. No exclamation marks.
-- Do not end with a slogan, a call to embrace change or "Now is the time to". End on the actual next step or decision.
-- Vary the length of bullets and sentences. A slide where every bullet is a bold label, a colon and eight words reads as machine output.
 
 ## 9. Custom layout (HTML, CSS, JavaScript)
 
@@ -422,7 +435,7 @@ Pitchcraft.setPath("s3", "items.0.value", "42");
 - Every `layout` is one of: `blank`, `title`, `statement`, `section`, `quote`, `closing`, `metrics`, `chart`, `demo`, `table`, `split`, `cards`, `comparison`, `bullets`, `process`, `timeline`, `flow`, `bento`, `anatomy`, `themes`, `code`, `custom`, `image`.
 - Every icon name is from the list; every object has a `type`; image objects have `alt`.
 - Nothing invented; headings short; contrast good; safe area respected; text sized for the theme's font width (section 9).
-- Writing follows the style notes in section 8: plain words, the point first, no slogans.
+- Writing follows the style notes in section 8: literal titles, the point first, plain words, no "not X but Y", no slogan ending, no invented frameworks.
 - Browser AIs: `await Pitchcraft.auditAll()` shows no problems and every slide `checked: true`.
 - Delivered as a `.pitchcraft` file, or one JSON code block if files are impossible.
 

@@ -5,7 +5,7 @@
 (function () {
 'use strict';
 const PC = window.PC = window.PC || {};
-PC.VERSION = '3.9.3';
+PC.VERSION = '3.9.4';
 PC.STAGE = { w: 1280, h: 720 };
 
 /* ── utilities ─────────────────────────────────────────────── */

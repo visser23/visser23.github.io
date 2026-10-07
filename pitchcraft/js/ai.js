@@ -35,6 +35,8 @@ AI.urls = function () {
   return { site, canonical, here, guide: site + 'ai-guide.md', full: site + 'llms-full.txt', schema: site + 'pitchcraft.schema.json', differs: !!here && here !== canonical };
 };
 /** One line naming the app, for the top of every prompt. */
+/** One reminder that travels inside every prompt: the full rules are "Writing style" in section 8 of the guide. */
+const WRITE = 'WRITING: plain, precise British English with one specific point per slide. Titles say what the slide shows or concludes, in literal words (no puns, slogans or teasers). No marketing or consultancy words, no "not X but Y", no rhetorical questions, no invented frameworks, no slogan or call-to-action ending. Follow "Writing style" in section 8 of the guide.';
 const siteLine = () => { const u = AI.urls(); return `PITCHCRAFT WEB ADDRESS: ${u.site}${u.differs ? `  (also published at ${u.canonical})` : ''}\nThis is the app the deck is for. It is a small open tool, so do not search for it: use this address.`; };
 
 /** How the AI should build slides. The default leaves the choice to the AI but points it at the full-capability route. */
@@ -60,6 +62,8 @@ AI.promptChat = function (brief, opts) {
 
 ${siteLine()}
 
+${WRITE}
+
 ${approachLine(opts)}
 
 YOUR TASK
@@ -79,6 +83,8 @@ AI.promptLink = function (brief, opts) {
 
 ${siteLine()}
 
+${WRITE}
+
 FIRST read the Pitchcraft guide (it is the complete specification: deck format, layouts, free-form objects, custom HTML/CSS/JS slides, design rules, writing style):
 ${u.guide}
 ${u.differs ? `(published copy: ${g.url})\n` : ''}${g.rawUrl ? `(same file on GitHub: ${g.rawUrl})\n` : ''}If you cannot open that link, say so and stop. Do not guess the format.
@@ -97,6 +103,8 @@ AI.promptAgent = function (task, opts) {
   return `Pitchcraft (a browser presentation studio) is open in the browser tab you control. You can read and edit the live deck with its JavaScript API, \`window.Pitchcraft\`. Every call is validated and undoable (the user can press Ctrl+Z).
 
 ${siteLine()}
+
+${WRITE}
 
 START HERE
 1. Run \`Pitchcraft.guide()\` and read the result. It is the complete specification (deck format, layouts, free-form objects, custom HTML/CSS/JS slides, design rules, writing style). \`Pitchcraft.guide(9)\` returns just section 9. If your tool mangles URLs or equals signs in long output, fetch the plain text copy instead: ${u.guide}
@@ -128,6 +136,8 @@ AI.promptSlide = function (slide, task) {
 
 ${siteLine()}
 
+${WRITE}
+
 THE SLIDE NOW (id "${id}")
 ${json.length > 9000 ? json.slice(0, 9000) + '\n… (truncated; use Pitchcraft.getSlide("' + id + '") for all of it)' : json}
 
@@ -158,6 +168,8 @@ AI.promptCustom = function () {
 Custom slides are Pitchcraft's full-capability route: any layout, any styling, diagrams, animation, canvas, interactive demos. Use them wherever the design matters. The full specification is at ${AI.urls().guide}.
 
 ${siteLine()}
+
+${WRITE}
 
 THE CANVAS
 - The slide is exactly 1280 x 720 px. html, css and js are three separate strings. html is the body content only (no <html>, <head> or <script>). The slide is scaled to fit any screen, so use px and design for 1280x720.
