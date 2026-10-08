@@ -2,127 +2,90 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-src 'self' about: blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'">
-<!-- 'unsafe-inline' scripts are required because custom slides are srcdoc iframes, which inherit this policy; each of them carries a stricter CSP of its own (no network, no nested frames). Remote scripts are limited to Google's tag, which only loads after consent. -->
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Pitchcraft: private presentation maker in your browser</title>
-<meta name="description" content="Pitchcraft is a free, private presentation studio. Write a deck as JSON (or ask an AI to), edit it visually, present it fullscreen and share it as one file.">
-<meta name="theme-color" content="#5b4bff">
-<link rel="canonical" href="https://visser23.github.io/pitchcraft/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Pitchcraft">
-<meta property="og:url" content="https://visser23.github.io/pitchcraft/">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Pitchcraft: presentations from JSON">
-<meta name="twitter:description" content="A free, private presentation studio. Write a deck as JSON or ask an AI to, edit it visually, present it fullscreen, export PDF or PowerPoint.">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "Pitchcraft",
-  "url": "https://visser23.github.io/pitchcraft/",
-  "applicationCategory": "BusinessApplication",
-  "operatingSystem": "Any modern web browser",
-  "description": "A free, private presentation studio that runs in your browser. A deck is plain JSON (a .pitchcraft file): write it, ask an AI assistant to, or edit it visually, then present it fullscreen or export PDF and PowerPoint.",
-  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "GBP"},
-  "featureList": ["No account and no server storage", "AI assistants can read the guide and return a deck", "Opens PowerPoint files as editable HTML slides", "Exports PowerPoint (.pptx), PDF and a portable .pitchcraft file", "Fullscreen presenter with speaker notes"]
-}
-</script>
-<meta property="og:title" content="Pitchcraft">
-<meta property="og:description" content="Decks that are just data. Edit visually, present fullscreen, share as one file.">
-<!-- For AI assistants: the deck format, layouts, free-form objects and browser API are documented at the URLs below.
-     In a browser agent: call Pitchcraft.guide() or Pitchcraft.manifest() in the page. -->
-<meta name="pitchcraft-ai-guide" content="https://visser23.github.io/pitchcraft/ai-guide.md">
-<meta name="pitchcraft-schema" content="https://visser23.github.io/pitchcraft/pitchcraft.schema.json">
-<link rel="alternate" type="text/markdown" title="Pitchcraft guide for AI assistants" href="ai-guide.md">
-<link rel="alternate" type="text/plain" title="Pitchcraft guide and JSON Schema, plain text" href="llms-full.txt">
-<link rel="describedby" type="application/schema+json" title="Pitchcraft deck JSON Schema" href="pitchcraft.schema.json">
-<link rel="help" type="text/html" title="Pitchcraft guide for AI assistants (web page)" href="ai-guide.html">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%234b3bff'/%3E%3Cstop offset='.55' stop-color='%238a4dff'/%3E%3Cstop offset='1' stop-color='%23ff6b57'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='1.5' y='1.5' width='29' height='29' rx='9.5' fill='url(%23g)'/%3E%3Crect x='14.5' y='8' width='11.5' height='9' rx='2.4' fill='%23fff' opacity='.28' transform='rotate(9 20 12.5)'/%3E%3Cpath d='M10 25.5V8.2c0-.7.6-1.3 1.3-1.3h6.9a5.5 5.5 0 0 1 0 11H13' fill='none' stroke='%23fff' stroke-width='3.3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M18.6 9.7l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z' fill='%23ffd36e'/%3E%3C/svg%3E">
-<link rel="preload" href="fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
-<script src="js/theme-boot.js"></script>
-<link rel="stylesheet" href="css/base.css">
-<link rel="stylesheet" href="css/fonts.css">
-<link rel="stylesheet" href="css/slides.css">
-<link rel="stylesheet" href="css/app.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pitchcraft is now SlideClark</title>
+<meta name="description" content="Pitchcraft has moved to SlideClark at slideclark.com.">
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="https://slideclark.com/">
+<noscript><meta http-equiv="refresh" content="0;url=https://slideclark.com/"></noscript>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #fbfafd; color: #1a1830; font: 16px/1.55 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; padding: 24px; }
+  main { max-width: 560px; width: 100%; background: #fff; border: 1px solid #e6e3f2; border-radius: 16px; padding: 32px; box-shadow: 0 8px 30px rgba(91, 75, 255, .08); }
+  h1 { font-size: 24px; line-height: 1.2; margin: 0 0 8px; }
+  p { margin: 0 0 14px; color: #4b4863; }
+  a { color: #5b4bff; }
+  .btn { display: inline-block; border: 1px solid #5b4bff; background: #5b4bff; color: #fff; border-radius: 10px; padding: 10px 16px; font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; }
+  .btn.ghost { background: #fff; color: #5b4bff; }
+  ul { list-style: none; padding: 0; margin: 0 0 18px; }
+  li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid #efedf8; font-size: 14px; }
+  li span { color: #4b4863; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .small { font-size: 13px; color: #6a6784; }
+  #offer { display: none; }
+</style>
 </head>
 <body>
-<div class="app" id="app" data-side="open" data-insp="open">
-
-  <header class="topbar">
-    <a class="brand" href="./" aria-label="Pitchcraft home">
-      <svg class="logo-mark" data-logo="3" width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="pcg-top" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4b3bff"/><stop offset=".55" stop-color="#8a4dff"/><stop offset="1" stop-color="#ff6b57"/></linearGradient></defs><rect x="1.5" y="1.5" width="29" height="29" rx="9.5" fill="url(#pcg-top)"/><rect x="14.5" y="8" width="11.5" height="9" rx="2.4" fill="#fff" opacity=".28" transform="rotate(9 20 12.5)"/><path d="M10 25.5V8.2c0-.7.6-1.3 1.3-1.3h6.9a5.5 5.5 0 0 1 0 11H13" fill="none" stroke="#fff" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.6 9.7l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z" fill="#ffd36e"/></svg>
-      <span class="wordmark">Pitch<em>craft</em></span>
-    </a>
-    <span class="app-ver" id="app-ver" title="Pitchcraft version"></span>
-    <input class="deck-name" id="deck-name" aria-label="Deck name" maxlength="80" spellcheck="false" autocomplete="off">
-    <span class="save-state" id="save-state" role="status">Saved</span>
-    <span class="top-sp"></span>
-    <button class="icon-btn" id="btn-undo" aria-label="Undo" title="Undo (Ctrl+Z)" disabled><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
-    <button class="icon-btn" id="btn-redo" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" disabled><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
-    <button class="ai-btn" id="btn-ai" aria-label="AI assistant: build or edit a deck with AI" title="Build or edit a deck with AI"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg><span class="lbl">AI</span></button>
-    <button class="icon-btn" id="btn-settings" aria-label="Settings: appearance, fonts, privacy" title="Settings"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/></svg></button>
-    <button class="help-btn" id="btn-help" aria-label="Help: how Pitchcraft works" title="How Pitchcraft works (?)"><span class="q" aria-hidden="true">?</span><span class="lbl">Help</span></button>
-    <button class="btn primary" id="btn-present" title="Present from the current slide (P)"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg><span class="lbl">Present</span></button>
-  </header>
-
-  <div class="ribbon" id="ribbon" role="toolbar" aria-label="Editing toolbar"></div>
-
-  <div class="workspace">
-    <aside class="sidebar" id="sidebar" aria-label="Slides">
-      <div class="sb-head"><span>Slides <span id="slide-count">0</span></span><button class="icon-btn" data-act-add aria-label="Add a slide" title="Add a slide" id="btn-add-slide"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
-      <div class="thumbs" id="thumbs" role="list"></div>
-    </aside>
-    <main class="canvas" id="canvas" aria-label="Slide canvas"><div class="canvas-inner" id="canvas-inner"></div></main>
-    <aside class="inspector" id="inspector" aria-label="Inspector">
-      <button class="icon-btn ins-close" id="ins-close" aria-label="Close inspector"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-      <div class="tabs" id="tabs" role="tablist" aria-label="Inspector tabs"></div>
-      <div class="panel" id="panel" role="tabpanel" tabindex="0"></div>
-    </aside>
+<main>
+  <h1>Pitchcraft is now SlideClark</h1>
+  <p id="plain">Taking you to <a href="https://slideclark.com/">slideclark.com</a>&hellip;</p>
+  <div id="offer">
+    <p>This browser has a deck that you made in Pitchcraft. SlideClark lives at a new address, and a browser keeps each address's data separate, so the deck cannot move across by itself.</p>
+    <p><b>Download your deck first</b> (nothing is uploaded; the file comes from your own browser), then open it in SlideClark with <b>Open</b>. Your deck also stays in this browser until you clear it.</p>
+    <ul id="list"></ul>
+    <div class="row"><a class="btn ghost" id="go" href="https://slideclark.com/">Continue to SlideClark</a></div>
+    <p class="small" style="margin-top:14px">This page will not ask again. To see it again, add <code>?migrate</code> to this address.</p>
   </div>
+</main>
+<script>
+/* Pitchcraft was renamed SlideClark and moved to https://slideclark.com. This page replaces the old app at this address:
+   1. every old link goes to the same place on the new site (path, query and hash are kept);
+   2. a browser that holds a deck from the old app is offered a download first, because the new address cannot read this address's storage.
+   Nothing is deleted and nothing is sent anywhere. */
+(function () {
+  'use strict';
+  var ORIGIN = 'https://slideclark.com', BASE = '/pitchcraft/', SEEN = 'slideclark.legacy.offered';
+  var l = location;
+  var rest = l.pathname.indexOf(BASE) === 0 ? l.pathname.slice(BASE.length) : l.pathname.replace(/^\/+/, '');
+  rest = rest.replace(/(^|\/)index\.html$/, '$1');
+  var dest = ORIGIN + '/' + rest + l.search.replace(/[?&]migrate(=[^&]*)?/, '').replace(/^&/, '?') + l.hash;
+  var plainRoot = rest === '' && !l.hash && !/[?&](template|present|reset)=/.test(l.search);
 
-  <footer class="statusbar">
-    <span id="status-slide">Slide 1</span><span class="sp"></span>
-    <span class="zoom no-mobile"><button id="zoom-out" aria-label="Zoom out">−</button><b id="zoom-val">60%</b><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-fit" aria-label="Fit slides to the window">Fit</button></span>
-  </footer>
+  function go() { l.replace(dest); }
+  function load(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+  function slug(s) { return String(s || 'deck').toLowerCase().replace(/<[^>]*>/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'deck'; }
+  function parse(s) { try { var d = JSON.parse(s); return d && Array.isArray(d.slides) && d.slides.length ? d : null; } catch (e) { return null; } }
 
-  <button class="fab" id="btn-fab" aria-label="Open the editing panel"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4"/></svg>Edit</button>
-</div>
+  var items = [];
+  if (plainRoot && (!/[?&]migrate/.test(l.search)) && load(SEEN)) { go(); return; }
+  if (plainRoot) {
+    var cur = parse(load('pitchcraft.deck.v3'));
+    if (cur) items.push({ label: 'Your deck: ' + ((cur.meta && cur.meta.name) || 'Untitled deck') + ' (' + cur.slides.length + ' slides)', name: slug(cur.meta && cur.meta.name) + '.pitchcraft', text: JSON.stringify(cur, null, 2) });
+    var bk = []; try { bk = JSON.parse(load('pitchcraft.backups.v1') || '[]'); } catch (e) { bk = []; }
+    (Array.isArray(bk) ? bk : []).forEach(function (b, i) {
+      var d = b && typeof b.deck === 'string' ? parse(b.deck) : null; if (!d) return;
+      items.push({ label: 'Earlier version ' + (i + 1) + ': ' + String(b.title || 'Untitled deck').slice(0, 60) + ' (' + d.slides.length + ' slides)', name: slug(b.title) + '-earlier-' + (i + 1) + '.pitchcraft', text: JSON.stringify(d, null, 2) });
+    });
+  }
+  if (!items.length) { go(); return; }
 
-<div class="toasts" id="toasts" aria-live="polite"></div>
-<div id="print-root" aria-hidden="true"></div>
-<!-- seo:start -->
-<noscript><div style="padding:40px;font:16px/1.5 system-ui;max-width:46em"><h1>Pitchcraft: presentations from JSON</h1><p>Pitchcraft is a free, private presentation studio that runs in your browser. A deck is plain JSON (a .pitchcraft file): write it, ask an AI assistant to, or edit it visually, then present it fullscreen or export PDF and PowerPoint. It needs JavaScript to run. It has no server and no tracking; everything happens in your browser.</p><p><a href="ai-guide.html">Guide for AI assistants</a> · <a href="llms.txt">llms.txt</a></p></div></noscript>
-<!-- seo:end -->
-
-<script src="js/core.js"></script>
-<script src="js/beautify.js"></script>
-<script src="js/walk.js"></script>
-<script src="js/objects.js"></script>
-<script src="js/fonts.js"></script>
-<script src="js/charts.js"></script>
-<script src="js/framedesign.js"></script>
-<script src="js/layouts.js"></script>
-<script src="js/templates.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/store.js"></script>
-<script src="js/editor.js"></script>
-<script src="js/stage.js"></script>
-<script src="js/touch.js"></script>
-<script src="js/inspector.js"></script>
-<script src="js/format.js"></script>
-<script src="js/htmlformat.js"></script>
-<script src="js/pptx.js"></script>
-<script src="js/pptximport.js"></script>
-<script src="js/portable.js"></script>
-<script src="js/share.js"></script>
-<script src="js/guide-data.js"></script>
-<script src="js/ai.js"></script>
-<script src="js/present.js"></script>
-<script src="js/policy.js"></script>
-<script src="js/consent.js"></script>
-<script src="js/help.js"></script>
-<script src="js/main.js"></script>
+  document.getElementById('plain').style.display = 'none';
+  document.getElementById('offer').style.display = 'block';
+  var ul = document.getElementById('list');
+  items.forEach(function (it) {
+    var li = document.createElement('li'), s = document.createElement('span'), a = document.createElement('a');
+    s.textContent = it.label; s.title = it.label;
+    a.className = 'btn'; a.textContent = 'Download'; a.href = '#'; a.setAttribute('role', 'button');
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      var url = URL.createObjectURL(new Blob([it.text], { type: 'application/json' })), d = document.createElement('a');
+      d.href = url; d.download = it.name; document.body.appendChild(d); d.click(); d.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    });
+    li.appendChild(s); li.appendChild(a); ul.appendChild(li);
+  });
+  document.getElementById('go').addEventListener('click', function (e) { e.preventDefault(); try { localStorage.setItem(SEEN, '1'); } catch (x) { /* noop */ } go(); });
+})();
+</script>
 </body>
 </html>

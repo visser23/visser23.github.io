@@ -1,15 +1,7 @@
-# Pitchcraft
+# SlideClark (formerly Pitchcraft)
 
-> Pitchcraft is a free browser presentation studio. A deck is plain JSON (a .pitchcraft file). AI assistants write or edit that JSON; the user opens it and presents.
+> Moved to https://slideclark.com/llms.txt
 
-## For AI assistants
-
-- [AI guide (markdown)](https://visser23.github.io/pitchcraft/ai-guide.md): the complete, always-current guide to the deck format, layouts, free-form objects and the in-browser API. Read this first.
-- [AI guide (web page)](https://visser23.github.io/pitchcraft/ai-guide.html): the same guide as a web page.
-- [Guide and schema in one plain-text file](https://visser23.github.io/pitchcraft/llms-full.txt): the same guide followed by the JSON Schema. No scripts, no HTML. Use this if your browser tool rewrites URLs or equals signs in long output.
-- [JSON Schema](https://visser23.github.io/pitchcraft/pitchcraft.schema.json): machine-readable deck schema (layouts, free-form objects, custom HTML/CSS/JS slides).
-- [Raw fallback](https://raw.githubusercontent.com/visser23/pitchcraft/main/ai-guide.md): the same markdown from GitHub.
-
-## App
-
-- [Pitchcraft](https://visser23.github.io/pitchcraft/): the studio itself. Version 3.9.4.
+- [AI guide](https://slideclark.com/ai-guide.md)
+- [JSON Schema](https://slideclark.com/slideclark.schema.json)
+- [Editor](https://slideclark.com/app)
