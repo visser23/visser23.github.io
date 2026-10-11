@@ -347,6 +347,15 @@
   <dialog class="modal" id="modal-cast" aria-labelledby="cast-title">
     <div class="modal__header"><h2 id="cast-title">Cast / TV playback</h2><button class="btn btn--outline" id="cast-close">Close</button></div>
     <div class="modal__body cast-help">
+      <h3>Android to LG via DLNA companion</h3>
+      <p>Chrome cannot discover or control DLNA TVs directly. Install <a href="https://play.google.com/store/apps/details?id=com.bubblesoft.android.bubbleupnp" target="_blank" rel="noopener noreferrer">BubbleUPnP for Android</a> first. It performs real UPnP/DLNA discovery and playback control on your local network; this website only hands it the current stream URL.</p>
+      <p>Connect phone and LG TV to the same home Wi-Fi (not a guest network). Enable the TV's DLNA/SmartShare renderer if available, allow any TV connection prompt, then select the LG playback device in BubbleUPnP's Now Playing screen before sending the stream.</p>
+      <button class="btn btn--primary" id="cast-android">Open current stream in BubbleUPnP (Android)</button>
+      <button class="btn btn--outline" id="cast-stream-copy">Copy stream URL for DLNA app</button>
+      <p>If the app does not open, use Copy stream URL, then BubbleUPnP: Playlist &gt; menu &gt; Add stream URL. Select the LG renderer and press Play. The handoff depends on the installed app's browser-link support; TV playback is not confirmed by this page. A TV that only browses DLNA libraries, but does not accept renderer control, cannot use this route.</p>
+      <button class="btn btn--outline" id="cast-pause">Pause phone playback</button>
+      <p>Pause the phone when ready to avoid two provider connections. Control TV playback in BubbleUPnP. The stream credentials go to that app and the TV, not a public casting service. Clear its playlist afterwards. Copying exposes credentials to your clipboard; clear it manually. The TV must support the stream's container and codecs. No video transcoding is provided here.</p>
+      <h3>Browser TV picker / AirPlay</h3>
       <p>Connect your device and TV to the same Wi-Fi. Enable AirPlay on an AirPlay-compatible LG TV, then use Safari on an iPhone, iPad or Mac.</p>
       <button class="btn btn--primary" id="cast-native">Choose TV / AirPlay</button>
       <p>Other browsers may offer Remote Playback. LG webOS is not automatically a Chromecast receiver. If no TV appears, use AirPlay screen mirroring (where supported), or Chrome's Cast tab with a separate Chromecast / Google Cast receiver.</p>
