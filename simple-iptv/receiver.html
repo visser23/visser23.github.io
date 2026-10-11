@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Simple IPTV TV receiver</title>
+  <style>
+    body{font:20px Arial,sans-serif;background:#0a0a0f;color:#f0f0f5;margin:2rem}main{max-width:1000px;margin:auto}input,button{font:inherit;padding:1rem;margin:.5rem 0;box-sizing:border-box}input,video{width:100%}video{max-height:65vh;background:#000}button{cursor:pointer}p{line-height:1.5}input:focus,button:focus{outline:4px solid #00d4ff}
+  </style>
+</head>
+<body><main>
+  <h1>Simple IPTV TV receiver</h1>
+  <p>Paste an HTTP/HTTPS stream URL or open a receiver link from the player. Press Play with your TV remote. Nothing is saved here.</p>
+  <form id="receiver-form"><label for="stream">Private stream URL</label><input id="stream" type="password" autocomplete="off" required><button type="submit">Play</button><button type="button" id="stop">Stop and clear</button></form>
+  <p id="status" role="status" aria-live="polite">Ready.</p>
+  <video id="tv-video" controls playsinline></video>
+  <p>TV codecs and webOS versions vary. HTTPS pages can block HTTP streams; HLS fallback needs CORS and internet access to load hls.js. DRM and provider connection limits still apply. If playback fails, use an IPTV app on the TV, a compatible AirPlay route or an external receiver. Close this browser when finished.</p>
+</main><script type="module" src="src/js/receiver.js"></script></body>
+</html>

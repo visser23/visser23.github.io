@@ -3434,3 +3434,8 @@ body {
   white-space: nowrap;
   border: 0;
 }
+
+/* TV playback help */
+.cast-help { display: grid; gap: 1rem; }
+.cast-help p { line-height: 1.5; }
+.cast-help textarea { min-height: 5rem; overflow-wrap: anywhere; }

@@ -15,6 +15,7 @@ import * as player from './modules/player.js';
 import * as epg from './modules/epg.js';
 import * as ui from './modules/ui.js';
 import * as locale from './modules/locale.js';
+import { initCasting } from './modules/casting.js';
 
 // App state
 let currentCredentials = null;
@@ -67,6 +68,10 @@ async function init() {
   const videoElement = document.getElementById('video');
   if (videoElement) {
     player.init(videoElement);
+    initCasting(videoElement, () => {
+      const url = player.getCurrentUrl();
+      return url ? storage.applyProxyToUrl(url) : null;
+    });
     setupPlayerListeners();
     // Attach DIRECT video element listeners for UI sync (more reliable)
     setupVideoElementListeners(videoElement);
