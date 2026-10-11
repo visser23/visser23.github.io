@@ -28,7 +28,7 @@ Automated validation checks the generated intent, exact URL preservation, fixed 
 1. Open https://visser23.github.io/simple-iptv/ and start a channel.
 2. Press the TV icon beside Picture-in-Picture.
 3. On an AirPlay-compatible LG TV, enable AirPlay in the TV settings, connect both devices to the same Wi-Fi and use Safari on an iPhone, iPad or Mac. Press **Choose TV / AirPlay**. Other browsers may provide a Remote Playback picker if they support it.
-4. If the TV is absent or the stream fails, try device-level AirPlay screen mirroring, or Chrome's Cast tab with a separate Google Cast receiver. An LG webOS TV alone is not necessarily a Google Cast receiver. The app does not implement the Google Cast SDK or proprietary LG/DLNA control.
+4. If the TV is absent or the stream fails, try device-level AirPlay screen mirroring, or Chrome's Cast tab with a separate Google Cast receiver. An LG webOS TV alone is not necessarily a Google Cast receiver. The app uses the Google Cast Web Sender SDK for Chromecast, but does not implement proprietary LG/DLNA control.
 5. For independent playback, open https://visser23.github.io/simple-iptv/receiver.html in the TV browser. Paste the stream URL, or open the **Copy receiver link for current stream** link there, and press **Play**. This is a standalone player, not phone-to-TV pairing. Use **Stop and clear** and close the TV browser afterwards.
 
 The receiver link contains the effective stream URL, including any configured proxy and provider credentials. It uses a URL fragment so the URL is not sent to GitHub Pages; the receiver removes the fragment from its address immediately and does not store the URL. Copy only to a trusted device. Clipboard contents are not automatically cleared.
@@ -40,3 +40,13 @@ Native casting depends on browser, TV model, firmware and codec support. MediaSo
 Static files are served directly from the root of `main` by the repository's legacy GitHub Pages build; no bundling step or project lint configuration exists.
 
 Run `node --test simple-iptv/tests/casting.test.mjs`, syntax-check the changed JS with `node --check`, and run `git diff --check`. Tests cover URL validation, Android intent construction and credential-free fallback, companion UI handlers, fragment privacy, native picker invocation/error propagation, HTML integration, receiver playback and clearing. Hardware casting requires a compatible TV and was not tested during implementation.
+
+## Chromecast / Google Cast built-in
+
+Select a channel, tap the TV icon, then **Choose Chromecast / Google Cast TV** and select the TV. Keep phone and TV on the same Wi-Fi. The SDK uses Google's default media receiver, so no custom receiver registration is needed. The effective HTTP/HTTPS URL (including the configured proxy) is loaded after receiver selection, never the phone-local hls.js/MediaSource blob. Local playback is left running; pause it when TV playback starts.
+
+The old browser picker only called Remote Playback on the local video element. That is not a Google Cast sender integration and cannot reliably discover/cast an hls.js MediaSource stream. The dedicated button now invokes `CastContext.requestSession()` synchronously from the tap, then `loadMedia()` on the selected session. SDK loading, cancellation, disconnection and load failures have visible feedback, without printing private URLs.
+
+Google documents Web Sender support for Cast-supported browsers on Android: https://developers.google.com/cast/docs/web_sender . If the SDK is blocked or unavailable, there is no reliable SDK-free Chromecast picker for this player. Use BubbleUPnP and select the Chromecast device, or the TV browser receiver fallback. The standalone receiver.html is not a registered Chromecast receiver.
+
+The default receiver must reach and decode the source. HLS is inferred for extensionless URLs; explicit .ts, .mp4 and .mpd URLs use their corresponding MIME types. A provider using a different extensionless format may need a compatible proxy URL or companion app. CORS, HTTP/mixed-content, DRM and connection limits remain. Physical Android/Chromecast playback has not been verified in this environment.

@@ -52,7 +52,7 @@ export function initCasting(video, getUrl) {
   };
   document.getElementById('cast-pause').onclick = () => {
     video.pause();
-    say('Phone playback paused. TV controls are in BubbleUPnP.');
+    say('Phone playback paused. Use the TV remote, Cast controls or BubbleUPnP for TV playback.');
   };
   document.getElementById('cast-stream-copy').onclick = async () => {
     try {

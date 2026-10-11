@@ -1,0 +1,57 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+const source = await readFile(new URL('../src/js/modules/google-cast.js', import.meta.url), 'utf8');
+const { requestGoogleCast, contentType, castError } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
+const api = { media: { MediaInfo: class { constructor(url, type) { this.contentId = url; this.contentType = type; } }, LoadRequest: class { constructor(media) { this.media = media; } } } };
+test('Cast picker invoked synchronously and effective URL loaded only after selection', async () => {
+  let picked = false, loaded;
+  const context = { requestSession() { picked = true; return Promise.resolve(); }, getCurrentSession() { return { loadMedia: async request => { loaded = request; } }; } };
+  const promise = requestGoogleCast(context, 'https://example.org/live/u/p/1.m3u8?token=private', api);
+  assert.equal(picked, true);
+  assert.equal(loaded, undefined);
+  await promise;
+  assert.equal(loaded.media.contentId, 'https://example.org/live/u/p/1.m3u8?token=private');
+  assert.equal(loaded.media.contentType, 'application/x-mpegURL');
+  assert.equal(loaded.autoplay, true);
+});
+test('unsupported SDK, cancellation, disconnect and load failure do not pretend to play', async () => {
+  await assert.rejects(requestGoogleCast(null, 'https://example.org/a', api), /not ready/);
+  await assert.rejects(requestGoogleCast({ requestSession: () => Promise.reject('cancel') }, 'https://example.org/a', api));
+  await assert.rejects(requestGoogleCast({ requestSession: async () => {}, getCurrentSession: () => null }, 'https://example.org/a', api), /disconnected/);
+  await assert.rejects(requestGoogleCast({ requestSession: async () => {}, getCurrentSession: () => ({ loadMedia: () => Promise.reject('LOAD_FAILED') }) }, 'https://example.org/a', api));
+  assert.match(castError('cancel'), /cancelled/);
+  assert.match(castError('LOAD_FAILED'), /TV could not load/);
+  assert.ok(!castError(new Error('https://private/password')).includes('password'));
+});
+test('invalid URLs never invoke picker; MIME types match common IPTV formats', async () => {
+  let called = false;
+  await assert.rejects(requestGoogleCast({ requestSession() { called = true; } }, 'blob:https://example.org/a', api), /HTTP/);
+  assert.equal(called, false);
+  assert.equal(contentType('https://example.org/a.ts'), 'video/mp2t');
+  assert.equal(contentType('https://example.org/a.mp4'), 'video/mp4');
+});
+test('shipped UI initialises SDK before click, reports load error and preserves effective proxy URL', async () => {
+  const { runInNewContext } = await import('node:vm');
+  const elements = { 'cast-google': {}, 'cast-status': {} };
+  let script, picked = false, loaded;
+  const context = { setOptions(options) { assert.equal(options.receiverApplicationId, 'DEFAULT'); }, addEventListener() {}, requestSession() { picked = true; return Promise.resolve(); }, getCurrentSession() { return { loadMedia: async request => { loaded = request; } }; } };
+  const window = { chrome: { cast: { ...api, AutoJoinPolicy: { ORIGIN_SCOPED: 'origin' }, media: { ...api.media, DEFAULT_MEDIA_RECEIVER_APP_ID: 'DEFAULT' } } }, cast: { framework: { CastContext: { getInstance: () => context }, CastContextEventType: { SESSION_STATE_CHANGED: 'state' }, SessionState: { SESSION_ENDED: 'ended' } } } };
+  const sandbox = { URL, window, document: { getElementById: id => elements[id], createElement: () => ({}), head: { appendChild(value) { assert.equal(typeof window.__onGCastApiAvailable, 'function'); script = value; } } } };
+  runInNewContext(source.replaceAll('export ', ''), sandbox);
+  sandbox.initGoogleCast(() => 'https://proxy.example.org/live.m3u8?url=private');
+  assert.match(script.src, /cast_sender.js\?loadCastFramework=1/);
+  script.onerror();
+  assert.match(elements['cast-status'].textContent, /SDK is unavailable/);
+  window.__onGCastApiAvailable(true);
+  elements['cast-google'].onclick();
+  assert.equal(picked, true);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(loaded.media.contentId, 'https://proxy.example.org/live.m3u8?url=private');
+  assert.match(elements['cast-status'].textContent, /Stream loaded/);
+  assert.equal(elements['cast-google'].disabled, false);
+  const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  assert.ok(html.includes('id="cast-google"'));
+  const app = await readFile(new URL('../src/js/app.js', import.meta.url), 'utf8');
+  assert.match(app, /initGoogleCast\(\(\) => \{\s+const url = player.getCurrentUrl\(\);\s+return url \? storage.applyProxyToUrl\(url\) : null;/);
+});

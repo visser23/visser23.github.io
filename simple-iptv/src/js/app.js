@@ -16,6 +16,7 @@ import * as epg from './modules/epg.js';
 import * as ui from './modules/ui.js';
 import * as locale from './modules/locale.js';
 import { initCasting } from './modules/casting.js';
+import { initGoogleCast } from './modules/google-cast.js';
 
 // App state
 let currentCredentials = null;
@@ -69,6 +70,10 @@ async function init() {
   if (videoElement) {
     player.init(videoElement);
     initCasting(videoElement, () => {
+      const url = player.getCurrentUrl();
+      return url ? storage.applyProxyToUrl(url) : null;
+    });
+    initGoogleCast(() => {
       const url = player.getCurrentUrl();
       return url ? storage.applyProxyToUrl(url) : null;
     });
