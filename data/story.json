@@ -297,7 +297,7 @@
     "year": "August 2026",
     "title": "Launching Yap",
     "caption": "I launched Yap in August 2026. Hold Fn to dictate into any Mac app, or record a longer note with speaker identification and text cleanup. It works with a ChatGPT plan or an OpenAI key.",
-    "image": "yap/icon.png",
+    "image": "assets/images/projects/yap.png",
     "type": "photo",
     "placeholder": "ai",
     "tag": "ai",
