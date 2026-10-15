@@ -1,954 +1,628 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yap — Voice to text, without the mess</title>
-    <meta name="description" content="macOS dictation that actually formats your words. Speak naturally, get clean notes, or ask about what is on your screen. Record meetings without joining the call. Free, bring your own API key.">
-    <link rel="icon" type="image/png" href="icon.png">
-    <style>
-        :root {
-            --bg: #0f2422;
-            --bg-surface: #153230;
-            --bg-card: #1b3f3c;
-            --text: #eef3f1;
-            --text-muted: #bccbc6;
-            --teal: #4fd1b5;
-            --teal-dim: #2a7d6e;
-            --ink-on-teal: #062520;
-            --coral: #ff9473;
-            --coral-light: #ffab90;
-            --gold: #d4a855;
-            --gold-dim: #a07830;
-            --white: #faf8f5;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* ─── NAV ─── */
-        nav {
-            padding: 1.5rem 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            max-width: 1080px;
-            margin: 0 auto;
-        }
-
-        .nav-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }
-
-        .nav-brand img {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-        }
-
-        .nav-brand span {
-            font-size: 1.2rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.2s;
-        }
-
-        .nav-links a:hover { color: var(--text); }
-
-        /* ─── HERO ─── */
-        .hero {
-            padding: 4rem 2rem 2.5rem;
-            max-width: 1080px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: auto auto auto;
-            column-gap: 3rem;
-            align-items: start;
-        }
-
-        .hero-badge {
-            grid-column: 1 / -1;
-            justify-self: start;
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            background: var(--bg-card);
-            border: 1px solid var(--teal-dim);
-            border-radius: 6px;
-            font-size: 0.75rem;
-            color: var(--teal);
-            font-weight: 500;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            margin-bottom: 1.2rem;
-        }
-
-        .hero h1 {
-            font-size: clamp(2.5rem, 6vw, 4rem);
-            font-weight: 700;
-            line-height: 1.1;
-            letter-spacing: -0.03em;
-            margin-bottom: 1.2rem;
-        }
-
-        .hero h1 .accent {
-            color: var(--coral);
-        }
-
-        .hero-right {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding-top: 0.5rem;
-        }
-
-        .hero-sub {
-            font-size: 1.05rem;
-            color: var(--text-muted);
-            margin-bottom: 1.8rem;
-            line-height: 1.65;
-        }
-
-        .hero-actions {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        @media (max-width: 740px) {
-            .hero {
-                grid-template-columns: 1fr;
-            }
-            .hero-right {
-                padding-top: 0;
-            }
-        }
-
-        .btn-download {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.6rem;
-            padding: 0.85rem 1.6rem;
-            background: var(--teal);
-            color: var(--ink-on-teal);
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.95rem;
-            transition: background 0.2s, transform 0.15s;
-        }
-
-        .btn-download:hover {
-            background: #6fe0c8;
-            transform: translateY(-1px);
-        }
-
-        .btn-download:focus-visible, .nav-links a:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
-
-        .btn-download svg {
-            width: 18px;
-            height: 18px;
-        }
-
-        .hero-meta {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .hero-meta span {
-            opacity: 0.5;
-            margin: 0 0.4rem;
-        }
-
-        /* ─── APP MOCK ─── */
-        .app-mock {
-            padding: 2rem 2rem 2.5rem;
-            max-width: 1080px;
-            margin: 0 auto;
-        }
-
-        .mock-window {
-            background: rgba(15,38,36,.95);
-            border: 1px solid rgba(61,184,160,.12);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0,0,0,.4);
-        }
-
-        .mock-titlebar {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 10px 14px;
-            background: rgba(0,0,0,.2);
-        }
-
-        .mock-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-
-        .mock-dot:nth-child(1) { background: #ff5f57; }
-        .mock-dot:nth-child(2) { background: #febc2e; }
-        .mock-dot:nth-child(3) { background: #28c840; }
-
-        .mock-body {
-            display: flex;
-            min-height: 280px;
-        }
-
-        .mock-sidebar {
-            width: 155px;
-            border-right: 1px solid rgba(255,255,255,.06);
-            padding: 12px 0;
-            flex-shrink: 0;
-        }
-
-        @media (max-width: 600px) {
-            .mock-sidebar { display: none; }
-        }
-
-        .mock-sb-title {
-            font-size: 10px;
-            font-weight: 600;
-            padding: 0 12px 8px;
-            color: var(--text);
-            border-bottom: 1px solid rgba(255,255,255,.06);
-            margin-bottom: 8px;
-        }
-
-        .mock-sb-grp {
-            font-size: 9px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
-            padding: 6px 12px 3px;
-        }
-
-        .mock-sb-item {
-            font-size: 10.5px;
-            padding: 5px 12px;
-            color: var(--text-muted);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .mock-sb-item.active {
-            background: rgba(255,255,255,.06);
-            color: var(--text);
-        }
-
-        .mock-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 12px 16px;
-            min-width: 0;
-        }
-
-        .mock-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .mock-title {
-            font-size: 11.5px;
-            font-weight: 600;
-            flex: 1;
-        }
-
-        .mock-tabs {
-            display: flex;
-            gap: 2px;
-            margin-bottom: 12px;
-        }
-
-        .mock-tab {
-            font-size: 9.5px;
-            padding: 3px 10px;
-            border-radius: 100px;
-            color: var(--text-muted);
-        }
-
-        .mock-tab.active {
-            background: rgba(255,255,255,.08);
-            color: var(--text);
-        }
-
-        .mock-content {
-            flex: 1;
-            font-size: 12px;
-            line-height: 1.7;
-            color: var(--text);
-            overflow: hidden;
-        }
-
-        .mock-content p { margin-bottom: 8px; }
-
-        .mock-speaker {
-            font-weight: 600;
-            display: block;
-            margin-top: 10px;
-        }
-
-        .mock-controls {
-            display: flex;
-            gap: 6px;
-            padding-top: 10px;
-            border-top: 1px solid rgba(255,255,255,.06);
-            margin-top: auto;
-        }
-
-        .mock-btn {
-            font-size: 9.5px;
-            padding: 3px 12px;
-            border-radius: 100px;
-            border: 1px solid var(--text-muted);
-            color: var(--text-muted);
-        }
-
-        .mock-btn.primary {
-            background: var(--coral);
-            border-color: var(--coral);
-            color: #fff;
-        }
-
-        /* Floating pebble + recording status below the window */
-        .mock-status {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.8rem;
-            margin-top: 1rem;
-        }
-
-        .mock-pebble {
-            width: 44px;
-            height: 22px;
-            border-radius: 100px;
-            background: rgba(15,38,36,.92);
-            border: 1px solid rgba(61,184,160,.25);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 3px;
-        }
-
-        .mock-pebble span {
-            width: 3px;
-            height: 3px;
-            border-radius: 50%;
-            background: var(--coral);
-            animation: wave 1.2s ease-in-out infinite;
-        }
-        .mock-pebble span:nth-child(2) { animation-delay: .1s; }
-        .mock-pebble span:nth-child(3) { animation-delay: .2s; }
-        .mock-pebble span:nth-child(4) { animation-delay: .3s; }
-        .mock-pebble span:nth-child(5) { animation-delay: .4s; }
-
-        @keyframes wave {
-            0%, 100% { transform: scaleY(1); opacity: 0.5; }
-            50% { transform: scaleY(2.2); opacity: 1; }
-        }
-
-        .mock-rec-label {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .mock-rec-label .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--coral);
-            animation: pulse 1.4s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; transform: scale(0.85); }
-            50% { opacity: 1; transform: scale(1.2); }
-        }
-
-        /* ─── MODES ─── */
-        .modes {
-            padding: 3rem 2rem 2rem;
-            max-width: 1080px;
-            margin: 0 auto;
-        }
-
-        .modes-header {
-            margin-bottom: 1.5rem;
-        }
-
-        .modes-header h2 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            margin-bottom: 0.4rem;
-        }
-
-        .modes-header p {
-            color: var(--text-muted);
-            font-size: 1rem;
-        }
-
-        .mode-cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.2rem;
-        }
-
-        @media (max-width: 900px) {
-            .mode-cards { grid-template-columns: 1fr; }
-        }
-
-        .mode-card {
-            background: var(--bg-surface);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 12px;
-            padding: 1.5rem;
-            transition: border-color 0.3s;
-        }
-
-        .mode-card:hover {
-            border-color: rgba(79, 209, 181, 0.3);
-        }
-
-        .mode-card .hotkey {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            padding: 0.25rem 0.55rem;
-            background: var(--bg-card);
-            border-radius: 6px;
-            font-family: 'SF Mono', monospace;
-            font-size: 0.8rem;
-            color: var(--gold);
-            margin-bottom: 0.8rem;
-        }
-
-        .mode-card h3 {
-            font-size: 1.15rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .mode-card p {
-            color: var(--text-muted);
-            font-size: 0.88rem;
-            line-height: 1.6;
-        }
-
-        /* ─── MEETING HIGHLIGHT ─── */
-        .meeting {
-            padding: 2.5rem 2rem;
-            max-width: 1080px;
-            margin: 0 auto;
-        }
-
-        .meeting-box {
-            background: var(--bg-surface);
-            border: 1px solid rgba(255,255,255,.05);
-            border-radius: 12px;
-            padding: 2rem;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            align-items: center;
-        }
-
-        @media (max-width: 700px) {
-            .meeting-box { grid-template-columns: 1fr; }
-        }
-
-        .meeting-text h2 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            margin-bottom: 0.6rem;
-        }
-
-        .meeting-text p {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            line-height: 1.65;
-            margin-bottom: 0.5rem;
-        }
-
-        .meeting-demo {
-            background: var(--bg-card);
-            border-radius: 8px;
-            padding: 1.2rem 1.5rem;
-            font-size: 0.85rem;
-            line-height: 1.8;
-        }
-
-        .meeting-demo .spk {
-            font-weight: 600;
-            display: block;
-            margin-top: 0.6rem;
-        }
-        .meeting-demo .spk:first-child { margin-top: 0; }
-        .meeting-demo .spk-a { color: var(--coral); }
-        .meeting-demo .spk-b { color: var(--teal); }
-        .meeting-demo .spk-c { color: var(--gold); }
-
-        .meeting-demo .words {
-            color: var(--text-muted);
-            margin-left: 0.2rem;
-        }
-
-        /* ─── FEATURES ─── */
-        .features {
-            padding: 2.5rem 2rem;
-            max-width: 1080px;
-            margin: 0 auto;
-        }
-
-        .features h2 {
-            font-size: 1.6rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            margin-bottom: 1.5rem;
-        }
-
-        .feature-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 0.8rem;
-        }
-
-        .feature-item {
-            padding: 1rem 1.2rem;
-            border-left: 2px solid var(--teal-dim);
-            transition: border-color 0.2s;
-        }
-
-        .feature-item:hover {
-            border-color: var(--teal);
-        }
-
-        .feature-item h4 {
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .feature-item p {
-            font-size: 0.82rem;
-            color: var(--text-muted);
-            line-height: 1.5;
-        }
-
-        /* ─── PRIVACY ─── */
-        .privacy {
-            padding: 2.5rem 2rem;
-            max-width: 1080px;
-            margin: 0 auto;
-        }
-
-        .privacy-box {
-            background: var(--bg-surface);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 12px;
-            padding: 2rem;
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 1.5rem;
-            align-items: start;
-        }
-
-        @media (max-width: 600px) {
-            .privacy-box { grid-template-columns: 1fr; }
-        }
-
-        .privacy-icon {
-            width: 44px;
-            height: 44px;
-            background: var(--bg-card);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .privacy-icon svg {
-            width: 22px;
-            height: 22px;
-            color: var(--teal);
-        }
-
-        .privacy-content h2 {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 0.6rem;
-        }
-
-        .privacy-content p {
-            color: var(--text-muted);
-            font-size: 0.88rem;
-            line-height: 1.65;
-            margin-bottom: 0.5rem;
-        }
-
-        .privacy-content ul {
-            list-style: none;
-            padding: 0;
-            margin-top: 0.8rem;
-        }
-
-        .privacy-content li {
-            position: relative;
-            padding-left: 1.1rem;
-            color: var(--text-muted);
-            font-size: 0.82rem;
-            margin-bottom: 0.35rem;
-        }
-
-        .privacy-content li::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0.5rem;
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            background: var(--teal-dim);
-        }
-
-        /* ─── REQUIREMENTS ─── */
-        .requirements {
-            padding: 2rem 2rem 3rem;
-            max-width: 1080px;
-            margin: 0 auto;
-        }
-
-        .requirements h2 {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-
-        .req-grid {
-            display: flex;
-            gap: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .req-item {
-            display: flex;
-            align-items: baseline;
-            gap: 0.5rem;
-        }
-
-        .req-item .label {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .req-item .value {
-            font-size: 0.88rem;
-            color: var(--text);
-            font-weight: 500;
-        }
-
-        /* ─── FOOTER ─── */
-        footer {
-            border-top: 1px solid rgba(255,255,255,0.05);
-            padding: 1.5rem 2rem;
-            max-width: 1080px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        footer p {
-            font-size: 0.78rem;
-            color: var(--text-muted);
-        }
-
-        footer a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.78rem;
-            transition: color 0.2s;
-        }
-
-        footer a:hover { color: var(--text); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yap — Talk. It writes.</title>
+<meta name="description" content="Yap turns speech into clean, formatted text on your Mac. Hold Fn to dictate anywhere, press Cmd+N to record a meeting, press Ctrl+Option+Y to ask about your screen. Free. Bring your own OpenAI key.">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" type="image/png" href="icon.png">
+<style>
+/* Tokens are the app's own (src/ui/web/tokens.css): the page follows your Mac's light or dark appearance, like Yap does. */
+:root {
+  color-scheme: dark light;
+  --bg: #0f2422; --surface: #153230; --surface-2: #1b3f3c; --sidebar: #0c1e1c;
+  --line: rgba(220,245,240,.13); --line-strong: rgba(220,245,240,.28);
+  --ink: #eef3f1; --ink-2: #bccbc6; --ink-3: #93a8a2;
+  --accent: #4fd1b5; --accent-ink: #062520; --accent-soft: rgba(79,209,181,.14);
+  --rec: #ff9473; --warn: #f2c862; --ok: #86e3a6; --danger: #ff9b92;
+  --shadow: 0 1px 2px rgba(2,14,12,.35), 0 8px 24px rgba(2,14,12,.28);
+  }
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f6f8f7; --surface: #ffffff; --surface-2: #ebf1ef; --sidebar: #edf2f0;
+    --line: rgba(16,40,36,.13); --line-strong: rgba(16,40,36,.32);
+    --ink: #10231f; --ink-2: #3b524d; --ink-3: #566d68;
+    --accent: #0c7766; --accent-ink: #ffffff; --accent-soft: rgba(12,119,102,.10);
+    --rec: #b73d17; --warn: #7d5200; --ok: #1a7440; --danger: #b3261e;
+    --shadow: 0 1px 2px rgba(16,40,36,.10), 0 8px 24px rgba(16,40,36,.12);
+  }
+}
+/* A field that is always dark, whatever the Mac is set to. */
+.always-dark {
+  color-scheme: dark;
+  --bg: #0f2422; --surface: #153230; --surface-2: #1b3f3c; --sidebar: #0c1e1c;
+  --line: rgba(220,245,240,.13); --line-strong: rgba(220,245,240,.28);
+  --ink: #eef3f1; --ink-2: #bccbc6; --ink-3: #93a8a2;
+  --accent: #4fd1b5; --accent-ink: #062520; --accent-soft: rgba(79,209,181,.14);
+  --rec: #ff9473; --warn: #f2c862; --ok: #86e3a6; --danger: #ff9b92;
+  --shadow: 0 1px 2px rgba(2,14,12,.35), 0 8px 24px rgba(2,14,12,.28);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+body {
+  font: 17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: var(--bg); color: var(--ink);
+  -webkit-font-smoothing: antialiased; text-wrap: pretty; overflow-x: hidden;
+}
+:root { --pad: clamp(16px, 2.2vw, 32px); --r: 8px; --t-display: clamp(36px, 4vw, 64px); --t-statement: clamp(24px, 2.2vw, 30px); }
+a { color: inherit; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r); }
+h1, h2, h3 { font-weight: 600; letter-spacing: -.03em; line-height: 1.04; text-wrap: balance; }
+h2 { font-size: var(--t-display); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.soft { color: var(--ink-2); }
+.small { font-size: 15px; }
+
+/* Keys on the page itself: filled chips in the text face. */
+kbd {
+  font: inherit; font-weight: 600; font-size: .86em; padding: .08em .45em; border-radius: 6px;
+  background: var(--surface-2); color: var(--ink); white-space: nowrap;
+}
+
+/* One button shape, one radius. */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 22px;
+  border: 0; border-radius: var(--r); background: var(--accent); color: var(--accent-ink);
+  font-weight: 600; text-decoration: none; transition: filter .15s, transform .1s;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn:active { transform: scale(.98); }
+.btn.sm { min-height: 40px; padding: 0 16px; font-size: 15px; }
+.btn svg { width: 18px; height: 18px; }
+
+/* ---------------------------------------------------------------- nav */
+.nav { position: sticky; top: 0; z-index: 50; background: var(--bg); }
+.nav-in { display: flex; align-items: center; gap: 28px; padding: 14px var(--pad); }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; font-size: 19px; letter-spacing: -.02em; margin-right: auto; }
+.brand img { width: 30px; height: 30px; border-radius: 7px; }
+.nav a:not(.brand):not(.btn) { font-size: 15px; text-decoration: none; color: var(--ink-2); }
+.nav a:not(.brand):not(.btn):hover { color: var(--ink); }
+
+/* ---------------------------------------------------------------- hero */
+.hero { min-height: calc(100svh - 62px); padding: 0 var(--pad) 32px; display: grid; grid-template-columns: 1fr clamp(460px, 42vw, 680px) 1fr; grid-template-rows: 1fr auto; column-gap: clamp(16px, 2.4vw, 40px); align-items: center; }
+.hero .half { font-size: var(--t-display); font-weight: 500; letter-spacing: -.035em; line-height: 1; }
+.hero .half.r { text-align: right; }
+.hero .stage { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
+.hero .hint { font-size: 15px; color: var(--ink-2); text-align: center; }
+.hero .lede { grid-column: 1 / 3; grid-row: 2; align-self: end; max-width: 460px; display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
+.hero .lede p { font-size: 18px; }
+
+/* ---------------------------------------------------------------- the product, drawn from the app's own CSS */
+[data-ui] {
+  font: 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  color: var(--ink); background: var(--bg); text-align: left;
+  border: 1px solid var(--line-strong); border-radius: 16px; overflow: hidden; text-wrap: pretty;
+  letter-spacing: 0; text-transform: none;
+}
+[data-ui] kbd { font: 11.5px/1 "SF Mono", ui-monospace, Menlo, monospace; padding: 2px 5px; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 4px; background: var(--surface); color: var(--ink-2); font-weight: 400; }
+[data-ui] h3 { font-size: 15px; font-weight: 600; letter-spacing: -.01em; line-height: 1.3; }
+[data-ui] p { margin: 0; }
+.u-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 32px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 8px; background: transparent; color: var(--ink); font-weight: 500; white-space: nowrap; } /* taste-skill-ignore: real product fragment */
+.u-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.u-btn.rec { background: var(--rec); border-color: var(--rec); color: #1d0a03; font-weight: 600; }
+.u-field { width: 100%; min-height: 32px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); display: flex; align-items: center; } /* taste-skill-ignore: real product fragment */
+.u-field.ph { color: var(--ink-3); }
+.u-ico { width: 15px; height: 15px; flex: none; }
+
+/* a screen with a document and the pebble */
+.u-screen { position: relative; aspect-ratio: 16 / 9; background: var(--sidebar); border-radius: 12px; }
+.u-doc { position: absolute; inset: 14px 14px 78px; background: var(--bg); border-radius: 8px; border: 1px solid var(--line); padding: 12px 14px; overflow: hidden; } /* taste-skill-ignore: real product fragment */
+.u-doc b { display: block; font-size: 12px; color: var(--ink-3); font-weight: 600; margin-bottom: 6px; }
+.u-doc .out { font-size: 15px; line-height: 1.55; min-height: 3em; }
+.u-doc .out:empty::before { content: "Click here, then talk."; color: var(--ink-3); }
+.u-doc .out .caret { display: inline-block; width: 7px; height: 14px; margin-left: 2px; vertical-align: -2px; background: var(--accent); animation: blink 1s steps(1) infinite; }
+.u-dock { position: absolute; left: 0; right: 0; bottom: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.u-tip { max-width: 92%; padding: 7px 12px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line-strong); color: var(--ink); font-size: 12.5px; line-height: 1.35; text-align: center; box-shadow: var(--shadow); } /* taste-skill-ignore: real product fragment */
+.u-tip .sep { color: var(--ink-3); padding: 0 6px; }
+.u-pebble { position: relative; width: 46px; height: 22px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--bg); display: flex; align-items: center; justify-content: center; gap: 4px; padding: 0; touch-action: none; transition: border-color .2s; } /* taste-skill-ignore: real product fragment */
+.u-pebble::before { content: ""; position: absolute; inset: -14px -18px; }
+.u-pebble:hover, .u-pebble:focus-visible { border-color: var(--accent); }
+.u-pebble i { width: 4px; height: 4px; border-radius: 50%; background: var(--ink-3); transition: background .3s; }
+.u-pebble.recording i { background: var(--rec); animation: wave 1.2s ease-in-out infinite; }
+.u-pebble.processing i { background: var(--warn); animation: bump 1.3s ease-in-out infinite; }
+.u-pebble.guide i { background: var(--accent); animation: bump 1.6s ease-in-out infinite; }
+.u-pebble i:nth-child(2) { animation-delay: .1s; } .u-pebble i:nth-child(3) { animation-delay: .2s; }
+.u-pebble i:nth-child(4) { animation-delay: .3s; } .u-pebble i:nth-child(5) { animation-delay: .4s; }
+@keyframes wave { 0%, 100% { transform: scaleY(1); opacity: .6; } 50% { transform: scaleY(2.4); opacity: 1; } }
+@keyframes bump { 0%, 100% { transform: scale(1); opacity: .6; } 50% { transform: scale(1.4); opacity: 1; } }
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes pulse { 0%, 100% { transform: scale(.8); opacity: .6; } 50% { transform: scale(1.15); opacity: 1; } }
+
+/* the Yap panel */
+.u-panel { display: flex; flex-direction: column; width: 100%; }
+.u-hd { display: flex; align-items: center; gap: 8px; padding: 10px 12px 4px; }
+.u-hd h3 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.u-state { display: flex; align-items: center; gap: 7px; color: var(--ink-2); }
+.u-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); }
+.u-dot.on { background: var(--rec); animation: pulse 1.4s ease-in-out infinite; }
+.u-tabs { display: flex; gap: 2px; padding: 4px 12px 0; border-bottom: 1px solid var(--line); } /* taste-skill-ignore: real product fragment */
+.u-tab { min-height: 32px; padding: 0 12px; display: inline-flex; align-items: center; color: var(--ink-2); font-weight: 500; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.u-tab.sel { color: var(--ink); border-bottom-color: var(--accent); }
+.u-body { padding: 6px 16px 14px; flex: 1; min-height: 0; overflow: hidden; }
+.u-body p { line-height: 1.6; margin: 5px 0; }
+.u-spk { display: block; margin-top: 10px; color: var(--rec); font-weight: 600; }
+.u-ctrl { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--line); } /* taste-skill-ignore: real product fragment */
+.u-ctrl .grow { flex: 1; }
+.u-body h4 { font-size: 15px; margin: 10px 0 4px; letter-spacing: -.02em; }
+.u-body ul { margin: 4px 0 4px 18px; }
+.u-body li { margin: 3px 0; line-height: 1.55; }
+.u-msgs { display: flex; flex-direction: column; gap: 12px; padding: 12px 16px; flex: 1; overflow: hidden; }
+.u-msg .who { font-size: 12px; font-weight: 600; color: var(--ink-3); margin-bottom: 2px; display: flex; gap: 8px; }
+.u-msg .who .seen { font-weight: 400; }
+.u-msg.user { align-self: flex-end; max-width: 92%; }
+.u-msg.user .who { justify-content: flex-end; }
+.u-msg.user .bubble { background: var(--accent-soft); border: 1px solid var(--line); border-radius: 12px 12px 4px 12px; padding: 8px 12px; } /* taste-skill-ignore: real product fragment */
+.u-msg.bot p { line-height: 1.6; margin: 0 0 6px; }
+.u-chip { display: inline-flex; align-items: center; gap: 4px; padding: 0 8px; min-height: 26px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface); } /* taste-skill-ignore: real product fragment */
+.u-ctx { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-bottom: 1px solid var(--line); min-height: 44px; color: var(--ink-2); } /* taste-skill-ignore: real product fragment */
+.u-compose { display: flex; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--line); } /* taste-skill-ignore: real product fragment */
+.u-compose .u-field { flex: 1; }
+.u-banner { margin: 12px 14px 0; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--warn); background: rgba(242,200,98,.13); display: flex; flex-direction: column; gap: 8px; } /* taste-skill-ignore: real product fragment */
+.u-banner p { color: var(--ink-2); }
+.u-set { padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 16px; }
+.u-set section { display: flex; flex-direction: column; gap: 6px; transition: opacity .2s; }
+.u-set .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.u-badge { font-size: 11.5px; color: var(--ink-3); }
+.u-lbl { display: block; font-weight: 600; margin-bottom: 4px; }
+.u-check { width: 14px; height: 14px; border-radius: 3px; background: var(--accent); display: inline-block; vertical-align: -2px; margin-right: 6px; }
+
+/* ---------------------------------------------------------------- how it works: one fragment pinned, three statements */
+.story { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: var(--pad); padding: clamp(80px, 12vw, 180px) var(--pad) 0; background: var(--sidebar); }
+.story > h2 { grid-column: 1 / 6; padding-bottom: 8vh; }
+.story .steps { grid-column: 1 / 6; grid-row: 2; }
+.story .step { min-height: 78vh; display: flex; flex-direction: column; justify-content: center; gap: 14px; color: var(--ink-2); transition: color .25s; }
+.story .step h3 { font-size: var(--t-statement); line-height: 1.12; }
+.story .step p { font-size: 17px; max-width: 46ch; }
+.story .step[aria-current="true"] { color: var(--ink); }
+.story .pin { grid-column: 7 / 13; grid-row: 1 / 3; position: sticky; top: 14vh; align-self: start; height: min(540px, 74vh); background: var(--surface-2); border-radius: 12px; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.story .frag { position: absolute; width: min(440px, calc(100% - 48px)); opacity: 0; transform: translateY(14px); pointer-events: none; transition: opacity .35s, transform .35s; }
+.story .pin[data-state="1"] .frag.s1, .story .pin[data-state="2"] .frag.s2, .story .pin[data-state="3"] .frag.s3 { opacity: 1; transform: none; pointer-events: auto; }
+.story .frag.s1 { width: min(480px, calc(100% - 48px)); }
+.story .tail { grid-column: 1 / 13; height: clamp(40px, 8vw, 120px); }
+
+/* ---------------------------------------------------------------- showcase: one dark row, centre panel lit */
+.show { padding: clamp(80px, 10vw, 160px) 0; background: var(--bg); color: var(--ink); }
+.show > h2 { padding: 0 var(--pad) clamp(28px, 4vw, 56px); }
+.reel { display: flex; gap: clamp(20px, 3vw, 48px); overflow-x: auto; scroll-snap-type: x mandatory; padding: 12px calc(50vw - 200px) 24px; scrollbar-width: none; align-items: flex-start; -webkit-overflow-scrolling: touch; }
+.reel::-webkit-scrollbar { display: none; }
+.reel figure { flex: none; width: 400px; scroll-snap-align: center; transition: transform .3s; transform: scale(.94); transform-origin: center top; }
+.reel figure.lit { transform: none; }
+.reel figure [data-ui] { height: 410px; box-shadow: var(--shadow); }
+.reel figcaption { padding: 18px 4px 0; font-size: 15px; color: var(--ink-2); }
+.reel figcaption strong { display: block; font-size: 17px; color: var(--ink); margin-bottom: 2px; }
+.reel figure:not(.lit) [data-ui] { box-shadow: none; }
+.show .dots { display: flex; gap: 8px; padding: 8px var(--pad) 0; }
+.show .dots button { width: 40px; height: 40px; border: 0; border-radius: var(--r); background: var(--surface); color: var(--ink); }
+.show .dots button:hover { background: var(--surface-2); }
+.show .dots svg { width: 18px; height: 18px; }
+
+/* ---------------------------------------------------------------- what's inside: one tall panel, notes in both margins */
+.inside { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: var(--pad); padding: clamp(80px, 10vw, 160px) var(--pad); background: var(--sidebar); position: relative; }
+.inside > h2 { grid-column: 1 / 13; margin-bottom: clamp(40px, 5vw, 72px); }
+.inside .plate { grid-column: 5 / 9; grid-row: 2; justify-self: center; width: 100%; max-width: 400px; position: relative; }
+.inside .plate [data-ui] { min-height: 660px; }
+.inside .notes-l, .inside .notes-r { display: contents; }
+.note { position: absolute; width: 24ch; font-size: 15px; color: var(--ink-2); }
+.note strong { display: block; font-size: 17px; color: var(--ink); font-weight: 600; margin-bottom: 2px; }
+.note.l { right: calc(100% + 40px); text-align: right; }
+.note.r { left: calc(100% + 40px); text-align: left; }
+.note { cursor: default; }
+.plate[data-focus] .u-set section { opacity: .3; }
+.plate[data-focus="key"] .u-set .k, .plate[data-focus="models"] .u-set .m, .plate[data-focus="voice"] .u-set .v,
+.plate[data-focus="folders"] .u-set .f, .plate[data-focus="dock"] .u-set .d, .plate[data-focus="files"] .u-set .n { opacity: 1; }
+
+/* ---------------------------------------------------------------- faq */
+.faq { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: var(--pad); padding: clamp(80px, 10vw, 160px) var(--pad); background: var(--bg); }
+.faq > h2 { grid-column: 1 / 5; position: sticky; top: 96px; align-self: start; font-size: clamp(36px, 4vw, 64px); }
+.faq .list { grid-column: 5 / 13; display: flex; flex-direction: column; gap: 8px; }
+.faq details { background: var(--surface); border-radius: var(--r); transition: background .2s, color .2s; }
+.faq summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 72px; padding: 14px 24px; font-weight: 600; font-size: 19px; cursor: pointer; border-radius: var(--r); }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary i { position: relative; flex: none; width: 16px; height: 16px; transition: transform .2s; }
+.faq summary i::before, .faq summary i::after { content: ""; position: absolute; left: 0; top: 6.5px; width: 16px; height: 3px; background: currentColor; }
+.faq summary i::after { transform: rotate(90deg); transition: transform .2s; }
+.faq details[open] summary i::after { transform: rotate(0deg); }
+.faq details[open] { background: var(--accent); color: var(--accent-ink); }
+.faq .ans { padding: 0 24px 24px; max-width: 54ch; font-size: 17px; }
+.faq details:not([open]):hover { background: var(--surface-2); }
+
+/* ---------------------------------------------------------------- get it */
+.get { background: var(--accent); color: var(--accent-ink); min-height: 90svh; padding: var(--pad); display: grid; grid-template-columns: repeat(12, 1fr); column-gap: var(--pad); align-items: center; }
+.get .say { grid-column: 1 / 7; align-self: end; display: flex; flex-direction: column; gap: 18px; padding-bottom: 24px; }
+.get .say h2 { font-size: clamp(56px, 7vw, 112px); line-height: .92; letter-spacing: -.045em; }
+.get .say p { font-size: 17px; max-width: 40ch; }
+.get .dialog { grid-column: 8 / 12; justify-self: end; width: 100%; max-width: 440px; --bg: #0f2422; --surface: #153230; --surface-2: #1b3f3c; --ink: #eef3f1; --ink-2: #bccbc6; --ink-3: #93a8a2; --line: rgba(220,245,240,.13); --line-strong: rgba(220,245,240,.28); --accent: #4fd1b5; --accent-ink: #062520; color: var(--ink); box-shadow: 0 2px 4px rgba(2,14,12,.3), 0 18px 48px rgba(2,14,12,.35); } /* taste-skill-ignore: real product fragment */
+.dialog .in { padding: 26px 26px 24px; display: flex; flex-direction: column; gap: 14px; }
+.dialog h3 { font-size: 20px; }
+.dialog .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.dialog .seg label { position: relative; }
+.dialog .seg input { position: absolute; opacity: 0; inset: 0; }
+.dialog .seg span { display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 8px; background: var(--surface); color: var(--ink-2); font-weight: 600; font-size: 14px; cursor: pointer; text-align: center; padding: 0 8px; }
+.dialog .seg input:checked + span { background: var(--accent); color: var(--accent-ink); }
+.dialog .seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dialog .dl { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 16px; text-decoration: none; transition: filter .15s, transform .1s; }
+.dialog .dl:hover { filter: brightness(1.08); }
+.dialog .dl:active { transform: scale(.98); }
+.dialog .dl svg { width: 18px; height: 18px; }
+.dialog .meta { font-size: 13px; color: var(--ink-2); }
+
+/* ---------------------------------------------------------------- footer */
+.foot { background: var(--bg); padding: clamp(120px, 24svh, 240px) var(--pad) 30px; display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; font-size: 15px; align-items: baseline; }
+.foot .mid { display: flex; gap: 24px; }
+.foot .mid a { color: var(--ink); text-decoration: none; }
+.foot .mid a:hover { text-decoration: underline; }
+.foot .l { color: var(--ink-2); }
+.foot .r { color: var(--ink-2); text-align: right; }
+
+/* ---------------------------------------------------------------- motion */
+.js [data-reveal] { opacity: 0; transform: translateY(24px); transition: opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1); transition-delay: calc(var(--i, 0) * 80ms); }
+.js [data-reveal].in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .js [data-reveal] { opacity: 1; transform: none; transition: none; }
+  .story .frag, .reel figure, .btn, .dialog .dl { transition: none; }
+  .u-pebble i, .u-dot, .caret { animation: none !important; }
+}
+
+/* ---------------------------------------------------------------- tablet and phone */
+@media (max-width: 1100px) {
+  .note { position: static; width: auto; text-align: left !important; }
+  .inside { grid-template-columns: 1fr; row-gap: 40px; }
+  .inside > h2, .inside .plate { grid-column: 1; text-align: left; grid-row: auto; }
+  .inside .notes { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 24px; }
+}
+@media (max-width: 820px) {
+  .nav-in { gap: 14px; } .nav-links { display: none; }
+  .hero { grid-template-columns: 1fr; grid-template-rows: auto; row-gap: 20px; padding-top: 8px; min-height: 0; }
+  .hero .half { font-size: 9vw; } .hero .stage, .hero .lede { grid-column: 1; grid-row: auto; }
+  .hero .half.r { text-align: right; } .hero .lede { padding-top: 12px; }
+  .u-screen { aspect-ratio: auto; min-height: 300px; } .u-doc { inset: 12px 12px 118px; } .hero .half:first-child { padding-top: 16px; }
+  .story { display: flex; flex-direction: column; padding-top: 72px; }
+  .story > h2 { order: 0; } .story .pin { order: 1; align-self: stretch; } .story .steps { order: 2; } .story .tail { order: 3; }
+  .story > h2 { padding-bottom: 20px; }
+  .story .pin { position: sticky; top: 56px; z-index: 5; height: 46svh; padding: 12px; margin: 0 calc(var(--pad) * -1); border-radius: 0; overflow: hidden; }
+  .story .u-panel { height: 340px !important; } .story .frag { width: calc(100% - 24px); } .story .frag.s1 { width: calc(100% - 24px); }
+  .story .step { min-height: 56svh; } .story .step h3 { font-size: 22px; }
+  .reel { padding: 12px 16px 24px; } .reel figure { width: min(340px, 82vw); }
+  .reel figure [data-ui] { height: 400px; }
+  .faq { display: block; } .faq > h2 { position: static; font-size: 9vw; margin-bottom: 24px; }
+  .faq summary { font-size: 18px; min-height: 64px; padding: 12px 20px; } .faq .ans { padding: 0 20px 20px; font-size: 16px; }
+  .get { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; min-height: 84svh; padding-top: 48px; gap: 36px; }
+  .get .say h2 { font-size: 13vw; } .get .dialog { justify-self: stretch; max-width: none; }
+  .dialog .dl { min-height: 52px; }
+  .foot { grid-template-columns: 1fr; gap: 8px; padding-top: 20svh; padding-bottom: 24px; } .foot .r { text-align: left; } .foot .mid { flex-wrap: wrap; gap: 16px; }
+  .inside .notes { grid-template-columns: 1fr; }
+}
+</style>
 </head>
 <body>
 
-<nav>
-    <div class="nav-brand">
-        <img src="icon.png" alt="Yap">
-        <span>Yap</span>
-    </div>
-    <ul class="nav-links">
-        <li><a href="#how">How it works</a></li>
-        <li><a href="#features">Features</a></li>
-        <li><a href="#privacy">Privacy</a></li>
-    </ul>
-</nav>
+<header class="nav">
+  <div class="nav-in">
+    <a class="brand" href="#top"><img src="icon.png" alt="" width="30" height="30">Yap</a>
+    <a class="nav-links" href="#how">How it works</a>
+    <a class="nav-links" href="#inside">What is inside</a>
+    <a class="nav-links" href="#questions">Questions</a>
+    <a class="btn sm" href="#get">Download</a>
+  </div>
+</header>
 
+<main id="top">
+
+<!-- ================= hero: one sentence, split by a working frame ================= -->
 <section class="hero">
-    <div class="hero-badge">Alpha &middot; macOS</div>
-    <h1>Talk. It <span class="accent">writes.</span></h1>
-    <div class="hero-right">
-        <p class="hero-sub">
-            Yap lives in your Dock and menu bar and turns speech into clean, formatted text.
-            Record meetings, dictate notes, speak at your cursor, or ask about what is on screen.
-            No subscriptions — bring your own OpenAI key.
-        </p>
-        <div class="hero-actions">
-            <a href="https://github.com/visser23/yap-releases/releases/download/v1.1.1/Yap-1.1.1-arm64.dmg" class="btn-download">
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                Apple Silicon
-            </a>
-            <a href="https://github.com/visser23/yap-releases/releases/download/v1.1.1/Yap-1.1.1-x86_64.dmg" class="btn-download" style="background:transparent;color:var(--teal);box-shadow:inset 0 0 0 1.5px var(--teal)">
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                Intel
-            </a>
-            <span class="hero-meta">v1.1.1<span>&middot;</span>macOS 12+</span>
-        </div>
+  <p class="half" data-reveal>Talk.</p>
+
+  <div class="stage" data-reveal style="--i:1">
+    <div class="u-screen" data-ui id="demo">
+      <div class="u-doc">
+        <b>Reply to Sarah</b>
+        <div class="out" id="demoOut" aria-live="polite">I think we should push the auth refactor to next sprint. The design team still needs another week.</div>
+      </div>
+      <div class="u-dock">
+        <div class="u-tip" id="demoTip" role="status"><kbd>Fn</kbd> Dictate<span class="sep">&middot;</span><kbd>Cmd</kbd>+<kbd>N</kbd> Notes<span class="sep">&middot;</span><kbd>Ctrl</kbd>+<kbd>Option</kbd>+<kbd>Y</kbd> Ask about your screen</div>
+        <button class="u-pebble" id="pebble" type="button" aria-label="Hold to try dictation. Press and hold, or hold the Space bar."><i></i><i></i><i></i><i></i><i></i></button>
+      </div>
     </div>
+    <p class="hint" id="demoHint">Hold the pebble. Say anything. Let go and the last words still land.</p>
+  </div>
+
+  <p class="half r" data-reveal style="--i:2">It writes.</p>
+
+  <div class="lede" data-reveal style="--i:3">
+    <p>Yap turns speech into clean, formatted text wherever your cursor is. Punctuation and paragraphs are fixed. Your words stay yours. Free, with your own OpenAI key.</p>
+    <a class="btn" href="#get"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Download for Mac</a>
+  </div>
 </section>
 
-<!-- App UI mockup -->
-<section class="app-mock" id="how">
-    <div class="mock-window">
-        <div class="mock-titlebar">
-            <div class="mock-dot"></div>
-            <div class="mock-dot"></div>
-            <div class="mock-dot"></div>
-        </div>
-        <div class="mock-body">
-            <div class="mock-sidebar">
-                <div class="mock-sb-title">Notes</div>
-                <div class="mock-sb-grp">Today</div>
-                <div class="mock-sb-item active">Sprint planning sync</div>
-                <div class="mock-sb-item">Product roadmap thoughts</div>
-                <div class="mock-sb-grp">Yesterday</div>
-                <div class="mock-sb-item">Client feedback call</div>
-                <div class="mock-sb-item">Architecture decision</div>
-            </div>
-            <div class="mock-main">
-                <div class="mock-header">
-                    <div class="mock-title">Sprint planning sync</div>
-                </div>
-                <div class="mock-tabs">
-                    <div class="mock-tab active">Clean</div>
-                    <div class="mock-tab">Raw</div>
-                    <div class="mock-tab">Notes</div>
-                </div>
-                <div class="mock-content">
-                    <p><span class="mock-speaker" style="color:var(--coral)">Sarah</span>
-                    I think we should push the auth refactor to next sprint. The design team still needs another week on the new flows.</p>
-                    <p><span class="mock-speaker" style="color:var(--teal)">Matt</span>
-                    Agreed. Let's keep this sprint focused on the API migration. We can pull in auth once the mocks are signed off.</p>
-                    <p><span class="mock-speaker" style="color:var(--gold)">James</span>
-                    Works for me. I'll update the board and let the stakeholders know about the shift.</p>
-                </div>
-                <div class="mock-controls">
-                    <div class="mock-btn">Copy</div>
-                    <div class="mock-btn">Convert to Notes</div>
-                    <div style="flex:1"></div>
-                    <div class="mock-btn primary">Done</div>
-                </div>
-            </div>
-        </div>
+<!-- ================= how it works: the fragment is pinned, three statements change it ================= -->
+<section class="story" id="how">
+  <h2 data-reveal>How it works</h2>
+
+  <div class="steps">
+    <div class="step" data-step="1" aria-current="true">
+      <h3>Hold <kbd>Fn</kbd> and talk.</h3>
+      <p>Yap types what you say at your cursor, in any app, and checks whether you are in email, chat or code so the formatting fits. Keep going as you let go: words you say just before releasing still make it in.</p>
     </div>
-    <!-- Pebble + recording indicator below the window -->
-    <div class="mock-status">
-        <div class="mock-pebble">
-            <span></span><span></span><span></span><span></span><span></span>
-        </div>
-        <div class="mock-rec-label">
-            <div class="dot"></div>
-            Listening&hellip;
-        </div>
+    <div class="step" data-step="2">
+      <h3>Or press <kbd>Cmd</kbd>+<kbd>N</kbd> and keep going.</h3>
+      <p>Record a whole meeting from your Mac's microphone. No bot joins the call and nobody gets an announcement. When you stop, Yap labels each speaker by name and hands you a clean note with a title.</p>
     </div>
+    <div class="step" data-step="3">
+      <h3>Then ask about your screen.</h3>
+      <p>Press <kbd>Ctrl</kbd>+<kbd>Option</kbd>+<kbd>Y</kbd> and ask about the window you are in, by voice or text. Guide answers as if it wrote the document, can search a folder you share, and never looks at Yap itself.</p>
+    </div>
+  </div>
+
+  <div class="pin" data-state="1" id="pin">
+    <div class="frag s1">
+      <div class="u-screen" data-ui>
+        <div class="u-doc"><b>Reply to Sarah</b><div class="out">Thanks for the update. I will send the revised plan by Friday, and James can take the board.</div></div>
+        <div class="u-dock"><div class="u-tip">Listening&hellip; let go to finish</div><span class="u-pebble recording" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></div>
+      </div>
+    </div>
+    <div class="frag s2">
+      <div class="u-panel" data-ui style="height:400px">
+        <div class="u-hd"><h3>Sprint planning sync</h3><span class="u-state"><span class="u-dot"></span>Ready</span></div>
+        <div class="u-tabs"><span class="u-tab sel">Clean</span><span class="u-tab">Raw</span><span class="u-tab">Guide</span></div>
+        <div class="u-body">
+          <span class="u-spk">Sarah</span><p>I think we should push the auth refactor to next sprint. The design team still needs another week on the new flows.</p>
+          <span class="u-spk">Matt</span><p>Agreed. Let's keep this sprint on the API migration and pull auth in once the mocks are signed off.</p>
+          <span class="u-spk">James</span><p>Works for me. I will update the board.</p>
+        </div>
+        <div class="u-ctrl"><span class="u-btn">Copy</span><span class="u-btn">Convert to notes</span></div>
+      </div>
+    </div>
+    <div class="frag s3">
+      <div class="u-panel" data-ui style="height:400px">
+        <div class="u-hd"><h3>Guide</h3><span class="u-state"><span class="u-dot"></span>Ready</span></div>
+        <div class="u-tabs"><span class="u-tab">Clean</span><span class="u-tab">Raw</span><span class="u-tab sel">Guide</span></div>
+        <div class="u-msgs">
+          <div class="u-msg user"><div class="who">You <span class="seen">spoken</span></div><div class="bubble">Why does the Q3 number look low?</div></div>
+          <div class="u-msg bot"><div class="who">Guide <span class="seen">looking at Numbers &mdash; Q3 budget</span></div><p>Row 14 is still a forecast. The 41k in B14 was never replaced with the actual invoice total, so the quarter sums short by about 9k.</p></div>
+        </div>
+        <div class="u-compose"><span class="u-field ph">Ask about what's on your screen</span><span class="u-btn primary">&rarr;</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="tail"></div>
 </section>
 
-<section class="modes">
-    <div class="modes-header">
-        <h2>Three ways to yap</h2>
-        <p>Dictate, take notes, or ask Yap about whatever is on your screen.</p>
-    </div>
-    <div class="mode-cards">
-        <div class="mode-card">
-            <div class="hotkey">&#8984;N</div>
-            <h3>Notes mode</h3>
-            <p>
-                Press the hotkey from anywhere. A small pill appears at the bottom of your screen.
-                Speak for as long as you want — minutes or hours. When you stop, Yap formats everything
-                into a clean note with an auto-generated title and speaker labels.
-            </p>
+<!-- ================= showcase: a dark row, the centre panel lit ================= -->
+<section class="show always-dark" aria-labelledby="showH">
+  <h2 id="showH" data-reveal>The app, at its real size</h2>
+  <div class="reel" id="row" tabindex="0" aria-label="Screens from Yap. Scroll sideways.">
+    <figure>
+      <div class="u-panel" data-ui>
+        <div class="u-hd"><h3>Untitled recording</h3><span class="u-state"><span class="u-dot on"></span>Recording</span></div>
+        <div class="u-tabs"><span class="u-tab sel">Clean</span><span class="u-tab">Raw</span><span class="u-tab">Guide</span></div>
+        <div class="u-body"><p class="soft" style="color:var(--ink-3)">Listening to the room. Yap writes it up when you stop.</p></div>
+        <div class="u-ctrl"><span class="grow"></span><span class="u-btn rec">Stop recording</span></div>
+      </div>
+      <figcaption><strong>Record the room</strong>Press Cmd+N when the meeting starts. No bot, no integration.</figcaption>
+    </figure>
+    <figure>
+      <div class="u-panel" data-ui>
+        <div class="u-hd"><h3>Client feedback call</h3><span class="u-state"><span class="u-dot"></span>Ready</span></div>
+        <div class="u-tabs"><span class="u-tab">Clean</span><span class="u-tab">Raw</span><span class="u-tab sel">Notes</span></div>
+        <div class="u-body">
+          <h4>Decisions</h4><ul><li>Ship the new onboarding on the 14th.</li><li>Keep the old pricing page until Q1.</li></ul>
+          <h4>Actions</h4><ul><li>Matt: send the revised scope.</li><li>Priya: book the usability test.</li></ul>
         </div>
-        <div class="mode-card">
-            <div class="hotkey">Fn</div>
-            <h3>Live insertion</h3>
-            <p>
-                Hold the Fn key and start talking. Yap transcribes, formats, and pastes directly
-                at your cursor — in any app. It detects context (email, Slack, code) and adjusts
-                formatting to match. Auto-latches after 10 seconds.
-            </p>
+        <div class="u-ctrl"><span class="u-btn">Copy</span><span class="u-btn">Regenerate clean text</span></div>
+      </div>
+      <figcaption><strong>Notes from a transcript</strong>One press turns the conversation into decisions and actions.</figcaption>
+    </figure>
+    <figure>
+      <div class="u-panel" data-ui>
+        <div class="u-hd"><h3>Guide</h3><span class="u-state"><span class="u-dot"></span>Ready</span></div>
+        <div class="u-tabs"><span class="u-tab">Clean</span><span class="u-tab">Raw</span><span class="u-tab sel">Guide</span></div>
+        <div class="u-ctx">Looking at <span class="u-chip">Front window</span><span class="u-chip">Project docs</span></div>
+        <div class="u-msgs">
+          <div class="u-msg user"><div class="who">You</div><div class="bubble">Which contract mentions the 30 day notice?</div></div>
+          <div class="u-msg bot"><div class="who">Guide <span class="seen">searching Project docs</span></div><p>Supplier agreement v3, clause 9.2. It says 30 days written notice, and the renewal paragraph points back to it.</p></div>
         </div>
-        <div class="mode-card">
-            <div class="hotkey">&#8963;&#8997;Y</div>
-            <h3>Guide</h3>
-            <p>
-                Press the shortcut and ask about the window you are looking at, by voice or text.
-                Guide answers as if it wrote the document, can search a folder you share, and tells
-                you what it is doing as it goes. It never looks at Yap itself.
-            </p>
+      </div>
+      <figcaption><strong>Search a folder you choose</strong>Guide tells you what it is doing as it goes.</figcaption>
+    </figure>
+    <figure>
+      <div class="u-panel" data-ui>
+        <div class="u-hd"><h3>Guide</h3><span class="u-state"><span class="u-dot"></span>Ready</span></div>
+        <div class="u-tabs"><span class="u-tab">Clean</span><span class="u-tab">Raw</span><span class="u-tab sel">Guide</span></div>
+        <div class="u-banner"><h3>Guide will send screenshots to OpenAI</h3><p>To answer, Guide sends a picture of the window you choose (and any file text it reads) to OpenAI using your API key. Nothing is stored by Yap. Do you want to go ahead?</p><div style="display:flex;gap:8px"><span class="u-btn primary">Go ahead</span><span class="u-btn">Not now</span></div></div>
+      </div>
+      <figcaption><strong>Asked before it looks</strong>Guide only sees a window after you agree, and only when you ask.</figcaption>
+    </figure>
+    <figure>
+      <div class="u-panel" data-ui>
+        <div class="u-set" style="padding-top:22px">
+          <h3 style="font-size:18px">Your OpenAI API key</h3>
+          <p class="soft" style="color:var(--ink-2)">Yap uses your own key for transcription, clean-up and Guide. It is stored in the macOS Keychain, never in a file.</p>
+          <div><span class="u-lbl">API key</span><span class="u-field">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span><p style="margin-top:6px;color:var(--ink-3)">Get one at platform.openai.com/api-keys</p></div>
+          <span class="u-btn primary" style="align-self:flex-start">Finish setup</span>
         </div>
-    </div>
+      </div>
+      <figcaption><strong>Set up in a minute</strong>Yap checks your key before it saves it, then walks you through each permission.</figcaption>
+    </figure>
+  </div>
+  <div class="dots"><button type="button" id="prevB" aria-label="Previous screen"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><button type="button" id="nextB" aria-label="Next screen"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>
 </section>
 
-<!-- Meeting recording callout -->
-<section class="meeting">
-    <div class="meeting-box">
-        <div class="meeting-text">
-            <h2>Record any meeting. From your desk.</h2>
-            <p>
-                Yap uses your Mac's microphone to capture everything in the room — or from
-                your speakers. It doesn't need to join the call or integrate with anything.
-                Just press &#8984;N when a meeting starts.
-            </p>
-            <p>
-                After you stop, Yap identifies individual speakers and labels them by name
-                (inferred from introductions or context). You get a full transcript with clear
-                attribution — no meeting bot, no awkward "an AI is recording this" notifications.
-            </p>
-        </div>
-        <div class="meeting-demo">
-            <span class="spk spk-a">Sarah</span>
-            <span class="words">I think we should push the auth refactor to next sprint. The design team still needs another week.</span>
-            <span class="spk spk-b">Matt</span>
-            <span class="words">Agreed. Let's keep this sprint focused on the API migration.</span>
-            <span class="spk spk-c">James</span>
-            <span class="words">Works for me. I'll update the board and let the stakeholders know about the shift.</span>
-        </div>
+<!-- ================= inside: one panel shown whole, notes in both margins ================= -->
+<section class="inside" id="inside" aria-labelledby="insideH">
+  <h2 id="insideH" data-reveal>Yours to control</h2>
+  <div class="plate" id="plate">
+    <div class="u-panel" data-ui>
+      <div class="u-set">
+        <div class="row"><h3 style="font-size:17px">Settings</h3><span class="u-badge">Yap 1.1.2</span></div>
+        <section class="k"><h3>OpenAI API key</h3><p class="soft" style="color:var(--ink-2)">Stored in your macOS Keychain. Yap uses it for transcription, clean-up and Guide.</p><span class="u-field">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span></section>
+        <section class="m"><h3>Models</h3>
+          <div class="row"><span>Live transcription</span><span class="u-badge">Auto-updated</span></div>
+          <div class="row"><span>Note cleanup</span><span class="u-badge">Auto-updated</span></div>
+          <div class="row"><span>Guide conversation</span><span class="u-badge">Auto-updated</span></div></section>
+        <section class="v"><h3>Voice</h3><span class="u-field">Guide speaks replies <span style="margin-left:auto;color:var(--ink-3)">on</span></span></section>
+        <section class="f"><h3>Shared folders</h3><div><span class="u-chip">Project docs</span></div></section>
+        <section class="d"><h3>Window and Dock</h3><p><span class="u-check"></span>Show Yap in the Dock</p><div><span class="u-btn">Quit Yap</span></div></section>
+        <section class="n"><h3>Your notes</h3><p class="soft" style="color:var(--ink-2)">Plain Markdown files in <kbd>~/.yap/</kbd></p></section>
+      </div>
     </div>
+    <div class="notes">
+      <div class="note l" style="top:52px" tabindex="0" data-f="key"><strong>Your key, in the Keychain</strong>Free to use. You pay OpenAI for what you use, nothing else. No account, no subscription.</div>
+      <div class="note l" style="top:168px" tabindex="0" data-f="models"><strong>Models that heal</strong>If OpenAI retires a model, Yap picks a replacement your key can use and tells you.</div>
+      <div class="note l" style="top:362px" tabindex="0" data-f="folders"><strong>Folders you choose</strong>Guide can search only the folders you share, and says what it found.</div>
+      <div class="note r" style="top:278px" tabindex="0" data-f="voice"><strong>A voice for Guide</strong>Replies are spoken if you want them to be, and silent if you do not.</div>
+      <div class="note r" style="top:424px" tabindex="0" data-f="dock"><strong>Always within reach</strong>A pebble on screen, an icon in the Dock and the menu bar. Quit any time.</div>
+      <div class="note r" style="top:546px" tabindex="0" data-f="files"><strong>Local first</strong>Notes live as Markdown on your Mac. No cloud, no sync, no telemetry.</div>
+    </div>
+  </div>
 </section>
 
-<section class="features" id="features">
-    <h2>What you get</h2>
-    <div class="feature-list">
-        <div class="feature-item">
-            <h4>Format, don't rewrite</h4>
-            <p>Punctuation, capitalisation, and paragraphs. Your words stay exactly as spoken.</p>
-        </div>
-        <div class="feature-item">
-            <h4>Speaker diarisation</h4>
-            <p>Detects who's talking and labels them by name. Works with meetings, interviews, or any multi-person conversation.</p>
-        </div>
-        <div class="feature-item">
-            <h4>Always within reach</h4>
-            <p>A small pebble on screen, an icon in the Dock and the menu bar. Move it where you like, and quit it any time.</p>
-        </div>
-        <div class="feature-item">
-            <h4>Local-first storage</h4>
-            <p>Notes saved as Markdown files on your machine. No cloud, no sync, no account needed.</p>
-        </div>
-        <div class="feature-item">
-            <h4>Context-aware formatting</h4>
-            <p>In Fn mode, detects whether you're in email, chat, or code and formats accordingly.</p>
-        </div>
-        <div class="feature-item">
-            <h4>Self-healing models</h4>
-            <p>If OpenAI retires a model, Yap picks a replacement from the ones your key can use and tells you.</p>
-        </div>
-        <div class="feature-item">
-            <h4>Free to use</h4>
-            <p>Yap costs nothing. Bring your own OpenAI API key — you only pay for what you use.</p>
-        </div>
-    </div>
+<!-- ================= questions ================= -->
+<section class="faq" id="questions">
+  <h2 data-reveal>Questions</h2>
+  <div class="list">
+    <details name="q" open><summary><span>What does it cost?</span><i aria-hidden="true"></i></summary><p class="ans">Nothing. Yap is free. You bring your own OpenAI API key and pay OpenAI directly for what you use.</p></details>
+    <details name="q"><summary><span>What leaves my Mac?</span><i aria-hidden="true"></i></summary><p class="ans">Audio goes to OpenAI for transcription and clean-up. Guide sends a picture of the window you ask about, only after you agree and only when you ask. Notes, settings and your key stay on your Mac. There is no telemetry, no analytics and no account.</p></details>
+    <details name="q"><summary><span>Do I need to install anything else?</span><i aria-hidden="true"></i></summary><p class="ans">No. Yap is a normal Mac app with everything built in. Open the disk image, drag Yap to Applications and open it.</p></details>
+    <details name="q"><summary><span>Which Macs does it run on?</span><i aria-hidden="true"></i></summary><p class="ans">macOS 12 Monterey or later, on Apple Silicon or Intel. There is one download for each.</p></details>
+    <details name="q"><summary><span>Why does it ask for permissions?</span><i aria-hidden="true"></i></summary><p class="ans">Microphone to hear you. Accessibility to type at your cursor. Input Monitoring to notice the Fn key. Screen Recording only if you use Guide. Setup walks you through each one and updates by itself when you grant it.</p></details>
+    <details name="q"><summary><span>Fn opens the emoji picker instead of Yap</span><i aria-hidden="true"></i></summary><p class="ans">In System Settings, Keyboard, set "Press the globe key to" to Do Nothing. macOS then leaves the key to Yap.</p></details>
+    <details name="q"><summary><span>Does Guide look at Yap itself?</span><i aria-hidden="true"></i></summary><p class="ans">Never. It ignores its own window and looks at the one you were using.</p></details>
+    <details name="q"><summary><span>Is it finished?</span><i aria-hidden="true"></i></summary><p class="ans">No. Yap is alpha software and you may meet rough edges. It is signed and notarised by Apple, so it opens without warnings.</p></details>
+  </div>
 </section>
 
-<section class="privacy" id="privacy">
-    <div class="privacy-box">
-        <div class="privacy-icon">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        </div>
-        <div class="privacy-content">
-            <h2>Your data stays yours</h2>
-            <p>
-                Yap processes audio through OpenAI's Whisper and GPT APIs — that's the only time
-                data leaves your machine. Everything else is local.
-            </p>
-            <ul>
-                <li>Notes stored as plain Markdown in ~/.yap/</li>
-                <li>API key stored in macOS Keychain</li>
-                <li>No telemetry, no analytics, no accounts</li>
-                <li>Guide sends a screenshot of the window you ask about to OpenAI, only after you agree and only when you ask</li>
-                <li>No data sent anywhere except OpenAI</li>
-            </ul>
-        </div>
+<!-- ================= get it: the first step, already open ================= -->
+<section class="get" id="get">
+  <div class="say">
+    <h2 data-reveal>Start<br>talking.</h2>
+    <p data-reveal style="--i:1">Open the disk image, drag Yap to Applications, and a short setup asks for your key and the permissions it needs.</p>
+  </div>
+  <div class="dialog" data-ui role="group" aria-labelledby="dlH" data-reveal style="--i:2">
+    <div class="in">
+      <h3 id="dlH">Get Yap for Mac</h3>
+      <p class="meta" style="font-size:13px"><span id="dlVer">Version 1.1.2</span> &middot; macOS 12 or later &middot; free</p>
+      <div class="seg" role="radiogroup" aria-label="Which Mac?">
+        <label><input type="radio" name="arch" value="arm64" checked><span>Apple Silicon</span></label>
+        <label><input type="radio" name="arch" value="x86_64"><span>Intel</span></label>
+      </div>
+      <a class="dl" id="dl" href="https://github.com/visser23/yap-releases/releases/download/v1.1.2/Yap-1.1.2-arm64.dmg"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span id="dlLbl">Download Yap 1.1.2</span></a>
+      <p class="meta">Not sure? Apple menu, About This Mac. A chip named M1 or later means Apple Silicon.</p>
     </div>
+  </div>
 </section>
 
-<section class="requirements">
-    <h2>Requirements</h2>
-    <div class="req-grid">
-        <div class="req-item">
-            <span class="label">OS</span>
-            <span class="value">macOS 12+ (Monterey)</span>
-        </div>
-        <div class="req-item">
-            <span class="label">Chip</span>
-            <span class="value">Apple Silicon or Intel</span>
-        </div>
-        <div class="req-item">
-            <span class="label">Key</span>
-            <span class="value">OpenAI API key</span>
-        </div>
-        <div class="req-item">
-            <span class="label">Permissions</span>
-            <span class="value">Microphone, Accessibility, Input Monitoring (Screen Recording for Guide)</span>
-        </div>
-    </div>
-</section>
+</main>
 
-<footer>
-    <p>&copy; 2026 Matt Visser &middot; Yap is alpha software. Expect rough edges.</p>
+<footer class="foot">
+  <span class="l">Yap, voice to text for Mac</span>
+  <nav class="mid" aria-label="Footer">
+    <a href="https://github.com/visser23/yap-releases/releases">All releases</a>
+    <a href="#how">How it works</a>
+    <a href="#top">Back to top</a>
+  </nav>
+  <span class="r">&copy; 2026 Matt Visser</span>
 </footer>
 
+<script>
+(function () {
+  var d = document, de = d.documentElement;
+  de.classList.add('js');
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function $(id) { return d.getElementById(id); }
+
+  /* entrances */
+  var rev = d.querySelectorAll('[data-reveal]');
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: .15 });
+    rev.forEach(function (n) { io.observe(n); });
+  } else rev.forEach(function (n) { n.classList.add('in'); });
+
+  /* the live thing: hold the pebble, words arrive in chunks, the tail still lands */
+  var out = $('demoOut'), tip = $('demoTip'), peb = $('pebble'), hint = $('demoHint');
+  var KEYS = tip.innerHTML;
+  var CHUNKS = ['I think we should push the auth refactor to next sprint.', 'The design team still needs another week.', 'Let us keep this sprint on the API migration.', 'We can pull auth in once the mocks are signed off.'];
+  var held = false, ci = 0, timer = 0, finish = 0, shown = [];
+  function paint(caret) { out.innerHTML = ''; out.appendChild(d.createTextNode(shown.join(' '))); if (caret) { var c = d.createElement('span'); c.className = 'caret'; out.appendChild(c); } }
+  function add() { if (ci < CHUNKS.length) { shown.push(CHUNKS[ci++]); paint(held); return true; } return false; }
+  function start() {
+    if (held) return; held = true; clearTimeout(finish); clearInterval(timer);
+    shown = []; ci = 0; out.innerHTML = '';
+    peb.className = 'u-pebble recording'; tip.textContent = 'Listening\u2026 let go to finish';
+    hint.textContent = 'Keep talking. Words arrive as you go.';
+    paint(true); timer = setInterval(function () { if (!add()) clearInterval(timer); }, 1300);
+  }
+  function stop() {
+    if (!held) return; held = false; clearInterval(timer);
+    peb.className = 'u-pebble processing'; tip.textContent = 'Finishing the last words\u2026';
+    finish = setTimeout(function () {
+      if (shown.length < 1) shown.push(CHUNKS[0]); else add();
+      paint(false); peb.className = 'u-pebble'; tip.innerHTML = KEYS;
+      hint.textContent = 'That is the real shape of it. Hold again to retry.';
+    }, 700);
+  }
+  peb.addEventListener('pointerdown', function (e) { e.preventDefault(); try { peb.setPointerCapture(e.pointerId); } catch (x) {} start(); });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (t) { peb.addEventListener(t, stop); });
+  peb.addEventListener('keydown', function (e) { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); start(); } });
+  peb.addEventListener('keyup', function (e) { if (e.key === ' ' || e.key === 'Enter') stop(); });
+  peb.addEventListener('blur', stop);
+
+  /* pinned story: the statement nearest the middle drives the fragment */
+  var steps = d.querySelectorAll('.step'), pin = $('pin'), sraf = 0, cur = '';
+  function pick() {
+    sraf = 0; var mid = innerHeight * (innerWidth <= 820 ? .72 : .5), best = null, bd = 1e9;
+    steps.forEach(function (s) { var r = s.getBoundingClientRect(), dd = Math.abs(r.top + r.height / 2 - mid); if (dd < bd) { bd = dd; best = s; } });
+    if (!best || best.getAttribute('data-step') === cur) return;
+    cur = best.getAttribute('data-step'); pin.setAttribute('data-state', cur);
+    steps.forEach(function (s) { s.setAttribute('aria-current', s === best ? 'true' : 'false'); });
+  }
+  addEventListener('scroll', function () { if (!sraf) sraf = requestAnimationFrame(pick); }, { passive: true });
+  addEventListener('resize', pick); pick();
+
+  /* showcase: light the panel in the middle of the row */
+  var row = $('row'), figs = row.querySelectorAll('figure'), raf = 0;
+  function lit() {
+    raf = 0; var mid = row.getBoundingClientRect().left + row.clientWidth / 2, best = null, bd = 1e9;
+    figs.forEach(function (f) { var r = f.getBoundingClientRect(), dd = Math.abs(r.left + r.width / 2 - mid); if (dd < bd) { bd = dd; best = f; } });
+    figs.forEach(function (f) { f.classList.toggle('lit', f === best); });
+  }
+  row.addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(lit); }, { passive: true });
+  addEventListener('resize', lit);
+  (function () { var f = figs[innerWidth > 820 ? 2 : 0]; row.style.scrollBehavior = 'auto'; row.scrollLeft = f.offsetLeft - (row.clientWidth - f.offsetWidth) / 2; lit(); })();
+  function go(dir) { var cur = -1; figs.forEach(function (f, i) { if (f.classList.contains('lit')) cur = i; }); var t = figs[Math.max(0, Math.min(figs.length - 1, cur + dir))]; t.scrollIntoView({ behavior: still ? 'auto' : 'smooth', inline: 'center', block: 'nearest' }); }
+  $('prevB').onclick = function () { go(-1); }; $('nextB').onclick = function () { go(1); };
+  row.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight') { e.preventDefault(); go(1); } if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); } });
+  /* a mouse wheel moves the row only when it is already being dragged; drag to scroll */
+  var down = false, sx = 0, sl = 0;
+  row.addEventListener('pointerdown', function (e) { if (e.pointerType !== 'mouse') return; down = true; sx = e.clientX; sl = row.scrollLeft; row.style.scrollSnapType = 'none'; });
+  addEventListener('pointermove', function (e) { if (down) row.scrollLeft = sl - (e.clientX - sx); });
+  addEventListener('pointerup', function () { if (down) { down = false; row.style.scrollSnapType = ''; } });
+
+  /* margin notes: hover or focus a note to light its control */
+  var plate = $('plate');
+  plate.querySelectorAll('.note').forEach(function (n) {
+    function on() { plate.setAttribute('data-focus', n.getAttribute('data-f')); }
+    function off() { plate.removeAttribute('data-focus'); }
+    n.addEventListener('mouseenter', on); n.addEventListener('focus', on);
+    n.addEventListener('mouseleave', off); n.addEventListener('blur', off);
+  });
+
+  /* download: one choice, one link */
+  var V = '1.1.2', BASE = 'https://github.com/visser23/yap-releases/releases/download/v' + V + '/Yap-' + V + '-';
+  d.querySelectorAll('input[name=arch]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      $('dl').href = BASE + r.value + '.dmg';
+      $('dlLbl').textContent = 'Download Yap ' + V + (r.value === 'x86_64' ? ' for Intel' : '');
+    });
+  });
+})();
+</script>
 </body>
 </html>
