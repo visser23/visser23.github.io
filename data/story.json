@@ -267,5 +267,53 @@
     "tag": "ai",
     "chapter": 6,
     "rotation": -2
+  },
+  {
+    "id": "semantic-browser",
+    "year": "2026",
+    "title": "Semantic Browser",
+    "caption": "Working with OpenClaw inspired me to build Semantic Browser. It turns web pages into compact, numbered text so AI agents can read, click and type without wading through the whole page.",
+    "image": "assets/images/projects/semantic-browser.png",
+    "type": "terminal",
+    "placeholder": "ai",
+    "tag": "ai",
+    "chapter": 6,
+    "rotation": 1
+  },
+  {
+    "id": "prophetai-launch",
+    "year": "April 2026",
+    "title": "Launching ProphetAI",
+    "caption": "I launched ProphetAI in April 2026. It publishes AI sports picks with the odds and reasoning, then records the results against a simulated bankroll. Wins and losses stay on the public record.",
+    "image": "assets/images/projects/prophetai.png",
+    "type": "photo",
+    "placeholder": "ai",
+    "tag": "ai",
+    "chapter": 6,
+    "rotation": -2
+  },
+  {
+    "id": "yap-launch",
+    "year": "August 2026",
+    "title": "Launching Yap",
+    "caption": "I launched Yap in August 2026. Hold Fn to dictate into any Mac app, or record a longer note with speaker identification and text cleanup. It works with a ChatGPT plan or an OpenAI key.",
+    "image": "yap/icon.png",
+    "type": "photo",
+    "placeholder": "ai",
+    "tag": "ai",
+    "chapter": 6,
+    "rotation": 2
+  },
+  {
+    "id": "slideclark-launch",
+    "year": "October 2026",
+    "title": "Launching Slideclark",
+    "caption": "I launched Slideclark in October 2026, taking Pitchcraft to its own home. An AI assistant writes the slides; I can edit them visually, present in the browser or export to PowerPoint.",
+    "image": "assets/images/projects/slideclark.webp",
+    "type": "photo",
+    "placeholder": "ai",
+    "tag": "ai",
+    "chapter": 6,
+    "rotation": -1
   }
 ]

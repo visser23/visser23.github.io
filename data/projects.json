@@ -12,14 +12,14 @@
     "featured": true
   },
   {
-    "title": "Pitchcraft",
-    "slug": "pitchcraft",
+    "title": "Slideclark",
+    "slug": "slideclark",
     "category": "product",
     "status": "live",
     "year": "2026",
-    "summary": "Free browser presentation studio. A deck is plain JSON, so any AI assistant can write it and you just present.",
-    "link": "/pitchcraft/",
-    "external": false,
+    "summary": "Browser presentation editor. Build slides with an AI assistant, edit them visually, then present or export to PowerPoint.",
+    "link": "https://slideclark.com",
+    "external": true,
     "icon": "slides",
     "featured": true
   },
