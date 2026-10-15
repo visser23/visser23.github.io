@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Yap — Talk. It writes.</title>
-<meta name="description" content="Yap turns speech into clean, formatted text on your Mac. Hold Fn to dictate anywhere, press Cmd+N to record a meeting, press Ctrl+Option+Y to ask about your screen. Free. Bring your own OpenAI key.">
+<meta name="description" content="Yap turns speech into clean, formatted text on your Mac. Hold Fn to dictate anywhere, press Cmd+N to record a meeting, press Ctrl+Option+Y to ask about your screen. Free. Use your ChatGPT plan or your own OpenAI key.">
 <meta name="color-scheme" content="dark light">
 <link rel="icon" type="image/png" href="icon.png">
 <style>
@@ -335,7 +335,7 @@ kbd {
   <p class="half r" data-reveal style="--i:2">It writes.</p>
 
   <div class="lede" data-reveal style="--i:3">
-    <p>Yap turns speech into clean, formatted text wherever your cursor is. Punctuation and paragraphs are fixed. Your words stay yours. Free, with your own OpenAI key.</p>
+    <p>Yap turns speech into clean, formatted text wherever your cursor is. Punctuation and paragraphs are fixed. Your words stay yours. Free. Sign in with ChatGPT or bring your own OpenAI key.</p>
     <a class="btn" href="#get"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Download for Mac</a>
   </div>
 </section>
@@ -434,20 +434,20 @@ kbd {
       <div class="u-panel" data-ui>
         <div class="u-hd"><h3>Guide</h3><span class="u-state"><span class="u-dot"></span>Ready</span></div>
         <div class="u-tabs"><span class="u-tab">Clean</span><span class="u-tab">Raw</span><span class="u-tab sel">Guide</span></div>
-        <div class="u-banner"><h3>Guide will send screenshots to OpenAI</h3><p>To answer, Guide sends a picture of the window you choose (and any file text it reads) to OpenAI using your API key. Nothing is stored by Yap. Do you want to go ahead?</p><div style="display:flex;gap:8px"><span class="u-btn primary">Go ahead</span><span class="u-btn">Not now</span></div></div>
+        <div class="u-banner"><h3>Guide will send screenshots to OpenAI</h3><p>To answer, Guide sends a picture of the window you choose (and any file text it reads) to OpenAI using your ChatGPT plan or API key. Nothing is stored by Yap. Do you want to go ahead?</p><div style="display:flex;gap:8px"><span class="u-btn primary">Go ahead</span><span class="u-btn">Not now</span></div></div>
       </div>
       <figcaption><strong>Asked before it looks</strong>Guide only sees a window after you agree, and only when you ask.</figcaption>
     </figure>
     <figure>
       <div class="u-panel" data-ui>
         <div class="u-set" style="padding-top:22px">
-          <h3 style="font-size:18px">Your OpenAI API key</h3>
-          <p class="soft" style="color:var(--ink-2)">Yap uses your own key for transcription, clean-up and Guide. It is stored in the macOS Keychain, never in a file.</p>
-          <div><span class="u-lbl">API key</span><span class="u-field">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span><p style="margin-top:6px;color:var(--ink-3)">Get one at platform.openai.com/api-keys</p></div>
+          <h3 style="font-size:18px">Connect Yap to OpenAI</h3>
+          <p class="soft" style="color:var(--ink-2)">Sign in with your ChatGPT plan, or use your own key. Either is stored in the macOS Keychain, never in a plain file.</p>
+          <div><span class="u-btn primary" style="display:inline-block;margin-bottom:10px">Continue with ChatGPT</span><br><span class="u-lbl">Or use an API key</span><span class="u-field">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span><p style="margin-top:6px;color:var(--ink-3)">Get one at platform.openai.com/api-keys</p></div>
           <span class="u-btn primary" style="align-self:flex-start">Finish setup</span>
         </div>
       </div>
-      <figcaption><strong>Set up in a minute</strong>Yap checks your key before it saves it, then walks you through each permission.</figcaption>
+      <figcaption><strong>Set up in a minute</strong>Continue with ChatGPT or paste a key (Yap checks it first), then it walks you through each permission.</figcaption>
     </figure>
   </div>
   <div class="dots"><button type="button" id="prevB" aria-label="Previous screen"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><button type="button" id="nextB" aria-label="Next screen"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>
@@ -459,8 +459,8 @@ kbd {
   <div class="plate" id="plate">
     <div class="u-panel" data-ui>
       <div class="u-set">
-        <div class="row"><h3 style="font-size:17px">Settings</h3><span class="u-badge">Yap 1.1.2</span></div>
-        <section class="k"><h3>OpenAI API key</h3><p class="soft" style="color:var(--ink-2)">Stored in your macOS Keychain. Yap uses it for transcription, clean-up and Guide.</p><span class="u-field">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span></section>
+        <div class="row"><h3 style="font-size:17px">Settings</h3><span class="u-badge">Yap 1.2.0</span></div>
+        <section class="k"><h3>Connection</h3><p class="soft" style="color:var(--ink-2)">Signed in with your ChatGPT plan, or an API key. Either way it lives in your macOS Keychain.</p><span class="u-field">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span></section>
         <section class="m"><h3>Models</h3>
           <div class="row"><span>Live transcription</span><span class="u-badge">Auto-updated</span></div>
           <div class="row"><span>Note cleanup</span><span class="u-badge">Auto-updated</span></div>
@@ -472,7 +472,7 @@ kbd {
       </div>
     </div>
     <div class="notes">
-      <div class="note l" style="top:52px" tabindex="0" data-f="key"><strong>Your key, in the Keychain</strong>Free to use. You pay OpenAI for what you use, nothing else. No account, no subscription.</div>
+      <div class="note l" style="top:52px" tabindex="0" data-f="key"><strong>Plan or key, in the Keychain</strong>Free to use. Sign in with ChatGPT (no API key) or pay OpenAI for what you use. No Yap account.</div>
       <div class="note l" style="top:168px" tabindex="0" data-f="models"><strong>Models that heal</strong>If OpenAI retires a model, Yap picks a replacement your key can use and tells you.</div>
       <div class="note l" style="top:362px" tabindex="0" data-f="folders"><strong>Folders you choose</strong>Guide can search only the folders you share, and says what it found.</div>
       <div class="note r" style="top:278px" tabindex="0" data-f="voice"><strong>A voice for Guide</strong>Replies are spoken if you want them to be, and silent if you do not.</div>
@@ -486,11 +486,11 @@ kbd {
 <section class="faq" id="questions">
   <h2 data-reveal>Questions</h2>
   <div class="list">
-    <details name="q" open><summary><span>What does it cost?</span><i aria-hidden="true"></i></summary><p class="ans">Nothing. Yap is free. You bring your own OpenAI API key and pay OpenAI directly for what you use.</p></details>
-    <details name="q"><summary><span>What leaves my Mac?</span><i aria-hidden="true"></i></summary><p class="ans">Audio goes to OpenAI for transcription and clean-up. Guide sends a picture of the window you ask about, only after you agree and only when you ask. Notes, settings and your key stay on your Mac. There is no telemetry, no analytics and no account.</p></details>
+    <details name="q" open><summary><span>What does it cost?</span><i aria-hidden="true"></i></summary><p class="ans">Nothing. Yap is free. Sign in with your ChatGPT Plus or Pro plan (usage counts toward your plan limits), or bring your own OpenAI API key and pay OpenAI directly for what you use.</p></details>
+    <details name="q"><summary><span>What leaves my Mac?</span><i aria-hidden="true"></i></summary><p class="ans">With an API key, audio goes to OpenAI for transcription and clean-up. When you sign in with ChatGPT, speech is turned into text on your Mac and only the text goes to OpenAI. Guide sends a picture of the window you ask about, only after you agree and only when you ask. Notes, settings and your key stay on your Mac. There is no telemetry, no analytics and no account.</p></details>
     <details name="q"><summary><span>Do I need to install anything else?</span><i aria-hidden="true"></i></summary><p class="ans">No. Yap is a normal Mac app with everything built in. Open the disk image, drag Yap to Applications and open it.</p></details>
     <details name="q"><summary><span>Which Macs does it run on?</span><i aria-hidden="true"></i></summary><p class="ans">macOS 12 Monterey or later, on Apple Silicon or Intel. There is one download for each.</p></details>
-    <details name="q"><summary><span>Why does it ask for permissions?</span><i aria-hidden="true"></i></summary><p class="ans">Microphone to hear you. Accessibility to type at your cursor. Input Monitoring to notice the Fn key. Screen Recording only if you use Guide. Setup walks you through each one and updates by itself when you grant it.</p></details>
+    <details name="q"><summary><span>Why does it ask for permissions?</span><i aria-hidden="true"></i></summary><p class="ans">Microphone to hear you. Accessibility to type at your cursor. Input Monitoring to notice the Fn key. Speech Recognition if you sign in with ChatGPT. Screen Recording only if you use Guide. Setup walks you through each one and updates by itself when you grant it.</p></details>
     <details name="q"><summary><span>Fn opens the emoji picker instead of Yap</span><i aria-hidden="true"></i></summary><p class="ans">In System Settings, Keyboard, set "Press the globe key to" to Do Nothing. macOS then leaves the key to Yap.</p></details>
     <details name="q"><summary><span>Does Guide look at Yap itself?</span><i aria-hidden="true"></i></summary><p class="ans">Never. It ignores its own window and looks at the one you were using.</p></details>
     <details name="q"><summary><span>Is it finished?</span><i aria-hidden="true"></i></summary><p class="ans">No. Yap is alpha software and you may meet rough edges. It is signed and notarised by Apple, so it opens without warnings.</p></details>
@@ -501,17 +501,17 @@ kbd {
 <section class="get" id="get">
   <div class="say">
     <h2 data-reveal>Start<br>talking.</h2>
-    <p data-reveal style="--i:1">Open the disk image, drag Yap to Applications, and a short setup asks for your key and the permissions it needs.</p>
+    <p data-reveal style="--i:1">Open the disk image, drag Yap to Applications, and a short setup connects ChatGPT (or your key) and asks for the permissions it needs.</p>
   </div>
   <div class="dialog" data-ui role="group" aria-labelledby="dlH" data-reveal style="--i:2">
     <div class="in">
       <h3 id="dlH">Get Yap for Mac</h3>
-      <p class="meta" style="font-size:13px"><span id="dlVer">Version 1.1.2</span> &middot; macOS 12 or later &middot; free</p>
+      <p class="meta" style="font-size:13px"><span id="dlVer">Version 1.2.0</span> &middot; macOS 12 or later &middot; free</p>
       <div class="seg" role="radiogroup" aria-label="Which Mac?">
         <label><input type="radio" name="arch" value="arm64" checked><span>Apple Silicon</span></label>
         <label><input type="radio" name="arch" value="x86_64"><span>Intel</span></label>
       </div>
-      <a class="dl" id="dl" href="https://github.com/visser23/yap-releases/releases/download/v1.1.2/Yap-1.1.2-arm64.dmg"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span id="dlLbl">Download Yap 1.1.2</span></a>
+      <a class="dl" id="dl" href="https://github.com/visser23/yap-releases/releases/download/v1.2.0/Yap-1.2.0-arm64.dmg"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span id="dlLbl">Download Yap 1.2.0</span></a>
       <p class="meta">Not sure? Apple menu, About This Mac. A chip named M1 or later means Apple Silicon.</p>
     </div>
   </div>
@@ -615,7 +615,7 @@ kbd {
   });
 
   /* download: one choice, one link */
-  var V = '1.1.2', BASE = 'https://github.com/visser23/yap-releases/releases/download/v' + V + '/Yap-' + V + '-';
+  var V = '1.2.0', BASE = 'https://github.com/visser23/yap-releases/releases/download/v' + V + '/Yap-' + V + '-';
   d.querySelectorAll('input[name=arch]').forEach(function (r) {
     r.addEventListener('change', function () {
       $('dl').href = BASE + r.value + '.dmg';
