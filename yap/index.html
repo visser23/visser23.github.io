@@ -4,19 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yap — Voice to text, without the mess</title>
-    <meta name="description" content="macOS dictation that actually formats your words. Speak naturally, get clean notes. Record meetings without joining the call. Free, bring your own API key.">
+    <meta name="description" content="macOS dictation that actually formats your words. Speak naturally, get clean notes, or ask about what is on your screen. Record meetings without joining the call. Free, bring your own API key.">
     <link rel="icon" type="image/png" href="icon.png">
     <style>
         :root {
-            --bg: #0f2624;
-            --bg-surface: #132e2b;
-            --bg-card: #1a3d39;
-            --text: #e8e4df;
-            --text-muted: #9aaba7;
-            --teal: #3db8a0;
+            --bg: #0f2422;
+            --bg-surface: #153230;
+            --bg-card: #1b3f3c;
+            --text: #eef3f1;
+            --text-muted: #bccbc6;
+            --teal: #4fd1b5;
             --teal-dim: #2a7d6e;
-            --coral: #e07850;
-            --coral-light: #f0956a;
+            --ink-on-teal: #062520;
+            --coral: #ff9473;
+            --coral-light: #ffab90;
             --gold: #d4a855;
             --gold-dim: #a07830;
             --white: #faf8f5;
@@ -95,7 +96,7 @@
             padding: 0.3rem 0.8rem;
             background: var(--bg-card);
             border: 1px solid var(--teal-dim);
-            border-radius: 100px;
+            border-radius: 6px;
             font-size: 0.75rem;
             color: var(--teal);
             font-weight: 500;
@@ -151,8 +152,8 @@
             align-items: center;
             gap: 0.6rem;
             padding: 0.85rem 1.6rem;
-            background: var(--coral);
-            color: var(--white);
+            background: var(--teal);
+            color: var(--ink-on-teal);
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
@@ -161,9 +162,11 @@
         }
 
         .btn-download:hover {
-            background: var(--coral-light);
+            background: #6fe0c8;
             transform: translateY(-1px);
         }
+
+        .btn-download:focus-visible, .nav-links a:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
 
         .btn-download svg {
             width: 18px;
@@ -421,11 +424,11 @@
 
         .mode-cards {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 1.2rem;
         }
 
-        @media (max-width: 700px) {
+        @media (max-width: 900px) {
             .mode-cards { grid-template-columns: 1fr; }
         }
 
@@ -438,7 +441,7 @@
         }
 
         .mode-card:hover {
-            border-color: rgba(61, 184, 160, 0.2);
+            border-color: rgba(79, 209, 181, 0.3);
         }
 
         .mode-card .hotkey {
@@ -728,20 +731,20 @@
     <h1>Talk. It <span class="accent">writes.</span></h1>
     <div class="hero-right">
         <p class="hero-sub">
-            Yap sits in your menu bar and turns speech into clean, formatted text.
-            Record meetings, dictate notes, or speak directly at your cursor.
+            Yap lives in your Dock and menu bar and turns speech into clean, formatted text.
+            Record meetings, dictate notes, speak at your cursor, or ask about what is on screen.
             No subscriptions — bring your own OpenAI key.
         </p>
         <div class="hero-actions">
-            <a href="https://github.com/visser23/yap-releases/releases/download/v1.1.0/Yap-1.1.0-arm64.dmg" class="btn-download">
+            <a href="https://github.com/visser23/yap-releases/releases/download/v1.1.1/Yap-1.1.1-arm64.dmg" class="btn-download">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
                 Apple Silicon
             </a>
-            <a href="https://github.com/visser23/yap-releases/releases/download/v1.1.0/Yap-1.1.0-x86_64.dmg" class="btn-download" style="background:var(--teal-dim)">
+            <a href="https://github.com/visser23/yap-releases/releases/download/v1.1.1/Yap-1.1.1-x86_64.dmg" class="btn-download" style="background:transparent;color:var(--teal);box-shadow:inset 0 0 0 1.5px var(--teal)">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
                 Intel
             </a>
-            <span class="hero-meta">v1.1.0<span>&middot;</span>macOS 12+</span>
+            <span class="hero-meta">v1.1.1<span>&middot;</span>macOS 12+</span>
         </div>
     </div>
 </section>
@@ -804,8 +807,8 @@
 
 <section class="modes">
     <div class="modes-header">
-        <h2>Two ways to yap</h2>
-        <p>Different situations, same clean output.</p>
+        <h2>Three ways to yap</h2>
+        <p>Dictate, take notes, or ask Yap about whatever is on your screen.</p>
     </div>
     <div class="mode-cards">
         <div class="mode-card">
@@ -824,6 +827,15 @@
                 Hold the Fn key and start talking. Yap transcribes, formats, and pastes directly
                 at your cursor — in any app. It detects context (email, Slack, code) and adjusts
                 formatting to match. Auto-latches after 10 seconds.
+            </p>
+        </div>
+        <div class="mode-card">
+            <div class="hotkey">&#8963;&#8997;Y</div>
+            <h3>Guide</h3>
+            <p>
+                Press the shortcut and ask about the window you are looking at, by voice or text.
+                Guide answers as if it wrote the document, can search a folder you share, and tells
+                you what it is doing as it goes. It never looks at Yap itself.
             </p>
         </div>
     </div>
@@ -868,8 +880,8 @@
             <p>Detects who's talking and labels them by name. Works with meetings, interviews, or any multi-person conversation.</p>
         </div>
         <div class="feature-item">
-            <h4>Menu bar native</h4>
-            <p>No dock icon, no window clutter. Lives quietly in your menu bar until you need it.</p>
+            <h4>Always within reach</h4>
+            <p>A small pebble on screen, an icon in the Dock and the menu bar. Move it where you like, and quit it any time.</p>
         </div>
         <div class="feature-item">
             <h4>Local-first storage</h4>
@@ -878,6 +890,10 @@
         <div class="feature-item">
             <h4>Context-aware formatting</h4>
             <p>In Fn mode, detects whether you're in email, chat, or code and formats accordingly.</p>
+        </div>
+        <div class="feature-item">
+            <h4>Self-healing models</h4>
+            <p>If OpenAI retires a model, Yap picks a replacement from the ones your key can use and tells you.</p>
         </div>
         <div class="feature-item">
             <h4>Free to use</h4>
@@ -901,7 +917,8 @@
                 <li>Notes stored as plain Markdown in ~/.yap/</li>
                 <li>API key stored in macOS Keychain</li>
                 <li>No telemetry, no analytics, no accounts</li>
-                <li>No data sent anywhere except OpenAI for transcription</li>
+                <li>Guide sends a screenshot of the window you ask about to OpenAI, only after you agree and only when you ask</li>
+                <li>No data sent anywhere except OpenAI</li>
             </ul>
         </div>
     </div>
@@ -916,7 +933,7 @@
         </div>
         <div class="req-item">
             <span class="label">Chip</span>
-            <span class="value">Apple Silicon</span>
+            <span class="value">Apple Silicon or Intel</span>
         </div>
         <div class="req-item">
             <span class="label">Key</span>
@@ -924,7 +941,7 @@
         </div>
         <div class="req-item">
             <span class="label">Permissions</span>
-            <span class="value">Microphone + Accessibility</span>
+            <span class="value">Microphone, Accessibility, Input Monitoring (Screen Recording for Guide)</span>
         </div>
     </div>
 </section>
