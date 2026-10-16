@@ -459,7 +459,7 @@ kbd {
   <div class="plate" id="plate">
     <div class="u-panel" data-ui>
       <div class="u-set">
-        <div class="row"><h3 style="font-size:17px">Settings</h3><span class="u-badge">Yap 1.2.0</span></div>
+        <div class="row"><h3 style="font-size:17px">Settings</h3><span class="u-badge">Yap 1.3.0</span></div>
         <section class="k"><h3>Connection</h3><p class="soft" style="color:var(--ink-2)">Signed in with your ChatGPT plan, or an API key. Either way it lives in your macOS Keychain.</p><span class="u-field">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span></section>
         <section class="m"><h3>Models</h3>
           <div class="row"><span>Live transcription</span><span class="u-badge">Auto-updated</span></div>
@@ -506,12 +506,12 @@ kbd {
   <div class="dialog" data-ui role="group" aria-labelledby="dlH" data-reveal style="--i:2">
     <div class="in">
       <h3 id="dlH">Get Yap for Mac</h3>
-      <p class="meta" style="font-size:13px"><span id="dlVer">Version 1.2.0</span> &middot; macOS 12 or later &middot; free</p>
+      <p class="meta" style="font-size:13px"><span id="dlVer">Version 1.3.0</span> &middot; macOS 12 or later &middot; free</p>
       <div class="seg" role="radiogroup" aria-label="Which Mac?">
         <label><input type="radio" name="arch" value="arm64" checked><span>Apple Silicon</span></label>
         <label><input type="radio" name="arch" value="x86_64"><span>Intel</span></label>
       </div>
-      <a class="dl" id="dl" href="https://github.com/visser23/yap-releases/releases/download/v1.2.0/Yap-1.2.0-arm64.dmg"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span id="dlLbl">Download Yap 1.2.0</span></a>
+      <a class="dl" id="dl" href="https://github.com/visser23/yap-releases/releases/download/v1.3.0/Yap-1.3.0-arm64.dmg"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span id="dlLbl">Download Yap 1.3.0</span></a>
       <p class="meta">Not sure? Apple menu, About This Mac. A chip named M1 or later means Apple Silicon.</p>
     </div>
   </div>
@@ -615,7 +615,7 @@ kbd {
   });
 
   /* download: one choice, one link */
-  var V = '1.2.0', BASE = 'https://github.com/visser23/yap-releases/releases/download/v' + V + '/Yap-' + V + '-';
+  var V = '1.3.0', BASE = 'https://github.com/visser23/yap-releases/releases/download/v' + V + '/Yap-' + V + '-';
   d.querySelectorAll('input[name=arch]').forEach(function (r) {
     r.addEventListener('change', function () {
       $('dl').href = BASE + r.value + '.dmg';
