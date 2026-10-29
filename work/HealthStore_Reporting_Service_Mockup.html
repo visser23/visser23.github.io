@@ -308,62 +308,12 @@
   .domain-list li{margin-bottom:6px;}
   .domain-list strong{font-weight:600;}
 
-  /* password gate */
-  #pw-gate{position:fixed;inset:0;z-index:9999;background:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font);}
-  #pw-gate.hidden{display:none;}
-  .pw-box{text-align:center;max-width:380px;padding:40px;}
-  .pw-box svg{width:80px;height:32px;display:block;margin:0 auto 24px;}
-  .pw-box h2{font-size:24px;font-weight:600;color:var(--ink);margin:0 0 8px;}
-  .pw-box p{font-size:15px;color:var(--grey-1);margin:0 0 20px;}
-  .pw-box input{width:100%;box-sizing:border-box;padding:10px 14px;font-size:16px;font-family:var(--font);border:2px solid var(--grey-3);margin-bottom:12px;}
-  .pw-box input:focus{outline:4px solid var(--nhs-yellow);border-color:var(--ink);}
-  .pw-box button{background:var(--nhs-green);color:#fff;border:0;padding:12px 32px;font-size:16px;font-weight:600;font-family:var(--font);cursor:pointer;width:100%;}
-  .pw-box button:hover{background:#005a30;}
-  .pw-box .pw-err{color:var(--nhs-red);font-size:14px;font-weight:600;margin-top:8px;display:none;}
 </style>
 </head>
 <body>
 
-<div id="pw-gate">
-  <div class="pw-box">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 16" role="img" aria-label="NHS">
-      <path fill="#005eb8" d="M0 0h40v16H0z"></path>
-      <path fill="#ffffff" d="M3.9 1.5h4.4l2.6 9h.1l1.8-9h3.3l-2.7 13H9l-2.7-9h-.1l-1.8 9H1.1M17.3 1.5h3.6l-1 4.9h4L25 1.5h3.5l-2.7 13h-3.5l1.1-5.6h-4.1l-1.2 5.6h-3.5M37.7 4.4c-.7-.3-1.6-.6-2.9-.6-1.4 0-2.5.2-2.5 1.3 0 1.8 5.1 1.2 5.1 5.1 0 3.6-3.3 4.5-6.4 4.5-1.3 0-2.9-.3-4-.7l.8-2.7c.7.4 2 .7 3.1.7s2.8-.2 2.8-1.5c0-2.1-5.1-1.3-5.1-5 0-3.4 3-4.4 5.9-4.4 1.6 0 3.1.2 4 .6"></path>
-    </svg>
-    <h2>HealthStore Reporting</h2>
-    <p>This document is restricted. Enter the access code to continue.</p>
-    <form id="pw-form" onsubmit="return false;">
-      <input type="password" id="pw-input" placeholder="Access code" autocomplete="off" autofocus>
-      <button type="submit" id="pw-btn">Continue</button>
-      <div class="pw-err" id="pw-err">Incorrect code. Try again.</div>
-    </form>
-  </div>
-</div>
-
-<script>
-(function(){
-  var h='-800hhb',k=function(s){for(var r=0,i=0;i<s.length;i++){r=((r<<5)-r)+s.charCodeAt(i);r|=0;}return r.toString(36);};
-  var gate=document.getElementById('pw-gate');
-  if(sessionStorage.getItem('hs-auth')==='1'){gate.classList.add('hidden');}
-  document.getElementById('pw-btn').addEventListener('click',function(){
-    var v=document.getElementById('pw-input').value;
-    if(k(v)===h){
-      gate.classList.add('hidden');
-      sessionStorage.setItem('hs-auth','1');
-    } else {
-      document.getElementById('pw-err').style.display='block';
-      document.getElementById('pw-input').value='';
-      document.getElementById('pw-input').focus();
-    }
-  });
-  document.getElementById('pw-input').addEventListener('keydown',function(e){
-    if(e.key==='Enter') document.getElementById('pw-btn').click();
-  });
-})();
-</script>
-
 <div class="demo-banner">
-  <div class="inner"><strong>Prototype service page.</strong> Figures are synthetic to demonstrate the final reporting layout and content model. Suppliers, products and ICBs are fictional.</div>
+  <div class="inner"><strong>Public demonstration, not a live NHS service.</strong> Figures are synthetic to demonstrate the final reporting layout and content model. Suppliers, products and ICBs are fictional.</div>
 </div>
 
 <header class="app">
