@@ -12,7 +12,7 @@ ProphetAI and Yap artwork belongs to Matt’s own projects and is reproduced her
 Project descriptions were checked against those sites, https://visser23.github.io/yap/ and the public Semantic Browser and Yap READMEs. Launch months and the OpenClaw inspiration were supplied by Matt; the public sources do not independently establish them. Semantic Browser has no supplied launch month, so its card retains a year-only date alongside the existing year-only 2026 entry, before the dated launches.
 
 - `bore-me-to-sleep.png`: the astronaut mascot from https://bore-me-to-sleep.vercel.app/ (`/assets/img/hero-moon.webp`), centred on the site's navy (`#1E2368`) at 1140 × 960, retrieved 5 November 2026.
-- `hive.png`: screenshot of Hive (Matt's agentic harness) supplied by Matt, cropped to the main work area (sidebar removed) and centred on a dark 1140 × 960 canvas, 5 November 2026. Hive has no public site yet. The launch months for Bore Me To Sleep (October 2026) and Hive (November 2026) were supplied by Matt; the Hive card text is inferred from the screenshot.
+- `hive.png`: screenshot of Hive (Matt's agentic harness) supplied by Matt, cropped tight on the status banner and first work area so the text is legible at card size, scaled to 1140 × 960, 5 November 2026. Hive has no public site yet. The launch months for Bore Me To Sleep (October 2026) and Hive (November 2026) were supplied by Matt; the Hive card text is inferred from the screenshot.
 
 Semantic Browser is published under the following licence:
 

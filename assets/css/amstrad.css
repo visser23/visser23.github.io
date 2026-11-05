@@ -301,7 +301,40 @@
   margin-bottom: -1px;
 }
 
-/* ── The computer itself: keyboard + tape deck ── */
+/* ── The computer itself: keyboard + tape deck ──
+   Seen from a little above and in front, like the real thing on a desk: the top face is
+   tilted back in perspective (so the front rows are nearer and wider) and a front face gives it thickness. */
+#kb-stage {
+  position: relative;
+  width: 90%;
+  perspective: 150cqw;
+  perspective-origin: 50% 0;
+  margin-bottom: -0.6cqw;       /* closes the gap left by the foreshortened top face and sits the front edge on the desk */
+}
+#kb-stage::before { /* contact shadow on the desk */
+  content: '';
+  position: absolute; left: -2%; right: -2%; bottom: -1.2cqw; height: 5cqw;
+  background: radial-gradient(ellipse at 50% 40%, rgba(40,28,12,0.5), rgba(40,28,12,0.2) 55%, transparent 75%);
+  filter: blur(4px);
+  pointer-events: none;
+}
+#kb-body {
+  position: relative;
+  transform-style: preserve-3d;
+  transform-origin: 50% 0;
+  transform: rotateX(36deg);
+}
+#kb-front {
+  position: absolute; left: 0; right: 0; top: 100%;
+  height: 5.6cqw;
+  transform-origin: 50% 0;
+  transform: rotateX(-90deg);
+  background:
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.05) 0 1px, transparent 1px 7px),
+    linear-gradient(to bottom, #c3bfad 0%, #a8a490 55%, #8f8b78 100%);
+  border-radius: 0 0 14px 14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -3px 5px rgba(0,0,0,0.25);
+}
 #keyboard-unit {
   position: relative;
   width: 100%;
@@ -310,14 +343,14 @@
   align-items: flex-start;
   gap: 2.4cqw;
   background:
-    linear-gradient(to bottom, rgba(255,255,255,0.45), transparent 4%),
-    linear-gradient(170deg, #dad6c6 0%, #c6c2b0 55%, #b3af9d 100%);
-  border-radius: 8px 8px 14px 14px;
+    linear-gradient(to bottom, rgba(255,255,255,0.5), transparent 6%),
+    linear-gradient(to bottom, rgba(255,255,255,0.18), transparent 40%, rgba(0,0,0,0.08)),
+    linear-gradient(170deg, #e0dccb 0%, #cbc7b5 55%, #b9b5a2 100%);
+  border-radius: 8px 8px 4px 4px;
   box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.3),
     inset -3px -4px 8px rgba(0,0,0,0.13),
-    inset 2px 2px 5px rgba(255,255,255,0.4),
-    0 6px 10px rgba(0,0,0,0.14),
-    0 18px 24px -6px rgba(40,28,12,0.35);
+    inset 2px 2px 5px rgba(255,255,255,0.4);
 }
 #keyboard-unit::before {
   content: 'amstrad';
@@ -338,12 +371,16 @@
 
 .key {
   height: 3.35cqw;
-  background: linear-gradient(to bottom, #3a3830, #25231c);
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,0.14), transparent 35%, rgba(0,0,0,0.18)),
+    linear-gradient(to bottom, #403e35, #27251e);
   border-radius: 0.5cqw;
   box-shadow:
-    0 0.45cqw 0 #0c0b08,
-    0 0.7cqw 0.5cqw rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.12);
+    0 0.4cqw 0 #14120d,
+    0 0.8cqw 0 #0a0907,
+    0 1.2cqw 0.7cqw rgba(0,0,0,0.4),
+    inset 0 0.12cqw 0 rgba(255,255,255,0.22),
+    inset 0 0 0 0.12cqw rgba(255,255,255,0.05);
   color: #e7e2d0;
   font-family: var(--mono);
   font-size: max(5px, 1.2cqw);
@@ -353,13 +390,13 @@
   transition: transform 0.06s, box-shadow 0.06s;
 }
 .key.down, .key:active {
-  transform: translateY(0.35cqw);
-  box-shadow: 0 0.1cqw 0 #0c0b08, 0 0.2cqw 0.3cqw rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+  transform: translateY(0.5cqw);
+  box-shadow: 0 0.1cqw 0 #0a0907, 0 0.3cqw 0.3cqw rgba(0,0,0,0.35), inset 0 0.12cqw 0 rgba(255,255,255,0.18);
 }
-.key.red   { background: linear-gradient(to bottom, #d2402f, #a82619); color: #fff; box-shadow: 0 0.45cqw 0 #5d130b, 0 0.7cqw 0.5cqw rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3); }
-.key.blue  { background: linear-gradient(to bottom, #3a6fc8, #234d9a); color: #fff; box-shadow: 0 0.45cqw 0 #0f2a5c, 0 0.7cqw 0.5cqw rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3); }
-.key.pale  { background: linear-gradient(to bottom, #d9d4bf, #b9b49f); color: #2c281f; box-shadow: 0 0.45cqw 0 #6f6b5a, 0 0.7cqw 0.5cqw rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.6); }
-.key.red.down, .key.blue.down, .key.pale.down { box-shadow: 0 0.1cqw 0 rgba(0,0,0,0.5), 0 0.2cqw 0.3cqw rgba(0,0,0,0.3); }
+.key.red   { background: linear-gradient(to bottom, rgba(255,255,255,0.22), transparent 40%), linear-gradient(to bottom, #d84634, #a82619); color: #fff; box-shadow: 0 0.4cqw 0 #7d1a0f, 0 0.8cqw 0 #4a0f08, 0 1.2cqw 0.7cqw rgba(0,0,0,0.4), inset 0 0.12cqw 0 rgba(255,255,255,0.4); }
+.key.blue  { background: linear-gradient(to bottom, rgba(255,255,255,0.22), transparent 40%), linear-gradient(to bottom, #3f75cf, #234d9a); color: #fff; box-shadow: 0 0.4cqw 0 #183a78, 0 0.8cqw 0 #0c2252, 0 1.2cqw 0.7cqw rgba(0,0,0,0.4), inset 0 0.12cqw 0 rgba(255,255,255,0.4); }
+.key.pale  { background: linear-gradient(to bottom, rgba(255,255,255,0.3), transparent 40%), linear-gradient(to bottom, #dcd7c2, #b9b49f); color: #2c281f; box-shadow: 0 0.4cqw 0 #8c8774, 0 0.8cqw 0 #6f6b5a, 0 1.2cqw 0.7cqw rgba(0,0,0,0.4), inset 0 0.12cqw 0 rgba(255,255,255,0.6); }
+.key.red.down, .key.blue.down, .key.pale.down { box-shadow: 0 0.1cqw 0 rgba(0,0,0,0.5), 0 0.3cqw 0.3cqw rgba(0,0,0,0.3); }
 .key.tall { height: auto; grid-row: span 2; }
 .key.space { background: linear-gradient(to bottom, #36342c, #22201a); }
 

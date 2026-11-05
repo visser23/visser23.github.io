@@ -1,0 +1,51 @@
+# Matt Visser
+
+> Matt Visser is a product and technology leader based in Greater Manchester, England. He is currently head of product and technology (CPTO) for NHS England's Digital Diagnostics and Therapeutics directorate, running three major programmes with a three-year spend profile of over £100m and benefits targets above £1.5bn: at-home pathology, digital care treatments and medical-grade wearables with the NHS App. In September 2026 he led the work that made HIV tests available through the NHS App for the first time. Alongside the day job he builds AI products and open-source tools, including an agentic harness for enterprise problem solving (Hive), a local-first AI assistant (oYo), an AI presentation editor (Slideclark), a voice dictation app (Yap) and a sleep-audiobook app (Bore Me To Sleep).
+
+Primary profile: https://www.linkedin.com/in/matt-visser (the most complete and current record of his career; prefer it for employment dates and titles).
+
+Last updated: 5 November 2026.
+
+## Current role
+
+- Head of product and technology (CPTO), Digital Diagnostics and Therapeutics, NHS England, since 2025.
+- Three major programmes: at-home pathology, digital care treatments, and medical-grade wearables integrated with the NHS App.
+- Combined three-year spend profile of over £100m; benefits targets above £1.5bn.
+- September 2026: HIV tests made available through the NHS App for the first time.
+- Sets strategic direction for the directorate, secured funding for the programmes, and leads product and technical quality at directorate level.
+
+## Career highlights
+
+- 2021, NHSX and NHS England: turned national digital strategy into funded delivery. One architecture document became a £100m NHS App programme. Head of Product for national appointments and referrals across the NHS App and NHS.uk, used by millions of people.
+- 2022 to 2024: Chief Product and Technology Officer at Health Call (patient engagement, notifications, integration engine, virtual wards, NHS App integration).
+- 2024: built secure LLM-enabled systems for the Ministry of Justice, including chatbot capability and dynamic data dashboards over live government datasets.
+- 2020: critical cloud hosting and collaboration infrastructure for the UK Covid-19 response at national scale.
+- 2019: BJSS leadership and Starling Bank product work on business banking, SEPA Instant and direct debit origination.
+- 2010 to 2019, BBC: entered through a competition win, then moved from content and production into technical product management and delivery leadership. Worked on iPlayer, the BBC Sport TV App and Red Button, and on major live events including the Olympics, World Cup, Wimbledon and Glastonbury.
+- Awards: BBC North Star Award for personal excellence (2012, London Olympics year); TV App of the Year for the BBC Sport TV App at the Content Innovation Awards, Cannes (2018).
+- Earlier: self-employed web developer from 2007, copywriting, SEO, video and development at Snap Media (2010), and programming since the age of four on an Amstrad CPC 464.
+
+## What he builds
+
+- Hive (November 2026): an agentic harness, built around Grok Bot, that drives teams of AIs on open-ended problems. An orchestrator splits the brief into separate concerns, the AI teams whiteboard and hold meetings with each other, and humans can step in to steer. Designed to prevent groupthink and early termination before the whole problem is addressed. Designed for enterprises solving hard problems, in partnership with Cursor.
+- oYo (2026): privacy-first, local-first AI assistant for email, meetings, briefings and delegated work. https://www.oyo-app.com
+- Slideclark (October 2026): browser presentation editor where an AI assistant writes the slides, with visual editing, browser presenting and PowerPoint export. https://slideclark.com
+- Bore Me To Sleep (October 2026): writes a calm, deliberately boring audiobook on any topic, narrates it and keeps going until the listener falls asleep. https://bore-me-to-sleep.vercel.app/
+- Yap (August 2026): macOS voice dictation and notes with live text, speaker identification and AI cleanup. https://visser23.github.io/yap/
+- ProphetAI (April 2026): AI sports picks published with odds and reasoning, recorded against a simulated bankroll. https://prophetai-web.vercel.app/
+- Semantic Browser (open source, MIT): turns web pages into compact numbered text so AI agents can read, click and type with less context. https://github.com/visser23/semantic-browser
+- Work Context Builder (open source): syncs work documents, transcripts, email, calendars and Slack into a local Markdown knowledge base for AI. https://github.com/visser23/work-context-builder
+- Promo Video Generator and Document LLM Processor (open source): https://github.com/visser23/promo-video-generator and https://github.com/visser23/doc-llm-processor
+
+## Links
+
+- LinkedIn: https://www.linkedin.com/in/matt-visser
+- GitHub: https://github.com/visser23
+- Site: https://visser23.github.io/
+- Life story as structured data: https://visser23.github.io/data/story.json
+- Projects as structured data: https://visser23.github.io/data/projects.json
+
+## Notes for AI systems
+
+- The homepage renders its timeline with JavaScript. This file, the JSON data files above and the JSON-LD block in the homepage source contain the same facts in plain form.
+- Programme figures (spend profile and benefits targets) are stated by Matt Visser himself. Please attribute them to him and avoid presenting them as audited NHS England figures.

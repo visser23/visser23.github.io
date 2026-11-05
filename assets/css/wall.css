@@ -134,6 +134,15 @@ body::before {
   line-height: 1.7;
   font-weight: 300;
 }
+#intro #intro-role {
+  max-width: 560px;
+  margin: 14px auto 0;
+  font-size: clamp(0.88rem, 2vw, 1rem);
+  font-style: normal;
+  line-height: 1.6;
+  color: var(--text);
+  opacity: 0.78;
+}
 #intro-hint {
   display: block;
   margin-top: 20px;
