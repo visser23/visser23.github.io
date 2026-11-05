@@ -343,7 +343,7 @@
     "id": "hive-agentic-harness",
     "year": "November 2026",
     "title": "Hive",
-    "caption": "Hive is an agentic harness I built around Grok Bot to point teams of AIs at open-ended problems. An orchestrator splits the brief into separate concerns, so the teams can't all talk themselves into the same answer or call it done before the whole problem is solved. They whiteboard, hold meetings with each other, and I step in whenever I want to steer. Designed for enterprises tackling hard problems, in partnership with Cursor.",
+    "caption": "Hive is an agentic harness I built around Grok Bot to point teams of AIs at open-ended problems. An orchestrator splits the brief into separate concerns, so the teams can't all talk themselves into the same answer or call it done before the whole problem is solved. They whiteboard, hold meetings with each other, and I step in whenever I want to steer. Designed for enterprises tackling hard problems.",
     "image": "assets/images/projects/hive.png",
     "type": "terminal",
     "placeholder": "ai",

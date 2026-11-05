@@ -27,7 +27,7 @@ Last updated: 5 November 2026.
 
 ## What he builds
 
-- Hive (November 2026): an agentic harness, built around Grok Bot, that drives teams of AIs on open-ended problems. An orchestrator splits the brief into separate concerns, the AI teams whiteboard and hold meetings with each other, and humans can step in to steer. Designed to prevent groupthink and early termination before the whole problem is addressed. Designed for enterprises solving hard problems, in partnership with Cursor.
+- Hive (November 2026): an agentic harness, built around Grok Bot, that drives teams of AIs on open-ended problems. An orchestrator splits the brief into separate concerns, the AI teams whiteboard and hold meetings with each other, and humans can step in to steer. Designed to prevent groupthink and early termination before the whole problem is addressed. Designed for enterprises solving hard problems.
 - oYo (2026): privacy-first, local-first AI assistant for email, meetings, briefings and delegated work. https://www.oyo-app.com
 - Slideclark (October 2026): browser presentation editor where an AI assistant writes the slides, with visual editing, browser presenting and PowerPoint export. https://slideclark.com
 - Bore Me To Sleep (October 2026): writes a calm, deliberately boring audiobook on any topic, narrates it and keeps going until the listener falls asleep. https://bore-me-to-sleep.vercel.app/
