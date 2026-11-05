@@ -36,6 +36,18 @@
     "featured": true
   },
   {
+    "title": "Bore Me To Sleep",
+    "slug": "bore-me-to-sleep",
+    "category": "product",
+    "status": "live",
+    "year": "2026",
+    "summary": "Pick any topic and it writes a calm, deliberately unexciting audiobook, narrates it in a soft voice and keeps going until you drift off.",
+    "link": "https://bore-me-to-sleep.vercel.app/",
+    "external": true,
+    "icon": "brain",
+    "featured": true
+  },
+  {
     "title": "ProphetAI",
     "slug": "phophetai",
     "category": "product",

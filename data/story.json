@@ -315,5 +315,29 @@
     "tag": "ai",
     "chapter": 6,
     "rotation": -1
+  },
+  {
+    "id": "bore-me-to-sleep-launch",
+    "year": "October 2026",
+    "title": "Launching Bore Me To Sleep",
+    "caption": "I launched Bore Me To Sleep in October 2026. Pick any topic and it writes a calm, deliberately unexciting audiobook, reads it aloud in a soft voice and keeps going until you drift off.",
+    "image": "assets/images/projects/bore-me-to-sleep.png",
+    "type": "photo",
+    "placeholder": "ai",
+    "tag": "ai",
+    "chapter": 6,
+    "rotation": 2
+  },
+  {
+    "id": "hive-agentic-harness",
+    "year": "November 2026",
+    "title": "Hive",
+    "caption": "Hive is my agentic harness for open-ended problems. An orchestrator splits a brief into specialist teams, each working in rounds and filing finished pieces to a shared library, with me steering from the side.",
+    "image": "assets/images/projects/hive.png",
+    "type": "terminal",
+    "placeholder": "ai",
+    "tag": "ai",
+    "chapter": 6,
+    "rotation": -2
   }
 ]
